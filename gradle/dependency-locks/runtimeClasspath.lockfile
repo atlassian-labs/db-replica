@@ -3,3 +3,5 @@
 # This file is expected to be part of source control.
 com.github.stephenc.jcip:jcip-annotations:1.0-1
 org.apache.commons:commons-lang3:3.11
+org.checkerframework:checker-qual:3.5.0
+org.postgresql:postgresql:42.2.18

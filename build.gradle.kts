@@ -21,6 +21,7 @@ configurations.all {
 
 dependencies {
     implementation("com.github.stephenc.jcip:jcip-annotations:1.0-1")
+    implementation("org.postgresql:postgresql:42.2.18")
     implementation("org.apache.commons:commons-lang3:3.11")
     testImplementation("junit:junit:4.12")
     testImplementation("org.assertj:assertj-core:3.18.1")
