@@ -3,7 +3,6 @@ package com.atlassian.db.replica.internal;
 import com.atlassian.db.replica.*;
 import com.atlassian.db.replica.spi.*;
 import com.atlassian.util.concurrent.*;
-import com.google.common.collect.*;
 
 import java.sql.*;
 import java.util.*;
@@ -413,9 +412,7 @@ public class ReplicaStatement implements Statement {
     }
 
     private Collection<Statement> allStatements() {
-        return ImmutableList
-            .of(readStatement, writeStatement)
-            .stream()
+        return Stream.of(readStatement, writeStatement)
             .filter(LazyReference::isInitialized)
             .map(LazyReference::get)
             .collect(Collectors.toList());
