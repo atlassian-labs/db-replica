@@ -28,6 +28,11 @@ dependencies {
     testImplementation("org.assertj:assertj-core:3.18.1")
 }
 
+tasks.compileJava {
+    options.compilerArgs.add("-Xlint:deprecation")
+    options.compilerArgs.add("-Xlint:unchecked")
+}
+
 tasks.withType<Test> {
     reports {
         junitXml.isEnabled = true
