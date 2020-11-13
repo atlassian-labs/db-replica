@@ -2,7 +2,7 @@ package com.atlassian.db.replica.internal;
 
 import com.atlassian.db.replica.*;
 import com.atlassian.db.replica.spi.*;
-import com.atlassian.util.concurrent.*;
+import io.atlassian.util.concurrent.*;
 
 import java.sql.*;
 import java.util.*;
