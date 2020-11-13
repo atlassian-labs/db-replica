@@ -1,11 +1,10 @@
 package com.atlassian.db.replica;
 
-import com.atlassian.diagnostics.internal.platform.monitor.db.SqlOperation;
+import com.atlassian.db.replica.api.*;
 
-import java.sql.SQLException;
-import java.time.Duration;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
+import java.sql.*;
+import java.time.*;
+import java.util.concurrent.atomic.*;
 
 /**
  * This collector will be used to collect metrics during query execution.

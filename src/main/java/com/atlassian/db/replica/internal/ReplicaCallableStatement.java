@@ -1,7 +1,6 @@
 package com.atlassian.db.replica.internal;
 
 import com.atlassian.db.replica.spi.*;
-import com.atlassian.jira.ofbiz.sql.*;
 
 import java.io.*;
 import java.math.*;
@@ -10,11 +9,11 @@ import java.sql.Date;
 import java.sql.*;
 import java.util.*;
 
-public class ReplicaCallableStatementWrapper extends PreparedStatementWrapper implements CallableStatement {
+public class ReplicaCallableStatement extends DelegatingPreparedStatement implements CallableStatement {
     private final ReplicaConnectionProvider connectionProvider;
     private final ReplicaConsistency consistency;
 
-    public ReplicaCallableStatementWrapper(
+    public ReplicaCallableStatement(
         ReplicaConnectionProvider connectionProvider,
         String sql,
         ReplicaConsistency consistency

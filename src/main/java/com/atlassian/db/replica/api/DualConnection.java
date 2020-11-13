@@ -32,7 +32,7 @@ public class DualConnection implements Connection {
 
     @Override
     public CallableStatement prepareCall(String sql) throws SQLException {
-        return new ReplicaCallableStatementWrapper(connectionProvider, sql, consistency);
+        return new ReplicaCallableStatement(connectionProvider, sql, consistency);
     }
 
     @Override
