@@ -1,6 +1,7 @@
 # This is a Gradle generated file for dependency locking.
 # Manual edits can break the build and are not advised.
 # This file is expected to be part of source control.
+com.atlassian.util.concurrent:atlassian-util-concurrent:3.0.0
 com.github.stephenc.jcip:jcip-annotations:1.0-1
 org.apache.commons:commons-lang3:3.11
 org.postgresql:postgresql:42.2.18
