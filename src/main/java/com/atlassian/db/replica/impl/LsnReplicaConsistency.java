@@ -25,17 +25,31 @@ public class LsnReplicaConsistency implements ReplicaConsistency {
 
     @Override
     public void write(Connection main) {
-        LogSequenceNumber next = queryLsn(main);
-        lastWrite.updateAndGet(prev -> max(prev, next));
+        try {
+            final LogSequenceNumber next = queryLsn(main);
+            lastWrite.updateAndGet(prev -> max(prev, next));
+        } catch (Exception e) {
+            //TODO: log warning
+            lastWrite.set(null);
+        }
     }
 
     @Override
     public boolean isConsistent(Connection replica) {
-        LogSequenceNumber lastRefresh = queryLsn(replica);
+        if (lastWrite.get() == null) {
+            return false;
+        }
+        LogSequenceNumber lastRefresh;
+        try {
+            lastRefresh = queryLsn(replica);
+        } catch (Exception e) {
+            //TODO: log warning
+            return false;
+        }
         return lastRefresh.asLong() >= lastWrite.get().asLong();
     }
 
-    private LogSequenceNumber queryLsn(Connection connection) {
+    private LogSequenceNumber queryLsn(Connection connection) throws Exception {
         try (
             PreparedStatement query = prepareQuery(connection);
             ResultSet results = query.executeQuery()
@@ -43,8 +57,6 @@ public class LsnReplicaConsistency implements ReplicaConsistency {
             results.next();
             String lsn = results.getString("lsn");
             return LogSequenceNumber.valueOf(lsn);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
         }
     }
 
