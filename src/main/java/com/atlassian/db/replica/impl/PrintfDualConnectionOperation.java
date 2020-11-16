@@ -1,40 +1,30 @@
-package com.atlassian.db.replica;
+package com.atlassian.db.replica.impl;
 
-import com.atlassian.db.replica.api.*;
+import com.atlassian.db.replica.api.SqlOperation;
+import com.atlassian.db.replica.spi.DualConnectionOperation;
 
-import java.sql.*;
-import java.time.*;
-import java.util.concurrent.atomic.*;
+import java.sql.SQLException;
+import java.time.Duration;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
-/**
- * This collector will be used to collect metrics during query execution.
- * Some ideas what can it provide:
- * - read replica DB time / all DB time ratio
- * - read only paths
- * - ...
- */
-public class SimpleMetricCollector {
+
+public class PrintfDualConnectionOperation implements DualConnectionOperation {
     private final static AtomicInteger counter = new AtomicInteger();
     private final static AtomicLong replicaDuration = new AtomicLong();
     private final static AtomicLong writeDuration = new AtomicLong();
 
-    public static <T> T measure(boolean isReadReplica, final SqlOperation<T> operation) throws SQLException {
-        if (isReadReplica) {
-            return executeOnReplica(operation);
-        } else {
-            return executeOnMain(operation);
-        }
-    }
-
-    private static <T> T executeOnReplica(final SqlOperation<T> operation) throws SQLException {
+    @Override
+    public <T> T executeOnReplica(final SqlOperation<T> operation) throws SQLException {
         return execute(replicaDuration, operation);
     }
 
-    private static <T> T executeOnMain(final SqlOperation<T> operation) throws SQLException {
+    @Override
+    public <T> T executeOnMain(final SqlOperation<T> operation) throws SQLException {
         return execute(writeDuration, operation);
     }
 
-    private static <T> T execute(AtomicLong duration, final SqlOperation<T> operation) throws SQLException {
+    private <T> T execute(AtomicLong duration, final SqlOperation<T> operation) throws SQLException {
         final long start = System.currentTimeMillis();
         final T returnValue = operation.execute();
         duration.addAndGet(System.currentTimeMillis() - start);

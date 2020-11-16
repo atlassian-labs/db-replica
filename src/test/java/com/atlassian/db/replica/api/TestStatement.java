@@ -12,7 +12,7 @@ public class TestStatement {
 
     @Test
     public void shouldCloseAllStatements() throws SQLException {
-        final DualConnection connection = new DualConnection(connectionProvider, new PermanentConsistency());
+        final DualConnection connection = DualConnection.builder(connectionProvider, new PermanentConsistency()).build();
         final PreparedStatement statement = connection.prepareStatement(QUERY);
         statement.executeQuery();
         statement.executeUpdate();
