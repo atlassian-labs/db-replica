@@ -12,7 +12,7 @@ import java.util.Set;
 public class ReplicaConnectionProvider implements AutoCloseable {
     private final ReplicaConsistency consistency;
     private final ConnectionProvider connectionProvider;
-    private Set<Connection> initializedConnections = new HashSet<>();
+    private final Set<Connection> initializedConnections = new HashSet<>();
     private Boolean isAutoCommit;
     private Integer transactionIsolation;
     private Boolean isReadOnly;
@@ -87,7 +87,6 @@ public class ReplicaConnectionProvider implements AutoCloseable {
     /**
      * Provides a connection that will be used for reading operation. Will use read-replica if possible.
      *
-     * @return
      */
     public Connection getReadConnection() throws SQLException {
         if (transactionIsolation != null && transactionIsolation > Connection.TRANSACTION_READ_COMMITTED) {
@@ -112,7 +111,6 @@ public class ReplicaConnectionProvider implements AutoCloseable {
      * Provides a connection that will be used for writing operation. It will always return a connection to the
      * main database.
      *
-     * @return
      */
     public Connection getWriteConnection() throws SQLException {
         final Connection connection = writeConnection.get();
@@ -121,16 +119,6 @@ public class ReplicaConnectionProvider implements AutoCloseable {
         }
         initialize(connection);
         return connection;
-    }
-
-    public Connection getCurrent() throws SQLException {
-        if (writeConnection.isInitialized()) {
-            return getWriteConnection();
-        }
-        if (readConnection.isInitialized()) {
-            return getReadConnection();
-        }
-        return getWriteConnection();
     }
 
     public boolean hasWriteConnection() {
