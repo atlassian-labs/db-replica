@@ -26,7 +26,7 @@ public class DualConnectionPerfTest {
         float thruputPerSecond = thruputPerMillis * 1000;
         assertThat(thruputPerSecond)
             .as("thruput per second")
-            .isGreaterThan(18_000);
+            .isGreaterThan(12_000);
     }
 
     private Duration runBenchmark(Connection connection, int times) throws SQLException {
