@@ -1,10 +1,13 @@
 package com.atlassian.db.replica.internal;
 
-import com.atlassian.db.replica.spi.*;
-import io.atlassian.util.concurrent.*;
+import com.atlassian.db.replica.spi.ConnectionProvider;
+import com.atlassian.db.replica.spi.ReplicaConsistency;
+import io.atlassian.util.concurrent.ResettableLazyReference;
 
-import java.sql.*;
-import java.util.*;
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.util.HashSet;
+import java.util.Set;
 
 public class ReplicaConnectionProvider implements AutoCloseable {
     private final ReplicaConsistency consistency;
@@ -101,6 +104,9 @@ public class ReplicaConnectionProvider implements AutoCloseable {
      */
     public Connection getWriteConnection() throws SQLException {
         final Connection connection = writeConnection.get();
+        if (readConnection.isInitialized() && !readConnection.get().equals(writeConnection.get())) {
+            closeConnection(readConnection);
+        }
         initialize(connection);
         return connection;
     }
@@ -151,8 +157,7 @@ public class ReplicaConnectionProvider implements AutoCloseable {
             final boolean isWriteAndReadTheSameConnection = writeConnection.isInitialized() && readConnection.get().equals(
                 writeConnection.get());
             try {
-                readConnection.get().close();
-                readConnection.reset();
+                closeConnection(readConnection);
             } catch (Exception e) {
                 lastException = e;
             }
@@ -162,14 +167,21 @@ public class ReplicaConnectionProvider implements AutoCloseable {
         }
         if (writeConnection.isInitialized()) {
             try {
-                writeConnection.get().close();
-                writeConnection.reset();
+                closeConnection(writeConnection);
             } catch (Exception e) {
                 lastException = e;
             }
         }
         if (lastException != null) {
             throw new SQLException(lastException);
+        }
+    }
+
+    private void closeConnection(ResettableLazyReference<Connection> connectionReference) throws SQLException{
+        try {
+            connectionReference.get().close();
+        }finally {
+            connectionReference.reset();
         }
     }
 }

@@ -227,11 +227,11 @@ public class TestDualConnection {
     public void shouldDualConnectionCloseSubConnectionsEvenIfReplicaConnectionCloseFails() throws SQLException {
         final DualConnection dualConnection = DualConnection.builder(connectionProvider, new PermanentConsistency()).build();
         dualConnection.prepareStatement(QUERY).executeQuery();
-        dualConnection.prepareStatement(QUERY).executeUpdate();
         final Connection replica = connectionProvider.getProvidedConnections().get(0);
         doThrow(new RuntimeException("Connection already closed")).when(replica).close();
+        Throwable thrown = catchThrowable(()->dualConnection.prepareStatement(QUERY).executeUpdate());
 
-        Throwable thrown = catchThrowable(dualConnection::close);
+        dualConnection.close();
 
         assertThat(thrown).hasMessageContaining("Connection already closed");
         assertThat(connectionProvider.getProvidedConnectionTypes())
@@ -364,5 +364,19 @@ public class TestDualConnection {
             }
         });
 
+    }
+
+    @Test
+    public void shouldHoldOnlyOneConnection() throws SQLException {
+        final DualConnection connection = DualConnection.builder(connectionProvider, new PermanentConsistency()).build();
+
+        connection.prepareStatement(QUERY).executeQuery();
+        connection.prepareStatement(QUERY).executeUpdate();
+
+        final Connection replica = connectionProvider.getProvidedConnections().get(0);
+        final Connection main = connectionProvider.getProvidedConnections().get(1);
+
+        verify(replica).close();
+        verify(main, never()).close();
     }
 }

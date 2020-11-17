@@ -101,19 +101,29 @@ public class TestTransactions {
     }
 
     @Test
-    public void shouldRollbackConnections() throws SQLException {
+    public void shouldRollbackMain() throws SQLException {
+        final DualConnection connection = DualConnection.builder(connectionProvider, new PermanentConsistency()).build();
+
+        final PreparedStatement preparedStatement = connection.prepareStatement(QUERY);
+        startTransaction(connection);
+        preparedStatement.execute();
+        connection.rollback();
+
+        final Connection main = connectionProvider.getProvidedConnections().get(0);
+        Mockito.verify(main).rollback();
+    }
+
+    @Test
+    public void shouldRollbackReplica() throws SQLException {
         final DualConnection connection = DualConnection.builder(connectionProvider, new PermanentConsistency()).build();
 
         final PreparedStatement preparedStatement = connection.prepareStatement(QUERY);
         startTransaction(connection);
         preparedStatement.executeQuery();
-        preparedStatement.execute();
         connection.rollback();
 
         final Connection replica = connectionProvider.getProvidedConnections().get(0);
-        final Connection main = connectionProvider.getProvidedConnections().get(1);
         Mockito.verify(replica).rollback();
-        Mockito.verify(main).rollback();
     }
 
     @Test
@@ -123,6 +133,7 @@ public class TestTransactions {
         final PreparedStatement preparedStatement = connection.prepareStatement(QUERY);
         startTransaction(connection);
         preparedStatement.executeQuery();
+        connection.commit();
         preparedStatement.execute();
         connection.commit();
 
