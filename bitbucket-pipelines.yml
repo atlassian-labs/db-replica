@@ -26,6 +26,8 @@ pipelines:
             - gradle
           trigger: manual
           script:
+            - pipe: atlassian/artifactory-sidekick:v1
+            - . .artifactory/activate.sh
             - git config --global user.email "bitbucketci-team@atlassian.com"
             - git config --global user.name "Bitbucket Pipelines"
             - bash ./gradlew release -Dhttp.proxyHost=localhost -Dhttp.proxyPort=29418
