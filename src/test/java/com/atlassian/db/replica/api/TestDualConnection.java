@@ -9,6 +9,7 @@ import org.mockito.Mockito;
 
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.sql.Statement;
 
 import static com.atlassian.db.replica.api.mocks.ConnectionProviderMock.ConnectionType.MAIN;
 import static com.atlassian.db.replica.api.mocks.ConnectionProviderMock.ConnectionType.REPLICA;
@@ -21,9 +22,10 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+@SuppressWarnings({"SqlDialectInspection", "SqlNoDataSourceInspection"})
 public class TestDualConnection {
     public static final String QUERY = "SELECT 1;";
-    private ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
+    private final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
 
     @Test
     public void shouldUseReplicaConnectionForExecuteQuery() throws SQLException {
@@ -41,12 +43,12 @@ public class TestDualConnection {
 
         connection.prepareStatement(QUERY).executeUpdate();
         connection.prepareStatement(QUERY).executeUpdate(QUERY);
-        connection.prepareStatement(QUERY).executeUpdate(QUERY, 1234);
+        connection.prepareStatement(QUERY).executeUpdate(QUERY, Statement.RETURN_GENERATED_KEYS);
         connection.prepareStatement(QUERY).executeUpdate(QUERY, new String[]{"test"});
         connection.prepareStatement(QUERY).executeUpdate(QUERY, new int[]{123});
         connection.prepareStatement(QUERY).executeLargeUpdate();
         connection.prepareStatement(QUERY).executeLargeUpdate(QUERY);
-        connection.prepareStatement(QUERY).executeLargeUpdate(QUERY, 1234);
+        connection.prepareStatement(QUERY).executeLargeUpdate(QUERY, Statement.RETURN_GENERATED_KEYS);
         connection.prepareStatement(QUERY).executeLargeUpdate(QUERY, new String[]{"test"});
         connection.prepareStatement(QUERY).executeLargeUpdate(QUERY, new int[]{123});
         connection.prepareStatement(QUERY).executeLargeBatch();
@@ -63,7 +65,7 @@ public class TestDualConnection {
 
         connection.prepareStatement(QUERY).execute();
         connection.prepareStatement(QUERY).execute(QUERY);
-        connection.prepareStatement(QUERY).execute(QUERY, 1234);
+        connection.prepareStatement(QUERY).execute(QUERY, Statement.RETURN_GENERATED_KEYS);
         connection.prepareStatement(QUERY).execute(QUERY, new String[]{"test"});
         connection.prepareStatement(QUERY).execute(QUERY, new int[]{123});
         connection.prepareStatement(QUERY, new int[]{123}).execute(QUERY, new int[]{123});
