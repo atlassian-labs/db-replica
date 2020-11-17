@@ -105,12 +105,12 @@ public class DualConnection implements Connection {
 
     @Override
     public void setReadOnly(boolean readOnly) throws SQLException {
-        throw new ReadReplicaUnsupportedOperationException();
+         connectionProvider.setReadOnly(readOnly);
     }
 
     @Override
     public boolean isReadOnly() throws SQLException {
-        throw new ReadReplicaUnsupportedOperationException();
+        return connectionProvider.getReadOnly();
     }
 
     @Override

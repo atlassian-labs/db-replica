@@ -15,6 +15,7 @@ public class ReplicaConnectionProvider implements AutoCloseable {
     private Set<Connection> initializedConnections = new HashSet<>();
     private Boolean isAutoCommit;
     private Integer transactionIsolation;
+    private Boolean isReadOnly;
     private Boolean isClosed = false;
     private final ResettableLazyReference<Connection> readConnection = new ResettableLazyReference<Connection>() {
         @Override
@@ -50,6 +51,9 @@ public class ReplicaConnectionProvider implements AutoCloseable {
             if (transactionIsolation != null) {
                 connection.setTransactionIsolation(transactionIsolation);
             }
+            if (isReadOnly != null) {
+                connection.setReadOnly(isReadOnly);
+            }
             initializedConnections.add(connection);
         }
     }
@@ -70,6 +74,14 @@ public class ReplicaConnectionProvider implements AutoCloseable {
 
     public Boolean isClosed() {
         return this.isClosed;
+    }
+
+    public Boolean getReadOnly() {
+        return isReadOnly;
+    }
+
+    public void setReadOnly(Boolean readOnly) {
+        isReadOnly = readOnly;
     }
 
     /**

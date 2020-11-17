@@ -453,4 +453,30 @@ public class TestDualConnection {
             .containsOnly(MAIN);
         verify(connectionProvider.singleProvidedConnection()).getMetaData();
     }
+
+    @Test
+    public void shouldStartReadOnlyMode() throws SQLException {
+        final DualConnection connection = DualConnection.builder(connectionProvider, new PermanentConsistency()).build();
+
+        connection.setReadOnly(true);
+        connection.prepareStatement(SIMPLE_QUERY).executeQuery();
+
+        assertThat(connectionProvider.getProvidedConnectionTypes())
+            .containsOnly(REPLICA);
+        verify(connectionProvider.singleProvidedConnection()).setReadOnly(true);
+        assertThat(connection.isReadOnly()).isTrue();
+    }
+
+    @Test
+    public void shouldStopReadOnlyMode() throws SQLException {
+        final DualConnection connection = DualConnection.builder(connectionProvider, new PermanentConsistency()).build();
+
+        connection.setReadOnly(false);
+        connection.prepareStatement(SIMPLE_QUERY).executeQuery();
+
+        assertThat(connectionProvider.getProvidedConnectionTypes())
+            .containsOnly(REPLICA);
+        verify(connectionProvider.singleProvidedConnection()).setReadOnly(false);
+        assertThat(connection.isReadOnly()).isFalse();
+    }
 }
