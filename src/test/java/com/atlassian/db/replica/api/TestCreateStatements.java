@@ -55,6 +55,21 @@ public class TestCreateStatements {
     }
 
     @Test
+    public void shouldPrepareStatementWithResultSetConcurrency() throws SQLException {
+        final DualConnection connection = DualConnection.builder(connectionProvider, new PermanentConsistency()).build();
+        final int resultSetType = ResultSet.TYPE_FORWARD_ONLY;
+        final int resultSetConcurrency = ResultSet.CONCUR_READ_ONLY;
+
+        connection.prepareStatement(SELECT, resultSetType, resultSetConcurrency).execute();
+
+        verify(connectionProvider.getProvidedConnections().get(0)).prepareStatement(
+            SELECT,
+            resultSetType,
+            resultSetConcurrency
+        );
+    }
+
+    @Test
     public void shouldPrepareStatementWithResultSetHoldability() throws SQLException {
         final DualConnection connection = DualConnection.builder(connectionProvider, new PermanentConsistency()).build();
         final int resultSetType = ResultSet.TYPE_FORWARD_ONLY;
