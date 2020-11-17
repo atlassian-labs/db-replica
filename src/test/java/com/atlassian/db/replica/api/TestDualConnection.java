@@ -3,6 +3,7 @@ package com.atlassian.db.replica.api;
 import com.atlassian.db.replica.api.mocks.ConnectionProviderMock;
 import com.atlassian.db.replica.api.mocks.PermanentConsistency;
 import com.atlassian.db.replica.api.mocks.PermanentInconsistency;
+import com.atlassian.db.replica.spi.DualConnectionOperation;
 import org.junit.Test;
 import org.mockito.Mockito;
 
@@ -13,9 +14,12 @@ import static com.atlassian.db.replica.api.mocks.ConnectionProviderMock.Connecti
 import static com.atlassian.db.replica.api.mocks.ConnectionProviderMock.ConnectionType.REPLICA;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 public class TestDualConnection {
     public static final String QUERY = "SELECT 1;";
@@ -229,7 +233,7 @@ public class TestDualConnection {
         dualConnection.prepareStatement(QUERY).executeQuery();
         final Connection replica = connectionProvider.getProvidedConnections().get(0);
         doThrow(new RuntimeException("Connection already closed")).when(replica).close();
-        Throwable thrown = catchThrowable(()->dualConnection.prepareStatement(QUERY).executeUpdate());
+        Throwable thrown = catchThrowable(() -> dualConnection.prepareStatement(QUERY).executeUpdate());
 
         dualConnection.close();
 
@@ -378,5 +382,38 @@ public class TestDualConnection {
 
         verify(replica).close();
         verify(main, never()).close();
+    }
+
+    @Test
+    public void shouldExecuteOnReplica() throws SQLException {
+        final DualConnectionOperation dualConnectionOperation = mock(DualConnectionOperation.class);
+        final DualConnection connection = DualConnection
+            .builder(connectionProvider, new PermanentConsistency())
+            .dualConnectionOperation(dualConnectionOperation)
+            .build();
+
+        connection.prepareStatement(QUERY).executeQuery();
+
+        assertThat(connectionProvider.getProvidedConnectionTypes())
+            .containsOnly(REPLICA);
+        verify(dualConnectionOperation).executeOnReplica(any());
+        verify(dualConnectionOperation, never()).executeOnMain(any());
+    }
+
+    @Test
+    public void shouldExecuteOnMain() throws SQLException {
+        final DualConnectionOperation dualConnectionOperation = mock(DualConnectionOperation.class);
+        when(dualConnectionOperation.executeOnMain(any())).thenReturn(1);
+        final DualConnection connection = DualConnection
+            .builder(connectionProvider, new PermanentConsistency())
+            .dualConnectionOperation(dualConnectionOperation)
+            .build();
+
+        connection.prepareStatement(QUERY).executeUpdate();
+
+        assertThat(connectionProvider.getProvidedConnectionTypes())
+            .containsOnly(MAIN);
+        verify(dualConnectionOperation, never()).executeOnReplica(any());
+        verify(dualConnectionOperation).executeOnMain(any());
     }
 }
