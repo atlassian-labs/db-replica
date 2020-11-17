@@ -1,0 +1,32 @@
+image: openjdk:8
+
+pipelines:
+  default:
+    - step:
+        name: Build project
+        caches:
+          - gradle
+        script:
+          - bash ./gradlew build
+        artifacts:
+          - build/reports/**
+  branches:
+    master:
+      - step:
+          name: Build project
+          caches:
+            - gradle
+          script:
+            - bash ./gradlew build
+          artifacts:
+            - build/reports/**
+      - step:
+          name: Release project
+          caches:
+            - gradle
+          trigger: manual
+          script:
+            - git config --global user.email "bitbucketci-team@atlassian.com"
+            - git config --global user.name "Bitbucket Pipelines"
+            - bash ./gradlew release -Dhttp.proxyHost=localhost -Dhttp.proxyPort=29418
+            - bash ./gradlew publish
