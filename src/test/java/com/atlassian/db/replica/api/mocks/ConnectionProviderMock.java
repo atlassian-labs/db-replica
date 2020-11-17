@@ -104,8 +104,9 @@ public class ConnectionProviderMock implements ConnectionProvider {
         return connection;
     }
 
-    private PreparedStatement getStatement() {
+    private PreparedStatement getStatement() throws SQLException {
         final PreparedStatement statement = mock(PreparedStatement.class);
+        when(statement.executeQuery()).thenReturn(mock(ResultSet.class));
         preparedStatements.add(statement);
         return statement;
     }

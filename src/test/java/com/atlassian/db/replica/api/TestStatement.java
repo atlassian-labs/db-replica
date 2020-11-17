@@ -1,19 +1,22 @@
 package com.atlassian.db.replica.api;
 
-import com.atlassian.db.replica.api.mocks.*;
-import org.junit.*;
-import org.mockito.*;
+import com.atlassian.db.replica.api.mocks.ConnectionProviderMock;
+import com.atlassian.db.replica.api.mocks.PermanentConsistency;
+import org.junit.Test;
+import org.mockito.Mockito;
 
-import java.sql.*;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+
+import static com.atlassian.db.replica.api.Queries.SIMPLE_QUERY;
 
 public class TestStatement {
-    public static final String QUERY = "SELECT 1;";
-    private ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
+    private final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
 
     @Test
     public void shouldCloseAllStatements() throws SQLException {
         final DualConnection connection = DualConnection.builder(connectionProvider, new PermanentConsistency()).build();
-        final PreparedStatement statement = connection.prepareStatement(QUERY);
+        final PreparedStatement statement = connection.prepareStatement(SIMPLE_QUERY);
         statement.executeQuery();
         statement.executeUpdate();
 

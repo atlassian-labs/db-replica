@@ -471,7 +471,13 @@ public class ReplicaStatement implements Statement {
         if (sql == null) {
             return false;
         }
-        return sql.split("WHERE")[0].contains("(");
+        String queryStart;
+        if(sql.length()> 80){
+            queryStart = sql.substring(0, 80);
+        }else{
+            queryStart = sql;
+        }
+        return queryStart.contains("(");
     }
 
     public Statement getWriteStatement() {

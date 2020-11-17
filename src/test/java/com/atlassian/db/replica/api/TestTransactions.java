@@ -10,6 +10,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
+import static com.atlassian.db.replica.api.Queries.SIMPLE_QUERY;
 import static com.atlassian.db.replica.api.mocks.ConnectionProviderMock.ConnectionType.MAIN;
 import static com.atlassian.db.replica.api.mocks.ConnectionProviderMock.ConnectionType.REPLICA;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -17,15 +18,14 @@ import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.Mockito.never;
 
 public class TestTransactions {
-    public static final String QUERY = "SELECT 1;";
-    private ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
+    private final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
 
     @Test
     public void shouldUseReadConnectionsForExecuteQueryInTransaction() throws SQLException {
         final DualConnection connection = DualConnection.builder(connectionProvider, new PermanentConsistency()).build();
 
         startTransaction(connection);
-        connection.prepareStatement(QUERY).executeQuery();
+        connection.prepareStatement(SIMPLE_QUERY).executeQuery();
         connection.commit();
 
         assertThat(connectionProvider.getProvidedConnectionTypes())
@@ -39,8 +39,8 @@ public class TestTransactions {
         final DualConnection connection = DualConnection.builder(connectionProvider, new PermanentConsistency()).build();
 
         startTransaction(connection);
-        connection.prepareStatement(QUERY).executeQuery();
-        connection.prepareStatement(QUERY).execute();
+        connection.prepareStatement(SIMPLE_QUERY).executeQuery();
+        connection.prepareStatement(SIMPLE_QUERY).execute();
 
         assertThat(connectionProvider.getProvidedConnectionTypes())
             .containsExactly(REPLICA, MAIN);
@@ -54,9 +54,9 @@ public class TestTransactions {
     public void shouldUseTransactionForWriteConnection() throws SQLException {
         final DualConnection connection = DualConnection.builder(connectionProvider, new PermanentConsistency()).build();
 
-        connection.prepareStatement(QUERY).executeQuery();
+        connection.prepareStatement(SIMPLE_QUERY).executeQuery();
         startTransaction(connection);
-        connection.prepareStatement(QUERY).execute();
+        connection.prepareStatement(SIMPLE_QUERY).execute();
 
         assertThat(connectionProvider.getProvidedConnectionTypes())
             .containsExactly(REPLICA, MAIN);
@@ -70,8 +70,8 @@ public class TestTransactions {
     public void shouldNotStartTransactionIfNeverUsed() throws SQLException {
         final DualConnection connection = DualConnection.builder(connectionProvider, new PermanentConsistency()).build();
 
-        connection.prepareStatement(QUERY).executeQuery();
-        connection.prepareStatement(QUERY).execute();
+        connection.prepareStatement(SIMPLE_QUERY).executeQuery();
+        connection.prepareStatement(SIMPLE_QUERY).execute();
         startTransaction(connection);
 
         assertThat(connectionProvider.getProvidedConnectionTypes())
@@ -86,7 +86,7 @@ public class TestTransactions {
     public void shouldShouldUseTransactionForTheSameStatement() throws SQLException {
         final DualConnection connection = DualConnection.builder(connectionProvider, new PermanentConsistency()).build();
 
-        final PreparedStatement preparedStatement = connection.prepareStatement(QUERY);
+        final PreparedStatement preparedStatement = connection.prepareStatement(SIMPLE_QUERY);
         preparedStatement.executeQuery();
         startTransaction(connection);
         preparedStatement.execute();
@@ -104,7 +104,7 @@ public class TestTransactions {
     public void shouldRollbackMain() throws SQLException {
         final DualConnection connection = DualConnection.builder(connectionProvider, new PermanentConsistency()).build();
 
-        final PreparedStatement preparedStatement = connection.prepareStatement(QUERY);
+        final PreparedStatement preparedStatement = connection.prepareStatement(SIMPLE_QUERY);
         startTransaction(connection);
         preparedStatement.execute();
         connection.rollback();
@@ -117,7 +117,7 @@ public class TestTransactions {
     public void shouldRollbackReplica() throws SQLException {
         final DualConnection connection = DualConnection.builder(connectionProvider, new PermanentConsistency()).build();
 
-        final PreparedStatement preparedStatement = connection.prepareStatement(QUERY);
+        final PreparedStatement preparedStatement = connection.prepareStatement(SIMPLE_QUERY);
         startTransaction(connection);
         preparedStatement.executeQuery();
         connection.rollback();
@@ -130,7 +130,7 @@ public class TestTransactions {
     public void shouldCommitTransactions() throws SQLException {
         final DualConnection connection = DualConnection.builder(connectionProvider, new PermanentConsistency()).build();
 
-        final PreparedStatement preparedStatement = connection.prepareStatement(QUERY);
+        final PreparedStatement preparedStatement = connection.prepareStatement(SIMPLE_QUERY);
         startTransaction(connection);
         preparedStatement.executeQuery();
         connection.commit();
@@ -147,7 +147,7 @@ public class TestTransactions {
     public void shouldUseMainForRepeatableReadTransactionIsolationLevel() throws SQLException {
         final DualConnection connection = DualConnection.builder(connectionProvider, new PermanentInconsistency()).build();
         connection.setTransactionIsolation(Connection.TRANSACTION_REPEATABLE_READ);
-        connection.prepareStatement(QUERY).executeQuery();
+        connection.prepareStatement(SIMPLE_QUERY).executeQuery();
 
         assertThat(connectionProvider.getProvidedConnectionTypes())
             .containsExactly(MAIN);
@@ -157,7 +157,7 @@ public class TestTransactions {
     public void shouldUseMainForSerializableTransactionIsolationLevel() throws SQLException {
         final DualConnection connection = DualConnection.builder(connectionProvider, new PermanentInconsistency()).build();
         connection.setTransactionIsolation(Connection.TRANSACTION_SERIALIZABLE);
-        connection.prepareStatement(QUERY).executeQuery();
+        connection.prepareStatement(SIMPLE_QUERY).executeQuery();
 
         assertThat(connectionProvider.getProvidedConnectionTypes())
             .containsExactly(MAIN);
