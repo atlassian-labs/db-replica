@@ -1,5 +1,7 @@
 image: openjdk:8
 
+options:
+  docker: true
 pipelines:
   default:
     - step:
@@ -10,6 +12,8 @@ pipelines:
           - bash ./gradlew build
         artifacts:
           - build/reports/**
+        services:
+          - docker
   branches:
     master:
       - step:
@@ -32,3 +36,5 @@ pipelines:
             - git config --global user.name "Bitbucket Pipelines"
             - bash ./gradlew release -Dhttp.proxyHost=localhost -Dhttp.proxyPort=29418
             - bash ./gradlew publish
+          services:
+            - docker
