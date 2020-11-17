@@ -1,14 +1,23 @@
 package com.atlassian.db.replica.api.mocks;
 
-import com.atlassian.db.replica.spi.*;
-import org.mockito.*;
-import org.mockito.stubbing.*;
+import com.atlassian.db.replica.spi.ConnectionProvider;
+import org.mockito.Mockito;
+import org.mockito.stubbing.Answer;
 
-import java.sql.*;
-import java.util.*;
+import java.sql.CallableStatement;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.List;
 
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class ConnectionProviderMock implements ConnectionProvider {
     private final boolean isAvailable;
@@ -32,6 +41,13 @@ public class ConnectionProviderMock implements ConnectionProvider {
 
     public List<Connection> getProvidedConnections() {
         return providedConnections;
+    }
+
+    public Connection singleProvidedConnection() {
+        if (providedConnections.size() != 1) {
+            throw new RuntimeException("Expected to provide a single connection");
+        }
+        return providedConnections.get(0);
     }
 
     public List<ConnectionType> getProvidedConnectionTypes() {

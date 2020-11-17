@@ -30,7 +30,7 @@ public class TestTransactions {
 
         assertThat(connectionProvider.getProvidedConnectionTypes())
             .containsExactly(REPLICA);
-        final Connection replica = connectionProvider.getProvidedConnections().get(0);
+        final Connection replica = connectionProvider.singleProvidedConnection();
         Mockito.verify(replica).setAutoCommit(false);
     }
 
@@ -109,7 +109,7 @@ public class TestTransactions {
         preparedStatement.execute();
         connection.rollback();
 
-        final Connection main = connectionProvider.getProvidedConnections().get(0);
+        final Connection main = connectionProvider.singleProvidedConnection();
         Mockito.verify(main).rollback();
     }
 
@@ -122,7 +122,7 @@ public class TestTransactions {
         preparedStatement.executeQuery();
         connection.rollback();
 
-        final Connection replica = connectionProvider.getProvidedConnections().get(0);
+        final Connection replica = connectionProvider.singleProvidedConnection();
         Mockito.verify(replica).rollback();
     }
 
