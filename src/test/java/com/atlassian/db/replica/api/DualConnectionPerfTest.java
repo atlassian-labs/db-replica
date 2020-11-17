@@ -2,7 +2,6 @@ package com.atlassian.db.replica.api;
 
 import com.atlassian.db.replica.api.mocks.ConnectionProviderMock;
 import com.atlassian.db.replica.api.mocks.PermanentConsistency;
-import org.assertj.core.api.Assertions;
 import org.junit.Test;
 
 import java.sql.Connection;
@@ -11,18 +10,23 @@ import java.time.Duration;
 import java.time.Instant;
 
 import static com.atlassian.db.replica.api.Queries.LARGE_SQL_QUERY;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class DualConnectionPerfTest {
     private final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
 
     @Test
-    public void shouldHaveAcceptableThroughput() throws SQLException {
+    public void shouldHaveAcceptableThruput() throws SQLException {
         final DualConnection connection = DualConnection.builder(connectionProvider, new PermanentConsistency()).build();
         final int times = 100000;
-        final Duration duration = runBenchmark(connection, times);
-        final int runsPerSecond = (int) (((times + 0.0f) / duration.toMillis()) * 100);
 
-        Assertions.assertThat(runsPerSecond).isGreaterThan(1800);
+        final Duration duration = runBenchmark(connection, times);
+
+        float thruputPerMillis = (float) times / duration.toMillis();
+        float thruputPerSecond = thruputPerMillis * 1000;
+        assertThat(thruputPerSecond)
+            .as("thruput per second")
+            .isGreaterThan(18_000);
     }
 
     private Duration runBenchmark(Connection connection, int times) throws SQLException {
