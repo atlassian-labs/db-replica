@@ -442,4 +442,15 @@ public class TestDualConnection {
         assertThat(connectionProvider.getPreparedStatements())
             .hasSize(10);
     }
+
+    @Test
+    public void shouldGetMetaDataFromMaster() throws SQLException {
+        final DualConnection connection = DualConnection.builder(connectionProvider, new PermanentConsistency()).build();
+
+        connection.getMetaData();
+
+        assertThat(connectionProvider.getProvidedConnectionTypes())
+            .containsOnly(MAIN);
+        verify(connectionProvider.singleProvidedConnection()).getMetaData();
+    }
 }
