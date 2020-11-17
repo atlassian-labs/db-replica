@@ -1,15 +1,11 @@
 plugins {
     `java-library`
+    id("com.atlassian.performance.tools.gradle-release").version("0.7.1")
 }
 
 tasks.wrapper {
     gradleVersion = "6.7"
     distributionType = Wrapper.DistributionType.BIN
-}
-
-repositories {
-    mavenLocal()
-    mavenCentral()
 }
 
 configurations.all {
@@ -38,4 +34,10 @@ tasks.withType<Test> {
     reports {
         junitXml.isEnabled = true
     }
+}
+
+group = "com.atlassian.db.replica"
+
+gradleRelease {
+    atlassianPrivateMode = true
 }
