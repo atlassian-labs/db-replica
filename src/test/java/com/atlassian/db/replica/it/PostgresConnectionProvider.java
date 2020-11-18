@@ -1,21 +1,17 @@
 package com.atlassian.db.replica.it;
 
-import com.atlassian.db.replica.spi.ConnectionProvider;
-import com.github.dockerjava.api.DockerClient;
-import com.github.dockerjava.api.command.CreateContainerResponse;
-import com.github.dockerjava.api.model.ExposedPort;
-import com.github.dockerjava.api.model.Link;
-import com.github.dockerjava.api.model.PortBinding;
-import com.github.dockerjava.core.DefaultDockerClientConfig;
-import com.github.dockerjava.core.DockerClientImpl;
-import com.github.dockerjava.httpclient5.ApacheDockerHttpClient;
-import com.github.dockerjava.transport.DockerHttpClient;
-import com.google.common.collect.ImmutableList;
+import com.atlassian.db.replica.spi.*;
+import com.github.dockerjava.api.*;
+import com.github.dockerjava.api.command.*;
+import com.github.dockerjava.api.model.*;
+import com.github.dockerjava.core.*;
+import com.github.dockerjava.httpclient5.*;
+import com.github.dockerjava.transport.*;
+import com.google.common.collect.*;
 
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.time.Duration;
-import java.util.Properties;
+import java.sql.*;
+import java.time.*;
+import java.util.*;
 
 public class PostgresConnectionProvider implements ConnectionProvider, AutoCloseable {
     final DefaultDockerClientConfig config = DefaultDockerClientConfig
@@ -67,8 +63,17 @@ public class PostgresConnectionProvider implements ConnectionProvider, AutoClose
         }
         isInitialized = true;
         cleanUp();
+        pullImage();
         startMaster();
         startReplica();
+    }
+
+    private void pullImage() {
+        try {
+            dockerClient.pullImageCmd("bitnami/postgresql:9.6").start().awaitCompletion();
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
@@ -97,7 +102,7 @@ public class PostgresConnectionProvider implements ConnectionProvider, AutoClose
         for (int i = 0; i < 10; i++) {
             try {
                 getReplicaConnection().close();
-            }catch (Exception e){
+            } catch (Exception e) {
                 try {
                     Thread.sleep(Duration.ofSeconds(1).toMillis());
                 } catch (Exception ex) {
@@ -126,7 +131,7 @@ public class PostgresConnectionProvider implements ConnectionProvider, AutoClose
         for (int i = 0; i < 10; i++) {
             try {
                 getMainConnection().close();
-            }catch (Exception e){
+            } catch (Exception e) {
                 try {
                     Thread.sleep(Duration.ofSeconds(1).toMillis());
                 } catch (Exception ex) {
