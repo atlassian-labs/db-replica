@@ -3,7 +3,7 @@ package com.atlassian.db.replica.api;
 import com.atlassian.db.replica.api.mocks.ConnectionProviderMock;
 import com.atlassian.db.replica.api.mocks.PermanentConsistency;
 import com.atlassian.db.replica.api.mocks.PermanentInconsistency;
-import com.atlassian.db.replica.spi.DualConnectionOperation;
+import com.atlassian.db.replica.spi.DualCall;
 import org.junit.Test;
 import org.mockito.Mockito;
 
@@ -399,35 +399,35 @@ public class TestDualConnection {
 
     @Test
     public void shouldExecuteOnReplica() throws SQLException {
-        final DualConnectionOperation dualConnectionOperation = mock(DualConnectionOperation.class);
+        final DualCall dualCall = mock(DualCall.class);
         final DualConnection connection = DualConnection
             .builder(connectionProvider, new PermanentConsistency())
-            .dualConnectionOperation(dualConnectionOperation)
+            .dualCall(dualCall)
             .build();
 
         connection.prepareStatement(SIMPLE_QUERY).executeQuery();
 
         assertThat(connectionProvider.getProvidedConnectionTypes())
             .containsOnly(REPLICA);
-        verify(dualConnectionOperation).executeOnReplica(any());
-        verify(dualConnectionOperation, never()).executeOnMain(any());
+        verify(dualCall).callReplica(any());
+        verify(dualCall, never()).callMain(any());
     }
 
     @Test
     public void shouldExecuteOnMain() throws SQLException {
-        final DualConnectionOperation dualConnectionOperation = mock(DualConnectionOperation.class);
-        when(dualConnectionOperation.executeOnMain(any())).thenReturn(1);
+        final DualCall dualCall = mock(DualCall.class);
+        when(dualCall.callMain(any())).thenReturn(1);
         final DualConnection connection = DualConnection
             .builder(connectionProvider, new PermanentConsistency())
-            .dualConnectionOperation(dualConnectionOperation)
+            .dualCall(dualCall)
             .build();
 
         connection.prepareStatement(SIMPLE_QUERY).executeUpdate();
 
         assertThat(connectionProvider.getProvidedConnectionTypes())
             .containsOnly(MAIN);
-        verify(dualConnectionOperation, never()).executeOnReplica(any());
-        verify(dualConnectionOperation).executeOnMain(any());
+        verify(dualCall, never()).callReplica(any());
+        verify(dualCall).callMain(any());
     }
 
 

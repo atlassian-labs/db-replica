@@ -7,6 +7,13 @@ This project **DOES NOT** adhere to [Semantic Versioning](http://semver.org/spec
 ## [Unreleased]
 [Unreleased]: https://bitbucket.org/atlassian/db-replica/branches/compare/master%0Drelease-0.1.0
 
+### Changed
+- Renamed:
+    - `api.SqlConnection` to `api.SqlCall`
+    - `spi.DualConnectionOperation` to `spi.DualCall`
+    - `impl.ForwardConnectionOperation` to `impl.ForwardCall`
+    - `impl.PrintfDualConnectionOperation` to `impl.TimeRatioPrinter`
+
 ## [0.1.0] - 2020-11-18
 [0.1.0]: https://bitbucket.org/atlassian/db-replica/branches/compare/release-0.1.0%0Dinitial-commit
 

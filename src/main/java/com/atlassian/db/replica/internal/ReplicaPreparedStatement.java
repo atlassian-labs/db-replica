@@ -1,6 +1,6 @@
 package com.atlassian.db.replica.internal;
 
-import com.atlassian.db.replica.spi.DualConnectionOperation;
+import com.atlassian.db.replica.spi.DualCall;
 import com.atlassian.db.replica.spi.ReplicaConsistency;
 
 import java.io.InputStream;
@@ -37,7 +37,7 @@ public class ReplicaPreparedStatement extends ReplicaStatement implements Prepar
     protected ReplicaPreparedStatement(
         ReplicaConnectionProvider connectionProvider,
         ReplicaConsistency consistency,
-        DualConnectionOperation dualConnectionOperation,
+        DualCall dualCall,
         String sql,
         Integer resultSetType,
         Integer resultSetConcurrency,
@@ -46,7 +46,7 @@ public class ReplicaPreparedStatement extends ReplicaStatement implements Prepar
         String[] columnNames,
         int[] columnIndexes
     ) {
-        super(consistency, connectionProvider, dualConnectionOperation, resultSetType, resultSetConcurrency, resultSetHoldability);
+        super(consistency, connectionProvider, dualCall, resultSetType, resultSetConcurrency, resultSetHoldability);
         this.sql = sql;
         this.resultSetType = resultSetType;
         this.resultSetConcurrency = resultSetConcurrency;
@@ -59,13 +59,13 @@ public class ReplicaPreparedStatement extends ReplicaStatement implements Prepar
     protected ReplicaPreparedStatement(
         ReplicaConnectionProvider connectionProvider,
         ReplicaConsistency consistency,
-        DualConnectionOperation dualConnectionOperation,
+        DualCall dualCall,
         String sql,
         Integer resultSetType,
         Integer resultSetConcurrency,
         Integer resultSetHoldability
     ) {
-        super(consistency, connectionProvider, dualConnectionOperation, resultSetType, resultSetConcurrency, resultSetHoldability);
+        super(consistency, connectionProvider, dualCall, resultSetType, resultSetConcurrency, resultSetHoldability);
         this.sql = sql;
         this.resultSetType = resultSetType;
         this.resultSetConcurrency = resultSetConcurrency;
@@ -713,7 +713,7 @@ public class ReplicaPreparedStatement extends ReplicaStatement implements Prepar
     public static class Builder {
         private final ReplicaConnectionProvider connectionProvider;
         private final ReplicaConsistency consistency;
-        private final DualConnectionOperation dualConnectionOperation;
+        private final DualCall dualCall;
         private final String sql;
         private Integer resultSetType;
         private Integer resultSetConcurrency;
@@ -725,12 +725,12 @@ public class ReplicaPreparedStatement extends ReplicaStatement implements Prepar
         public Builder(
             ReplicaConnectionProvider connectionProvider,
             ReplicaConsistency consistency,
-            DualConnectionOperation dualConnectionOperation,
+            DualCall dualCall,
             String sql
         ) {
             this.connectionProvider = connectionProvider;
             this.consistency = consistency;
-            this.dualConnectionOperation = dualConnectionOperation;
+            this.dualCall = dualCall;
             this.sql = sql;
         }
 
@@ -768,7 +768,7 @@ public class ReplicaPreparedStatement extends ReplicaStatement implements Prepar
             return new ReplicaPreparedStatement(
                 connectionProvider,
                 consistency,
-                dualConnectionOperation,
+                dualCall,
                 sql,
                 resultSetType,
                 resultSetConcurrency,

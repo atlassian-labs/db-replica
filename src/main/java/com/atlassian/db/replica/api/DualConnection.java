@@ -1,13 +1,13 @@
 package com.atlassian.db.replica.api;
 
-import com.atlassian.db.replica.impl.ForwardConnectionOperation;
+import com.atlassian.db.replica.impl.ForwardCall;
 import com.atlassian.db.replica.internal.ReadReplicaUnsupportedOperationException;
 import com.atlassian.db.replica.internal.ReplicaCallableStatement;
 import com.atlassian.db.replica.internal.ReplicaConnectionProvider;
 import com.atlassian.db.replica.internal.ReplicaPreparedStatement;
 import com.atlassian.db.replica.internal.ReplicaStatement;
 import com.atlassian.db.replica.spi.ConnectionProvider;
-import com.atlassian.db.replica.spi.DualConnectionOperation;
+import com.atlassian.db.replica.spi.DualCall;
 import com.atlassian.db.replica.spi.ReplicaConsistency;
 
 import java.sql.Array;
@@ -36,31 +36,31 @@ import java.util.concurrent.Executor;
 public class DualConnection implements Connection {
     private final ReplicaConnectionProvider connectionProvider;
     private final ReplicaConsistency consistency;
-    private final DualConnectionOperation dualConnectionOperation;
+    private final DualCall dualCall;
 
     private DualConnection(
         ConnectionProvider connectionProvider,
         ReplicaConsistency consistency,
-        DualConnectionOperation dualConnectionOperation
+        DualCall dualCall
     ) {
         this.connectionProvider = new ReplicaConnectionProvider(connectionProvider, consistency);
         this.consistency = consistency;
-        this.dualConnectionOperation = dualConnectionOperation;
+        this.dualCall = dualCall;
     }
 
     @Override
     public Statement createStatement() throws SQLException {
-        return ReplicaStatement.builder(connectionProvider, consistency, dualConnectionOperation).build();
+        return ReplicaStatement.builder(connectionProvider, consistency, dualCall).build();
     }
 
     @Override
     public PreparedStatement prepareStatement(String sql) throws SQLException {
-        return new ReplicaPreparedStatement.Builder(connectionProvider, consistency, dualConnectionOperation, sql).build();
+        return new ReplicaPreparedStatement.Builder(connectionProvider, consistency, dualCall, sql).build();
     }
 
     @Override
     public CallableStatement prepareCall(String sql) throws SQLException {
-        return new ReplicaCallableStatement.Builder(connectionProvider, consistency, dualConnectionOperation, sql).build();
+        return new ReplicaCallableStatement.Builder(connectionProvider, consistency, dualCall, sql).build();
     }
 
     @Override
@@ -146,7 +146,7 @@ public class DualConnection implements Connection {
     @Override
     public Statement createStatement(int resultSetType, int resultSetConcurrency) throws SQLException {
         return ReplicaStatement
-            .builder(connectionProvider, consistency, dualConnectionOperation)
+            .builder(connectionProvider, consistency, dualCall)
             .resultSetType(resultSetType)
             .resultSetConcurrency(resultSetConcurrency)
             .build();
@@ -161,7 +161,7 @@ public class DualConnection implements Connection {
         return new ReplicaPreparedStatement.Builder(
             connectionProvider,
             consistency,
-            dualConnectionOperation,
+            dualCall,
             sql
         ).resultSetType(resultSetType)
             .resultSetConcurrency(resultSetConcurrency)
@@ -171,7 +171,7 @@ public class DualConnection implements Connection {
     @Override
     public CallableStatement prepareCall(String sql, int resultSetType, int resultSetConcurrency) throws SQLException {
         return new ReplicaCallableStatement
-            .Builder(connectionProvider, consistency, dualConnectionOperation, sql)
+            .Builder(connectionProvider, consistency, dualCall, sql)
             .resultSetType(resultSetType)
             .resultSetConcurrency(resultSetConcurrency)
             .build();
@@ -223,7 +223,7 @@ public class DualConnection implements Connection {
         int resultSetConcurrency,
         int resultSetHoldability
     ) throws SQLException {
-        return ReplicaStatement.builder(connectionProvider, consistency, dualConnectionOperation)
+        return ReplicaStatement.builder(connectionProvider, consistency, dualCall)
             .resultSetType(resultSetType)
             .resultSetConcurrency(resultSetConcurrency)
             .resultSetHoldability(resultSetHoldability)
@@ -240,7 +240,7 @@ public class DualConnection implements Connection {
         return new ReplicaPreparedStatement.Builder(
             connectionProvider,
             consistency,
-            dualConnectionOperation,
+            dualCall,
             sql
         ).resultSetType(resultSetType)
             .resultSetConcurrency(resultSetConcurrency)
@@ -256,7 +256,7 @@ public class DualConnection implements Connection {
         int resultSetHoldability
     ) throws SQLException {
         return new ReplicaCallableStatement
-            .Builder(connectionProvider, consistency, dualConnectionOperation, sql)
+            .Builder(connectionProvider, consistency, dualCall, sql)
             .resultSetType(resultSetType)
             .resultSetConcurrency(resultSetConcurrency)
             .resultSetHoldability(resultSetHoldability)
@@ -268,7 +268,7 @@ public class DualConnection implements Connection {
         return new ReplicaPreparedStatement.Builder(
             connectionProvider,
             consistency,
-            dualConnectionOperation,
+            dualCall,
             sql
         ).autoGeneratedKeys(autoGeneratedKeys)
             .build();
@@ -279,7 +279,7 @@ public class DualConnection implements Connection {
         return new ReplicaPreparedStatement.Builder(
             connectionProvider,
             consistency,
-            dualConnectionOperation,
+            dualCall,
             sql
         ).columnIndexes(columnIndexes)
             .build();
@@ -290,7 +290,7 @@ public class DualConnection implements Connection {
         return new ReplicaPreparedStatement.Builder(
             connectionProvider,
             consistency,
-            dualConnectionOperation,
+            dualCall,
             sql
         ).columnNames(columnNames)
             .build();
@@ -396,7 +396,7 @@ public class DualConnection implements Connection {
     public static class Builder {
         private final ConnectionProvider connectionProvider;
         private final ReplicaConsistency consistency;
-        private DualConnectionOperation dualConnectionOperation = new ForwardConnectionOperation();
+        private DualCall dualCall = new ForwardCall();
 
         private Builder(
             ConnectionProvider connectionProvider,
@@ -406,8 +406,8 @@ public class DualConnection implements Connection {
             this.consistency = consistency;
         }
 
-        public DualConnection.Builder dualConnectionOperation(DualConnectionOperation dualConnectionOperation) {
-            this.dualConnectionOperation = dualConnectionOperation;
+        public DualConnection.Builder dualCall(DualCall dualCall) {
+            this.dualCall = dualCall;
             return this;
         }
 
@@ -415,7 +415,7 @@ public class DualConnection implements Connection {
             return new DualConnection(
                 connectionProvider,
                 consistency,
-                dualConnectionOperation
+                dualCall
             );
         }
     }

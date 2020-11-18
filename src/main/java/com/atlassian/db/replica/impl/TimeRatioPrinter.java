@@ -1,7 +1,7 @@
 package com.atlassian.db.replica.impl;
 
-import com.atlassian.db.replica.api.SqlOperation;
-import com.atlassian.db.replica.spi.DualConnectionOperation;
+import com.atlassian.db.replica.api.SqlCall;
+import com.atlassian.db.replica.spi.DualCall;
 
 import java.sql.SQLException;
 import java.time.Duration;
@@ -9,24 +9,24 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 
-public class PrintfDualConnectionOperation implements DualConnectionOperation {
+public class TimeRatioPrinter implements DualCall {
     private final static AtomicInteger counter = new AtomicInteger();
     private final static AtomicLong replicaDuration = new AtomicLong();
     private final static AtomicLong writeDuration = new AtomicLong();
 
     @Override
-    public <T> T executeOnReplica(final SqlOperation<T> operation) throws SQLException {
-        return execute(replicaDuration, operation);
+    public <T> T callReplica(final SqlCall<T> call) throws SQLException {
+        return call(replicaDuration, call);
     }
 
     @Override
-    public <T> T executeOnMain(final SqlOperation<T> operation) throws SQLException {
-        return execute(writeDuration, operation);
+    public <T> T callMain(final SqlCall<T> call) throws SQLException {
+        return call(writeDuration, call);
     }
 
-    private <T> T execute(AtomicLong duration, final SqlOperation<T> operation) throws SQLException {
+    private <T> T call(AtomicLong duration, final SqlCall<T> call) throws SQLException {
         final long start = System.currentTimeMillis();
-        final T returnValue = operation.execute();
+        final T returnValue = call.call();
         duration.addAndGet(System.currentTimeMillis() - start);
         if (counter.incrementAndGet() % 100 == 0) {
             final long main = writeDuration.get();

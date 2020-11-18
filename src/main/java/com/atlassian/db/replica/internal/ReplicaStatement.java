@@ -1,7 +1,7 @@
 package com.atlassian.db.replica.internal;
 
-import com.atlassian.db.replica.api.SqlOperation;
-import com.atlassian.db.replica.spi.DualConnectionOperation;
+import com.atlassian.db.replica.api.SqlCall;
+import com.atlassian.db.replica.spi.DualCall;
 import com.atlassian.db.replica.spi.ReplicaConsistency;
 import io.atlassian.util.concurrent.LazyReference;
 
@@ -24,7 +24,7 @@ public class ReplicaStatement implements Statement {
     private Statement currentStatement;
     private final List<Operation> operations = new ArrayList<>();
     private final ReplicaConsistency consistency;
-    private final DualConnectionOperation dualConnectionOperation;
+    private final DualCall dualCall;
     private final LazyReference<Statement> readStatement = new LazyReference<Statement>() {
         @Override
         protected Statement create() throws Exception {
@@ -42,14 +42,14 @@ public class ReplicaStatement implements Statement {
     public ReplicaStatement(
         ReplicaConsistency consistency,
         ReplicaConnectionProvider connectionProvider,
-        DualConnectionOperation dualConnectionOperation,
+        DualCall dualCall,
         Integer resultSetType,
         Integer resultSetConcurrency,
         Integer resultSetHoldability
     ) {
         this.consistency = consistency;
         this.connectionProvider = connectionProvider;
-        this.dualConnectionOperation = dualConnectionOperation;
+        this.dualCall = dualCall;
         this.resultSetType = resultSetType;
         this.resultSetConcurrency = resultSetConcurrency;
         this.resultSetHoldability = resultSetHoldability;
@@ -391,11 +391,11 @@ public class ReplicaStatement implements Statement {
         return returnValue;
     }
 
-    <T> T execute(final SqlOperation<T> operation) throws SQLException {
+    <T> T execute(final SqlCall<T> call) throws SQLException {
         if (isReadOnly()) {
-            return dualConnectionOperation.executeOnReplica(operation);
+            return dualCall.callReplica(call);
         } else {
-            final T result = dualConnectionOperation.executeOnMain(operation);
+            final T result = dualCall.callMain(call);
             recordWriteAfterQueryExecution();
             return result;
         }
@@ -431,9 +431,9 @@ public class ReplicaStatement implements Statement {
     public static Builder builder(
         ReplicaConnectionProvider connectionProvider,
         ReplicaConsistency consistency,
-        DualConnectionOperation dualConnectionOperation
+        DualCall dualCall
     ) {
-        return new Builder(connectionProvider, consistency, dualConnectionOperation);
+        return new Builder(connectionProvider, consistency, dualCall);
     }
 
     void recordWriteAfterQueryExecution() throws SQLException {
@@ -501,7 +501,7 @@ public class ReplicaStatement implements Statement {
     public static class Builder {
         private final ReplicaConnectionProvider connectionProvider;
         private final ReplicaConsistency consistency;
-        private final DualConnectionOperation dualConnectionOperation;
+        private final DualCall dualCall;
         private Integer resultSetType;
         private Integer resultSetConcurrency;
         private Integer resultSetHoldability;
@@ -509,11 +509,11 @@ public class ReplicaStatement implements Statement {
         private Builder(
             ReplicaConnectionProvider connectionProvider,
             ReplicaConsistency consistency,
-            DualConnectionOperation dualConnectionOperation
+            DualCall dualCall
         ) {
             this.connectionProvider = connectionProvider;
             this.consistency = consistency;
-            this.dualConnectionOperation = dualConnectionOperation;
+            this.dualCall = dualCall;
         }
 
         public Builder resultSetType(int resultSetType) {
@@ -535,7 +535,7 @@ public class ReplicaStatement implements Statement {
             return new ReplicaStatement(
                 consistency,
                 connectionProvider,
-                dualConnectionOperation,
+                dualCall,
                 resultSetType,
                 resultSetConcurrency,
                 resultSetHoldability

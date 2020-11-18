@@ -1,6 +1,6 @@
 package com.atlassian.db.replica.internal;
 
-import com.atlassian.db.replica.spi.DualConnectionOperation;
+import com.atlassian.db.replica.spi.DualCall;
 import com.atlassian.db.replica.spi.ReplicaConsistency;
 
 import java.io.InputStream;
@@ -32,7 +32,7 @@ public class ReplicaCallableStatement extends ReplicaPreparedStatement implement
     public ReplicaCallableStatement(
         ReplicaConnectionProvider connectionProvider,
         ReplicaConsistency consistency,
-        DualConnectionOperation dualConnectionOperation,
+        DualCall dualCall,
         String sql,
         Integer resultSetType,
         Integer resultSetConcurrency,
@@ -41,7 +41,7 @@ public class ReplicaCallableStatement extends ReplicaPreparedStatement implement
         super(
             connectionProvider,
             consistency,
-            dualConnectionOperation,
+            dualCall,
             sql,
             resultSetType,
             resultSetConcurrency,
@@ -631,7 +631,7 @@ public class ReplicaCallableStatement extends ReplicaPreparedStatement implement
     public static class Builder {
         private final ReplicaConnectionProvider connectionProvider;
         private final ReplicaConsistency consistency;
-        private final DualConnectionOperation dualConnectionOperation;
+        private final DualCall dualCall;
         private final String sql;
         private Integer resultSetType;
         private Integer resultSetConcurrency;
@@ -640,12 +640,12 @@ public class ReplicaCallableStatement extends ReplicaPreparedStatement implement
         public Builder(
             ReplicaConnectionProvider connectionProvider,
             ReplicaConsistency consistency,
-            DualConnectionOperation dualConnectionOperation,
+            DualCall dualCall,
             String sql
         ) {
             this.connectionProvider = connectionProvider;
             this.consistency = consistency;
-            this.dualConnectionOperation = dualConnectionOperation;
+            this.dualCall = dualCall;
             this.sql = sql;
         }
 
@@ -668,7 +668,7 @@ public class ReplicaCallableStatement extends ReplicaPreparedStatement implement
             return new ReplicaCallableStatement(
                 connectionProvider,
                 consistency,
-                dualConnectionOperation,
+                dualCall,
                 sql,
                 resultSetType,
                 resultSetConcurrency,
