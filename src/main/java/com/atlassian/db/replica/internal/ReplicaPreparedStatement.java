@@ -85,7 +85,6 @@ public class ReplicaPreparedStatement extends ReplicaStatement implements Prepar
     public int executeUpdate() throws SQLException {
         final PreparedStatement statement = getWriteStatement();
         final Integer returnValue = execute(statement::executeUpdate);
-        logMainLogSequenceNumber();
         return returnValue;
     }
 
@@ -93,7 +92,6 @@ public class ReplicaPreparedStatement extends ReplicaStatement implements Prepar
     public long executeLargeUpdate() throws SQLException {
         final PreparedStatement statement = getWriteStatement();
         final Long returnValue = execute(statement::executeLargeUpdate);
-        logMainLogSequenceNumber();
         return returnValue;
     }
 
@@ -393,7 +391,6 @@ public class ReplicaPreparedStatement extends ReplicaStatement implements Prepar
     public boolean execute() throws SQLException {
         final PreparedStatement statement = getWriteStatement();
         final Boolean returnValue = execute(statement::execute);
-        logMainLogSequenceNumber();
         return returnValue;
     }
 

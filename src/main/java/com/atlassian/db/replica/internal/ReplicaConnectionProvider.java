@@ -64,11 +64,15 @@ public class ReplicaConnectionProvider implements AutoCloseable {
     }
 
     public void setAutoCommit(Boolean autoCommit) {
-        isAutoCommit = autoCommit;
+        final Boolean autoCommitBefore = getAutoCommit();
+        this.isAutoCommit = autoCommit;
         initializedConnections.clear();
+        if (!autoCommitBefore.equals(getAutoCommit())) {
+            recordCommit(autoCommitBefore);
+        }
     }
 
-    public Boolean getAutoCommit() {
+    public boolean getAutoCommit() {
         return isAutoCommit == null || isAutoCommit;
     }
 
@@ -86,7 +90,6 @@ public class ReplicaConnectionProvider implements AutoCloseable {
 
     /**
      * Provides a connection that will be used for reading operation. Will use read-replica if possible.
-     *
      */
     public Connection getReadConnection() throws SQLException {
         if (transactionIsolation != null && transactionIsolation > Connection.TRANSACTION_READ_COMMITTED) {
@@ -110,7 +113,6 @@ public class ReplicaConnectionProvider implements AutoCloseable {
     /**
      * Provides a connection that will be used for writing operation. It will always return a connection to the
      * main database.
-     *
      */
     public Connection getWriteConnection() throws SQLException {
         final Connection connection = writeConnection.get();
@@ -140,12 +142,19 @@ public class ReplicaConnectionProvider implements AutoCloseable {
     public void commit() throws SQLException {
         if (writeConnection.isInitialized()) {
             writeConnection.get().commit();
+            recordCommit(isAutoCommit);
         }
         if (readConnection.isInitialized()) {
             if (writeConnection.isInitialized() && readConnection.get().equals(writeConnection.get())) {
                 return;
             }
             readConnection.get().commit();
+        }
+    }
+
+    private void recordCommit(Boolean autoCommit) {
+        if (writeConnection.isInitialized() && autoCommit != null && !autoCommit) {
+            consistency.write(writeConnection.get());
         }
     }
 
@@ -177,10 +186,10 @@ public class ReplicaConnectionProvider implements AutoCloseable {
         }
     }
 
-    private void closeConnection(ResettableLazyReference<Connection> connectionReference) throws SQLException{
+    private void closeConnection(ResettableLazyReference<Connection> connectionReference) throws SQLException {
         try {
             connectionReference.get().close();
-        }finally {
+        } finally {
             connectionReference.reset();
         }
     }
