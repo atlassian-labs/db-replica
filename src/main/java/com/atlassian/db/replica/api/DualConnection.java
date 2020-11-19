@@ -189,12 +189,12 @@ public class DualConnection implements Connection {
 
     @Override
     public void setHoldability(int holdability) {
-        throw new ReadReplicaUnsupportedOperationException();
+        connectionProvider.setHoldability(holdability);
     }
 
     @Override
-    public int getHoldability() {
-        throw new ReadReplicaUnsupportedOperationException();
+    public int getHoldability() throws SQLException {
+        return connectionProvider.getHoldability();
     }
 
     @Override

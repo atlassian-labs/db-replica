@@ -23,6 +23,7 @@ public class ReplicaConnectionProvider implements AutoCloseable {
     private String catalog;
     private SQLWarning warning;
     private Map<String, Class<?>> typeMap;
+    private Integer holdability;
     private Boolean isClosed = false;
     private final ResettableLazyReference<Connection> readConnection = new ResettableLazyReference<Connection>() {
         @Override
@@ -66,6 +67,9 @@ public class ReplicaConnectionProvider implements AutoCloseable {
             }
             if (typeMap != null) {
                 connection.setTypeMap(typeMap);
+            }
+            if (holdability != null) {
+                connection.setHoldability(holdability);
             }
             initializedConnections.add(connection);
         }
@@ -123,6 +127,14 @@ public class ReplicaConnectionProvider implements AutoCloseable {
 
     public void setTypeMap(Map<String, Class<?>> typeMap) {
         this.typeMap = typeMap;
+    }
+
+    public Integer getHoldability() throws SQLException {
+        return holdability == null ? getWriteConnection().getHoldability() : holdability;
+    }
+
+    public void setHoldability(Integer holdability) {
+        this.holdability = holdability;
     }
 
     public SQLWarning getWarning() throws SQLException {

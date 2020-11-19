@@ -8,6 +8,7 @@ import org.junit.Test;
 import org.mockito.Mockito;
 
 import java.sql.Connection;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.HashMap;
@@ -590,5 +591,32 @@ public class TestDualConnection {
         assertThat(connectionProvider.getProvidedConnectionTypes())
             .containsOnly(REPLICA);
         verify(connectionProvider.singleProvidedConnection()).setTypeMap(typeMap);
+    }
+
+    @Test
+    public void shouldChangeHoldabilityMain() throws SQLException {
+        final DualConnection connection = DualConnection.builder(connectionProvider, new PermanentConsistency()).build();
+
+        connection.setHoldability(ResultSet.HOLD_CURSORS_OVER_COMMIT);
+        connection.prepareStatement(SIMPLE_QUERY).executeQuery();
+        connection.prepareStatement(SIMPLE_QUERY).executeUpdate();
+
+        assertThat(connection.getHoldability()).isEqualTo(ResultSet.HOLD_CURSORS_OVER_COMMIT);
+        connectionProvider.getProvidedConnections().forEach(conn -> {
+            try {
+                Mockito.verify(conn).setHoldability(ResultSet.HOLD_CURSORS_OVER_COMMIT);
+            } catch (SQLException e) {
+                throw new RuntimeException(e);
+            }
+        });
+    }
+
+    @Test
+    public void shouldDelegateToMainIfHoldabilityNotKnown() throws SQLException {
+        final DualConnection connection = DualConnection.builder(connectionProvider, new PermanentConsistency()).build();
+
+        connection.getHoldability();
+
+        verify(connectionProvider.singleProvidedConnection()).getHoldability();
     }
 }
