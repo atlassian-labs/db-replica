@@ -134,13 +134,13 @@ public class DualConnection implements Connection {
     }
 
     @Override
-    public SQLWarning getWarnings() {
-        throw new ReadReplicaUnsupportedOperationException();
+    public SQLWarning getWarnings() throws SQLException {
+        return connectionProvider.getWarning();
     }
 
     @Override
-    public void clearWarnings() {
-        throw new ReadReplicaUnsupportedOperationException();
+    public void clearWarnings() throws SQLException {
+        connectionProvider.clearWarnings();
     }
 
     @Override

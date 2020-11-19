@@ -9,6 +9,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.SQLWarning;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
@@ -17,19 +18,32 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doCallRealMethod;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 public class ConnectionProviderMock implements ConnectionProvider {
     private final boolean isAvailable;
+    private SQLWarning mainWarning;
+    private SQLWarning replicaWarning;
 
     public ConnectionProviderMock() {
         this.isAvailable = true;
+        this.mainWarning = null;
+        this.replicaWarning = null;
     }
 
     public ConnectionProviderMock(boolean isAvailable) {
         this.isAvailable = isAvailable;
+        this.mainWarning = null;
+        this.replicaWarning = null;
+    }
+
+    public ConnectionProviderMock(boolean isAvailable, SQLWarning mainWarning, SQLWarning replicaWarning) {
+        this.isAvailable = isAvailable;
+        this.mainWarning = mainWarning;
+        this.replicaWarning = replicaWarning;
     }
 
     public enum ConnectionType {
@@ -68,13 +82,31 @@ public class ConnectionProviderMock implements ConnectionProvider {
     @Override
     public Connection getMainConnection() {
         providedConnectionTypes.add(ConnectionType.MAIN);
-        return getConnection();
+        final Connection connection = getConnection();
+        setWarning(connection, mainWarning);
+        return connection;
     }
 
     @Override
     public Connection getReplicaConnection() {
         providedConnectionTypes.add(ConnectionType.REPLICA);
-        return getConnection();
+        final Connection connection = getConnection();
+        setWarning(connection, replicaWarning);
+        return connection;
+    }
+
+    private void setWarning(Connection connection, SQLWarning warning) {
+        try {
+            final Warning warn = new Warning(warning);
+            //noinspection ThrowableNotThrown
+            doAnswer(invocation -> warn.getWarning()).when(connection).getWarnings();
+            doAnswer(invocation -> {
+                warn.clear();
+                return null;
+            }).when(connection).clearWarnings();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private Connection getConnection() {
@@ -149,6 +181,22 @@ public class ConnectionProviderMock implements ConnectionProvider {
 
     private void initializeConnection(Connection connection, Statement statement) throws SQLException {
         when(statement.getConnection()).thenReturn(connection);
+    }
+
+    private static class Warning {
+        private SQLWarning warning;
+
+        public Warning(SQLWarning warning) {
+            this.warning = warning;
+        }
+
+        public SQLWarning getWarning() {
+            return warning;
+        }
+
+        public void clear() {
+            this.warning = null;
+        }
     }
 
     private static abstract class AutoCommitAwareConnection implements Connection {

@@ -6,6 +6,7 @@ import io.atlassian.util.concurrent.ResettableLazyReference;
 
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.sql.SQLWarning;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -17,6 +18,7 @@ public class ReplicaConnectionProvider implements AutoCloseable {
     private Integer transactionIsolation;
     private Boolean isReadOnly;
     private String catalog;
+    private SQLWarning warning;
     private Boolean isClosed = false;
     private final ResettableLazyReference<Connection> readConnection = new ResettableLazyReference<Connection>() {
         @Override
@@ -106,6 +108,30 @@ public class ReplicaConnectionProvider implements AutoCloseable {
 
     public void setCatalog(String catalog) {
         this.catalog = catalog;
+    }
+
+    public SQLWarning getWarning() throws SQLException {
+        if (this.writeConnection.isInitialized()) {
+            final Connection writeConnection = this.writeConnection.get();
+            saveWarning(writeConnection.getWarnings());
+
+        }
+        if (this.readConnection.isInitialized()) {
+            final Connection readConnection = this.readConnection.get();
+            saveWarning(readConnection.getWarnings());
+        }
+        return warning;
+    }
+
+    public void clearWarnings() throws SQLException {
+        if (writeConnection.isInitialized()) {
+            writeConnection.get().clearWarnings();
+
+        }
+        if (readConnection.isInitialized()) {
+            readConnection.get().clearWarnings();
+        }
+        warning = null;
     }
 
     /**
@@ -208,9 +234,36 @@ public class ReplicaConnectionProvider implements AutoCloseable {
 
     private void closeConnection(ResettableLazyReference<Connection> connectionReference) throws SQLException {
         try {
-            connectionReference.get().close();
+            final Connection connection = connectionReference.get();
+            saveWarning(connection.getWarnings());
+            connection.close();
         } finally {
             connectionReference.reset();
         }
+    }
+
+    private void saveWarning(SQLWarning warning) {
+        if (warning == null || isLastWarning(warning)) {
+            return;
+        }
+        if (this.warning == null) {
+            this.warning = warning;
+        } else {
+            this.warning.setNextWarning(warning);
+        }
+    }
+
+    private boolean isLastWarning(SQLWarning warning) {
+        if (this.warning == null) {
+            return false;
+        }
+        SQLWarning lastWarning = this.warning;
+        for (int i = 0; i < 100; i++) {
+            if (lastWarning.getNextWarning() == null) {
+                return lastWarning.equals(warning);
+            } else
+                lastWarning = lastWarning.getNextWarning();
+        }
+        return true;
     }
 }
