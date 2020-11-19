@@ -342,8 +342,8 @@ public class DualConnection implements Connection {
     }
 
     @Override
-    public Array createArrayOf(String typeName, Object[] elements) {
-        throw new ReadReplicaUnsupportedOperationException();
+    public Array createArrayOf(String typeName, Object[] elements) throws SQLException {
+        return connectionProvider.getWriteConnection().createArrayOf(typeName, elements);
     }
 
     @Override

@@ -650,4 +650,15 @@ public class TestDualConnection {
 
         verify(connectionProvider.getProvidedConnections().get(1)).isValid(10);
     }
+
+    @Test
+    public void shouldCreateArrayOfOnMainConnection() throws SQLException {
+        final DualConnection connection = DualConnection.builder(connectionProvider, new PermanentConsistency()).build();
+
+        connection.createArrayOf("type", new Object[]{});
+
+        assertThat(connectionProvider.getProvidedConnectionTypes())
+            .containsOnly(MAIN);
+        verify(connectionProvider.singleProvidedConnection()).createArrayOf("type", new Object[]{});
+    }
 }
