@@ -170,7 +170,7 @@ public class TestDualConnection {
     }
 
     @Test
-    public void shouldGetAutoCommitFalse() throws SQLException {
+    public void shouldGetAutoCommitFalse() {
         final DualConnection connection = DualConnection.builder(connectionProvider, new PermanentConsistency()).build();
 
         connection.setAutoCommit(false);
@@ -181,7 +181,7 @@ public class TestDualConnection {
     }
 
     @Test
-    public void shouldGetAutoCommitTrue() throws SQLException {
+    public void shouldGetAutoCommitTrue() {
         final DualConnection connection = DualConnection.builder(connectionProvider, new PermanentConsistency()).build();
 
         connection.setAutoCommit(true);
@@ -192,7 +192,7 @@ public class TestDualConnection {
     }
 
     @Test
-    public void shouldGetAutoCommitDefault() throws SQLException {
+    public void shouldGetAutoCommitDefault() {
         final DualConnection connection = DualConnection.builder(connectionProvider, new PermanentConsistency()).build();
 
         assertThat(connection.getAutoCommit()).isTrue();
@@ -283,7 +283,7 @@ public class TestDualConnection {
     }
 
     @Test
-    public void shouldInitiallyOpen() throws SQLException {
+    public void shouldInitiallyOpen() {
         final DualConnection connection = DualConnection.builder(connectionProvider, new PermanentConsistency()).build();
 
         assertThat(connection.isClosed()).isFalse();
@@ -496,7 +496,7 @@ public class TestDualConnection {
     }
 
     @Test
-    public void shouldGetNullCatalog() throws SQLException {
+    public void shouldGetNullCatalog() {
         final DualConnection connection = DualConnection.builder(connectionProvider, new PermanentConsistency()).build();
 
         assertThat(connection.getCatalog()).isNull();
