@@ -23,10 +23,11 @@ import static org.mockito.Mockito.doCallRealMethod;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+@SuppressWarnings("MagicConstant")
 public class ConnectionProviderMock implements ConnectionProvider {
     private final boolean isAvailable;
-    private SQLWarning mainWarning;
-    private SQLWarning replicaWarning;
+    private final SQLWarning mainWarning;
+    private final SQLWarning replicaWarning;
 
     public ConnectionProviderMock() {
         this.isAvailable = true;
@@ -203,12 +204,12 @@ public class ConnectionProviderMock implements ConnectionProvider {
         private Boolean isAutoCommitEnabled;
 
         @Override
-        public void setAutoCommit(boolean autoCommit) throws SQLException {
+        public void setAutoCommit(boolean autoCommit) {
             this.isAutoCommitEnabled = autoCommit;
         }
 
         @Override
-        public boolean getAutoCommit() throws SQLException {
+        public boolean getAutoCommit() {
             return isAutoCommitEnabled == null || isAutoCommitEnabled;
         }
     }
