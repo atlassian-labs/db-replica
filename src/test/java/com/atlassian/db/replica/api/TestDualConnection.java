@@ -661,4 +661,13 @@ public class TestDualConnection {
             .containsOnly(MAIN);
         verify(connectionProvider.singleProvidedConnection()).createArrayOf("type", new Object[]{});
     }
+
+    @Test
+    public void shouldGetSchema() throws SQLException {
+        final DualConnection connection = DualConnection.builder(connectionProvider, new PermanentConsistency()).build();
+
+        connection.getSchema();
+
+        verify(connectionProvider.singleProvidedConnection()).getSchema();
+    }
 }

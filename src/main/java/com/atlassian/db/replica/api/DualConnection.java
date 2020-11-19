@@ -357,8 +357,8 @@ public class DualConnection implements Connection {
     }
 
     @Override
-    public String getSchema() {
-        throw new ReadReplicaUnsupportedOperationException();
+    public String getSchema() throws SQLException {
+        return connectionProvider.getReadConnection().getSchema();
     }
 
     @Override
