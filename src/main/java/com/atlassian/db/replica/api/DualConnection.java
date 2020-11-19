@@ -179,12 +179,12 @@ public class DualConnection implements Connection {
 
     @Override
     public Map<String, Class<?>> getTypeMap() {
-        throw new ReadReplicaUnsupportedOperationException();
+        return connectionProvider.getTypeMap();
     }
 
     @Override
     public void setTypeMap(Map<String, Class<?>> map) {
-        throw new ReadReplicaUnsupportedOperationException();
+        connectionProvider.setTypeMap(map);
     }
 
     @Override

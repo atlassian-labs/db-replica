@@ -10,6 +10,8 @@ import org.mockito.Mockito;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.HashMap;
+import java.util.Map;
 
 import static com.atlassian.db.replica.api.Queries.LARGE_SQL_QUERY;
 import static com.atlassian.db.replica.api.Queries.SIMPLE_QUERY;
@@ -529,5 +531,64 @@ public class TestDualConnection {
         connection.getTransactionIsolation();
 
         assertThat(connectionProvider.getProvidedConnections()).isEmpty();
+    }
+
+    @Test
+    public void shouldReturnEmptyTypeMap() {
+        final DualConnection connection = DualConnection.builder(connectionProvider, new PermanentInconsistency()).build();
+
+        assertThat(connection.getTypeMap()).isEmpty();
+    }
+
+    @Test
+    public void shouldSetTypeMap() {
+        final DualConnection connection = DualConnection.builder(connectionProvider, new PermanentInconsistency()).build();
+        final Map<String, Class<?>> typeMap = new HashMap<>();
+        typeMap.put("MyType", Object.class);
+
+        connection.setTypeMap(typeMap);
+
+        assertThat(connection.getTypeMap().keySet()).containsOnly("MyType");
+    }
+
+    @Test
+    public void shouldReturnTypeMapCopy() {
+        final DualConnection connection = DualConnection.builder(connectionProvider, new PermanentInconsistency()).build();
+        final Map<String, Class<?>> typeMap = new HashMap<>();
+        typeMap.put("MyType", Object.class);
+        connection.setTypeMap(typeMap);
+
+        final Map<String, Class<?>> typeMapFromConnection = connection.getTypeMap();
+        typeMapFromConnection.put("AnotherType", Integer.class);
+
+        assertThat(typeMapFromConnection).isNotEqualTo(connection.getTypeMap());
+    }
+
+    @Test
+    public void shouldSetMapOnMain() throws SQLException {
+        final DualConnection connection = DualConnection.builder(connectionProvider, new PermanentConsistency()).build();
+        final Map<String, Class<?>> typeMap = new HashMap<>();
+        typeMap.put("MyType", Object.class);
+
+        connection.setTypeMap(typeMap);
+        connection.prepareStatement(SIMPLE_QUERY).executeUpdate();
+
+        assertThat(connectionProvider.getProvidedConnectionTypes())
+            .containsOnly(MAIN);
+        verify(connectionProvider.singleProvidedConnection()).setTypeMap(typeMap);
+    }
+
+    @Test
+    public void shouldSetMapOnReplica() throws SQLException {
+        final DualConnection connection = DualConnection.builder(connectionProvider, new PermanentConsistency()).build();
+        final Map<String, Class<?>> typeMap = new HashMap<>();
+        typeMap.put("MyType", Object.class);
+
+        connection.setTypeMap(typeMap);
+        connection.prepareStatement(SIMPLE_QUERY).executeQuery();
+
+        assertThat(connectionProvider.getProvidedConnectionTypes())
+            .containsOnly(REPLICA);
+        verify(connectionProvider.singleProvidedConnection()).setTypeMap(typeMap);
     }
 }

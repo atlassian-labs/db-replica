@@ -7,7 +7,10 @@ import io.atlassian.util.concurrent.ResettableLazyReference;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.SQLWarning;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 public class ReplicaConnectionProvider implements AutoCloseable {
@@ -19,6 +22,7 @@ public class ReplicaConnectionProvider implements AutoCloseable {
     private Boolean isReadOnly;
     private String catalog;
     private SQLWarning warning;
+    private Map<String, Class<?>> typeMap;
     private Boolean isClosed = false;
     private final ResettableLazyReference<Connection> readConnection = new ResettableLazyReference<Connection>() {
         @Override
@@ -59,6 +63,9 @@ public class ReplicaConnectionProvider implements AutoCloseable {
             }
             if (catalog != null) {
                 connection.setCatalog(catalog);
+            }
+            if (typeMap != null) {
+                connection.setTypeMap(typeMap);
             }
             initializedConnections.add(connection);
         }
@@ -108,6 +115,14 @@ public class ReplicaConnectionProvider implements AutoCloseable {
 
     public void setCatalog(String catalog) {
         this.catalog = catalog;
+    }
+
+    public Map<String, Class<?>> getTypeMap() {
+        return typeMap == null ? Collections.emptyMap() : new HashMap<>(typeMap);
+    }
+
+    public void setTypeMap(Map<String, Class<?>> typeMap) {
+        this.typeMap = typeMap;
     }
 
     public SQLWarning getWarning() throws SQLException {
