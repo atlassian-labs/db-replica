@@ -18,7 +18,6 @@ import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.NClob;
 import java.sql.PreparedStatement;
-import java.sql.SQLClientInfoException;
 import java.sql.SQLException;
 import java.sql.SQLWarning;
 import java.sql.SQLXML;
@@ -49,17 +48,17 @@ public class DualConnection implements Connection {
     }
 
     @Override
-    public Statement createStatement() throws SQLException {
+    public Statement createStatement() {
         return ReplicaStatement.builder(connectionProvider, consistency, dualCall).build();
     }
 
     @Override
-    public PreparedStatement prepareStatement(String sql) throws SQLException {
+    public PreparedStatement prepareStatement(String sql) {
         return new ReplicaPreparedStatement.Builder(connectionProvider, consistency, dualCall, sql).build();
     }
 
     @Override
-    public CallableStatement prepareCall(String sql) throws SQLException {
+    public CallableStatement prepareCall(String sql) {
         return new ReplicaCallableStatement.Builder(connectionProvider, consistency, dualCall, sql).build();
     }
 
@@ -69,12 +68,12 @@ public class DualConnection implements Connection {
     }
 
     @Override
-    public void setAutoCommit(boolean autoCommit) throws SQLException {
+    public void setAutoCommit(boolean autoCommit) {
         connectionProvider.setAutoCommit(autoCommit);
     }
 
     @Override
-    public boolean getAutoCommit() throws SQLException {
+    public boolean getAutoCommit() {
         return connectionProvider.getAutoCommit();
     }
 
@@ -94,7 +93,7 @@ public class DualConnection implements Connection {
     }
 
     @Override
-    public boolean isClosed() throws SQLException {
+    public boolean isClosed() {
         return connectionProvider.isClosed();
     }
 
@@ -104,47 +103,47 @@ public class DualConnection implements Connection {
     }
 
     @Override
-    public void setReadOnly(boolean readOnly) throws SQLException {
+    public void setReadOnly(boolean readOnly) {
         connectionProvider.setReadOnly(readOnly);
     }
 
     @Override
-    public boolean isReadOnly() throws SQLException {
+    public boolean isReadOnly() {
         return connectionProvider.getReadOnly();
     }
 
     @Override
-    public void setCatalog(String catalog) throws SQLException {
+    public void setCatalog(String catalog) {
         connectionProvider.setCatalog(catalog);
     }
 
     @Override
-    public String getCatalog() throws SQLException {
+    public String getCatalog() {
         return connectionProvider.getCatalog();
     }
 
     @Override
-    public void setTransactionIsolation(int level) throws SQLException {
+    public void setTransactionIsolation(int level) {
         connectionProvider.setTransactionIsolation(level);
     }
 
     @Override
-    public int getTransactionIsolation() throws SQLException {
+    public int getTransactionIsolation() {
         throw new ReadReplicaUnsupportedOperationException();
     }
 
     @Override
-    public SQLWarning getWarnings() throws SQLException {
+    public SQLWarning getWarnings() {
         throw new ReadReplicaUnsupportedOperationException();
     }
 
     @Override
-    public void clearWarnings() throws SQLException {
+    public void clearWarnings() {
         throw new ReadReplicaUnsupportedOperationException();
     }
 
     @Override
-    public Statement createStatement(int resultSetType, int resultSetConcurrency) throws SQLException {
+    public Statement createStatement(int resultSetType, int resultSetConcurrency) {
         return ReplicaStatement
             .builder(connectionProvider, consistency, dualCall)
             .resultSetType(resultSetType)
@@ -157,7 +156,7 @@ public class DualConnection implements Connection {
         String sql,
         int resultSetType,
         int resultSetConcurrency
-    ) throws SQLException {
+    ) {
         return new ReplicaPreparedStatement.Builder(
             connectionProvider,
             consistency,
@@ -169,7 +168,7 @@ public class DualConnection implements Connection {
     }
 
     @Override
-    public CallableStatement prepareCall(String sql, int resultSetType, int resultSetConcurrency) throws SQLException {
+    public CallableStatement prepareCall(String sql, int resultSetType, int resultSetConcurrency) {
         return new ReplicaCallableStatement
             .Builder(connectionProvider, consistency, dualCall, sql)
             .resultSetType(resultSetType)
@@ -178,42 +177,42 @@ public class DualConnection implements Connection {
     }
 
     @Override
-    public Map<String, Class<?>> getTypeMap() throws SQLException {
+    public Map<String, Class<?>> getTypeMap() {
         throw new ReadReplicaUnsupportedOperationException();
     }
 
     @Override
-    public void setTypeMap(Map<String, Class<?>> map) throws SQLException {
+    public void setTypeMap(Map<String, Class<?>> map) {
         throw new ReadReplicaUnsupportedOperationException();
     }
 
     @Override
-    public void setHoldability(int holdability) throws SQLException {
+    public void setHoldability(int holdability) {
         throw new ReadReplicaUnsupportedOperationException();
     }
 
     @Override
-    public int getHoldability() throws SQLException {
+    public int getHoldability() {
         throw new ReadReplicaUnsupportedOperationException();
     }
 
     @Override
-    public Savepoint setSavepoint() throws SQLException {
+    public Savepoint setSavepoint() {
         throw new ReadReplicaUnsupportedOperationException();
     }
 
     @Override
-    public Savepoint setSavepoint(String name) throws SQLException {
+    public Savepoint setSavepoint(String name) {
         throw new ReadReplicaUnsupportedOperationException();
     }
 
     @Override
-    public void rollback(Savepoint savepoint) throws SQLException {
+    public void rollback(Savepoint savepoint) {
         throw new ReadReplicaUnsupportedOperationException();
     }
 
     @Override
-    public void releaseSavepoint(Savepoint savepoint) throws SQLException {
+    public void releaseSavepoint(Savepoint savepoint) {
         throw new ReadReplicaUnsupportedOperationException();
     }
 
@@ -222,7 +221,7 @@ public class DualConnection implements Connection {
         int resultSetType,
         int resultSetConcurrency,
         int resultSetHoldability
-    ) throws SQLException {
+    ) {
         return ReplicaStatement.builder(connectionProvider, consistency, dualCall)
             .resultSetType(resultSetType)
             .resultSetConcurrency(resultSetConcurrency)
@@ -236,7 +235,7 @@ public class DualConnection implements Connection {
         int resultSetType,
         int resultSetConcurrency,
         int resultSetHoldability
-    ) throws SQLException {
+    ) {
         return new ReplicaPreparedStatement.Builder(
             connectionProvider,
             consistency,
@@ -254,7 +253,7 @@ public class DualConnection implements Connection {
         int resultSetType,
         int resultSetConcurrency,
         int resultSetHoldability
-    ) throws SQLException {
+    ) {
         return new ReplicaCallableStatement
             .Builder(connectionProvider, consistency, dualCall, sql)
             .resultSetType(resultSetType)
@@ -264,7 +263,7 @@ public class DualConnection implements Connection {
     }
 
     @Override
-    public PreparedStatement prepareStatement(String sql, int autoGeneratedKeys) throws SQLException {
+    public PreparedStatement prepareStatement(String sql, int autoGeneratedKeys) {
         return new ReplicaPreparedStatement.Builder(
             connectionProvider,
             consistency,
@@ -275,7 +274,7 @@ public class DualConnection implements Connection {
     }
 
     @Override
-    public PreparedStatement prepareStatement(String sql, int[] columnIndexes) throws SQLException {
+    public PreparedStatement prepareStatement(String sql, int[] columnIndexes) {
         return new ReplicaPreparedStatement.Builder(
             connectionProvider,
             consistency,
@@ -286,7 +285,7 @@ public class DualConnection implements Connection {
     }
 
     @Override
-    public PreparedStatement prepareStatement(String sql, String[] columnNames) throws SQLException {
+    public PreparedStatement prepareStatement(String sql, String[] columnNames) {
         return new ReplicaPreparedStatement.Builder(
             connectionProvider,
             consistency,
@@ -297,92 +296,92 @@ public class DualConnection implements Connection {
     }
 
     @Override
-    public Clob createClob() throws SQLException {
+    public Clob createClob() {
         throw new ReadReplicaUnsupportedOperationException();
     }
 
     @Override
-    public Blob createBlob() throws SQLException {
+    public Blob createBlob() {
         throw new ReadReplicaUnsupportedOperationException();
     }
 
     @Override
-    public NClob createNClob() throws SQLException {
+    public NClob createNClob() {
         throw new ReadReplicaUnsupportedOperationException();
     }
 
     @Override
-    public SQLXML createSQLXML() throws SQLException {
+    public SQLXML createSQLXML() {
         throw new ReadReplicaUnsupportedOperationException();
     }
 
     @Override
-    public boolean isValid(int timeout) throws SQLException {
+    public boolean isValid(int timeout) {
         throw new ReadReplicaUnsupportedOperationException();
     }
 
     @Override
-    public void setClientInfo(String name, String value) throws SQLClientInfoException {
+    public void setClientInfo(String name, String value) {
         throw new ReadReplicaUnsupportedOperationException();
     }
 
     @Override
-    public void setClientInfo(Properties properties) throws SQLClientInfoException {
+    public void setClientInfo(Properties properties) {
         throw new ReadReplicaUnsupportedOperationException();
     }
 
     @Override
-    public String getClientInfo(String name) throws SQLException {
+    public String getClientInfo(String name) {
         throw new ReadReplicaUnsupportedOperationException();
     }
 
     @Override
-    public Properties getClientInfo() throws SQLException {
+    public Properties getClientInfo() {
         throw new ReadReplicaUnsupportedOperationException();
     }
 
     @Override
-    public Array createArrayOf(String typeName, Object[] elements) throws SQLException {
+    public Array createArrayOf(String typeName, Object[] elements) {
         throw new ReadReplicaUnsupportedOperationException();
     }
 
     @Override
-    public Struct createStruct(String typeName, Object[] attributes) throws SQLException {
+    public Struct createStruct(String typeName, Object[] attributes) {
         throw new ReadReplicaUnsupportedOperationException();
     }
 
     @Override
-    public void setSchema(String schema) throws SQLException {
+    public void setSchema(String schema) {
         throw new ReadReplicaUnsupportedOperationException();
     }
 
     @Override
-    public String getSchema() throws SQLException {
+    public String getSchema() {
         throw new ReadReplicaUnsupportedOperationException();
     }
 
     @Override
-    public void abort(Executor executor) throws SQLException {
+    public void abort(Executor executor) {
         throw new ReadReplicaUnsupportedOperationException();
     }
 
     @Override
-    public void setNetworkTimeout(Executor executor, int milliseconds) throws SQLException {
+    public void setNetworkTimeout(Executor executor, int milliseconds) {
         throw new ReadReplicaUnsupportedOperationException();
     }
 
     @Override
-    public int getNetworkTimeout() throws SQLException {
+    public int getNetworkTimeout() {
         throw new ReadReplicaUnsupportedOperationException();
     }
 
     @Override
-    public <T> T unwrap(Class<T> iface) throws SQLException {
+    public <T> T unwrap(Class<T> iface) {
         throw new ReadReplicaUnsupportedOperationException();
     }
 
     @Override
-    public boolean isWrapperFor(Class<?> iface) throws SQLException {
+    public boolean isWrapperFor(Class<?> iface) {
         throw new ReadReplicaUnsupportedOperationException();
     }
 
