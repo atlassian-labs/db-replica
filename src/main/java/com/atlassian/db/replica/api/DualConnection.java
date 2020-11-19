@@ -317,8 +317,8 @@ public class DualConnection implements Connection {
     }
 
     @Override
-    public boolean isValid(int timeout) {
-        throw new ReadReplicaUnsupportedOperationException();
+    public boolean isValid(int timeout) throws SQLException {
+        return connectionProvider.getReadConnection().isValid(timeout);
     }
 
     @Override

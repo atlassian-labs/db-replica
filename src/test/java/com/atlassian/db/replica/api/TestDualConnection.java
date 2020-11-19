@@ -619,4 +619,35 @@ public class TestDualConnection {
 
         verify(connectionProvider.singleProvidedConnection()).getHoldability();
     }
+
+    @Test
+    public void shouldValidateDelegateToReplica() throws SQLException {
+        final DualConnection connection = DualConnection.builder(connectionProvider, new PermanentConsistency()).build();
+
+        connection.isValid(10);
+
+        verify(connectionProvider.singleProvidedConnection()).isValid(10);
+    }
+
+    @Test
+    public void shouldValidateDelegateToCurrentConnectionForReplica() throws SQLException {
+        final DualConnection connection = DualConnection.builder(connectionProvider, new PermanentConsistency()).build();
+        connection.prepareStatement(SIMPLE_QUERY).executeQuery();
+
+        connection.isValid(10);
+
+        assertThat(connectionProvider.getProvidedConnectionTypes())
+            .containsOnly(REPLICA);
+        verify(connectionProvider.singleProvidedConnection()).isValid(10);
+    }
+
+    @Test
+    public void shouldValidateDelegateToCurrentConnectionForMain() throws SQLException {
+        final DualConnection connection = DualConnection.builder(connectionProvider, new PermanentConsistency()).build();
+        connection.prepareStatement(SIMPLE_QUERY).executeUpdate();
+
+        connection.isValid(10);
+
+        verify(connectionProvider.getProvidedConnections().get(1)).isValid(10);
+    }
 }
