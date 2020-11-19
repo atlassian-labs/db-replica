@@ -22,7 +22,7 @@ public class ReplicaStatement implements Statement {
     private final Integer resultSetConcurrency;
     private final Integer resultSetHoldability;
     private Statement currentStatement;
-    private final List<Operation> operations = new ArrayList<>();
+    private final List<StatementOperation> operations = new ArrayList<>();
     private final ReplicaConsistency consistency;
     private final DualCall dualCall;
     private final LazyReference<Statement> readStatement = new LazyReference<Statement>() {
@@ -110,17 +110,9 @@ public class ReplicaStatement implements Statement {
     @Override
     public void setQueryTimeout(int seconds) {
         addOperation(
-            new Operation<Statement, Integer>(
-                (statement, args) -> {
-                    try {
-                        statement.setQueryTimeout(args.getValue());
-                    } catch (SQLException e) {
-                        throw new RuntimeException(e);
-                    }
-                    return null;
-                },
-                new Args<>(1, seconds) //hah a wrong abstraction! (TODO: fix it)
-            )
+            (StatementOperation<Statement>) statement -> {
+                statement.setQueryTimeout(seconds);
+            }
         );
     }
 
@@ -182,17 +174,9 @@ public class ReplicaStatement implements Statement {
     @Override
     public void setFetchSize(int rows) {
         addOperation(
-            new Operation<Statement, Integer>(
-                (statement, args) -> {
-                    try {
-                        statement.setFetchSize(args.getValue());
-                    } catch (SQLException e) {
-                        throw new RuntimeException(e);
-                    }
-                    return null;
-                },
-                new Args<>(1, rows) //hah a wrong abstraction! (TODO: fix it)
-            )
+            (StatementOperation<Statement>) statement -> {
+                statement.setFetchSize(rows);
+            }
         );
     }
 
@@ -402,9 +386,9 @@ public class ReplicaStatement implements Statement {
     }
 
     public void performOperations() {
-        for (Operation<Statement, Void> operation : operations) {
+        for (StatementOperation<Statement> operation : operations) {
             try {
-                operation.run(getCurrentStatement());
+                operation.accept(getCurrentStatement());
             } catch (Exception e) {
                 throw new ReadReplicaUnsupportedOperationException();
             }
@@ -420,7 +404,7 @@ public class ReplicaStatement implements Statement {
         this.currentStatement = statement;
     }
 
-    public void addOperation(Operation operation) {
+    public void addOperation(StatementOperation operation) {
         operations.add(operation);
     }
 
@@ -438,7 +422,7 @@ public class ReplicaStatement implements Statement {
 
     void recordWriteAfterQueryExecution() throws SQLException {
         final Connection connection = currentStatement.getConnection();
-        if(connection.getAutoCommit()) {
+        if (connection.getAutoCommit()) {
             consistency.write(connection);
         }
     }

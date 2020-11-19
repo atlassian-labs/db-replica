@@ -84,280 +84,167 @@ public class ReplicaPreparedStatement extends ReplicaStatement implements Prepar
     @Override
     public int executeUpdate() throws SQLException {
         final PreparedStatement statement = getWriteStatement();
-        final Integer returnValue = execute(statement::executeUpdate);
-        return returnValue;
+        return execute(statement::executeUpdate);
     }
 
     @Override
     public long executeLargeUpdate() throws SQLException {
         final PreparedStatement statement = getWriteStatement();
-        final Long returnValue = execute(statement::executeLargeUpdate);
-        return returnValue;
+        return execute(statement::executeLargeUpdate);
     }
 
     @Override
     public void setNull(int parameterIndex, int sqlType) {
         addOperation(
-            new Operation<PreparedStatement, Integer>(
-                (statement, args) -> {
-                    try {
-                        statement.setNull(args.getParameterIndex(), args.getValue());
-                    } catch (SQLException e) {
-                        throw new RuntimeException(e);
-                    }
-                    return null;
-                },
-                new Args<>(parameterIndex, sqlType)
-            )
+            (StatementOperation<PreparedStatement>) statement -> {
+                statement.setNull(parameterIndex, sqlType);
+            }
         );
     }
 
     @Override
     public void setBoolean(int parameterIndex, boolean x) {
         addOperation(
-            new Operation<PreparedStatement, Boolean>(
-                (statement, args) -> {
-                    try {
-                        statement.setBoolean(args.getParameterIndex(), args.getValue());
-                    } catch (SQLException e) {
-                        throw new RuntimeException(e);
-                    }
-                    return null;
-                },
-                new Args<>(parameterIndex, x)
-            )
+            (StatementOperation<PreparedStatement>) statement -> {
+                statement.setBoolean(parameterIndex, x);
+            }
         );
     }
 
     @Override
     public void setByte(int parameterIndex, byte x) {
         addOperation(
-            new Operation<PreparedStatement, Byte>(
-                (statement, args) -> {
-                    try {
-                        statement.setByte(args.getParameterIndex(), args.getValue());
-                    } catch (SQLException e) {
-                        throw new RuntimeException(e);
-                    }
-                    return null;
-                },
-                new Args<>(parameterIndex, x)
-            )
+            (StatementOperation<PreparedStatement>) statement -> {
+                statement.setByte(parameterIndex, x);
+            }
         );
     }
 
     @Override
     public void setShort(int parameterIndex, short x) {
         addOperation(
-            new Operation<PreparedStatement, Short>(
-                (statement, args) -> {
-                    try {
-                        statement.setShort(args.getParameterIndex(), args.getValue());
-                    } catch (SQLException e) {
-                        throw new RuntimeException(e);
-                    }
-                    return null;
-                },
-                new Args<>(parameterIndex, x)
-            )
+            (StatementOperation<PreparedStatement>) statement -> {
+                statement.setShort(parameterIndex, x);
+            }
         );
     }
 
     @Override
     public void setInt(int parameterIndex, int x) {
         addOperation(
-            new Operation<PreparedStatement, Integer>(
-                (statement, args) -> {
-                    try {
-                        statement.setInt(args.getParameterIndex(), args.getValue());
-                    } catch (SQLException e) {
-                        throw new RuntimeException(e);
-                    }
-                    return null;
-                },
-                new Args<>(parameterIndex, x)
-            )
+            (StatementOperation<PreparedStatement>) statement -> {
+                statement.setInt(parameterIndex, x);
+            }
         );
     }
 
     @Override
     public void setLong(int parameterIndex, long x) {
         addOperation(
-            new Operation<PreparedStatement, Long>(
-                (statement, args) -> {
-                    try {
-                        statement.setLong(args.getParameterIndex(), args.getValue());
-                    } catch (SQLException e) {
-                        throw new RuntimeException(e);
-                    }
-                    return null;
-                },
-                new Args<>(parameterIndex, x)
-            )
+            (StatementOperation<PreparedStatement>) statement -> {
+                statement.setLong(parameterIndex, x);
+            }
         );
     }
 
     @Override
     public void setFloat(int parameterIndex, float x) {
         addOperation(
-            new Operation<PreparedStatement, Float>(
-                (statement, args) -> {
-                    try {
-                        statement.setFloat(args.getParameterIndex(), args.getValue());
-                    } catch (SQLException e) {
-                        throw new RuntimeException(e);
-                    }
-                    return null;
-                },
-                new Args<>(parameterIndex, x)
-            )
+            (StatementOperation<PreparedStatement>) statement -> {
+                statement.setFloat(parameterIndex, x);
+            }
         );
     }
 
     @Override
     public void setDouble(int parameterIndex, double x) {
         addOperation(
-            new Operation<PreparedStatement, Double>(
-                (statement, args) -> {
-                    try {
-                        statement.setDouble(args.getParameterIndex(), args.getValue());
-                    } catch (SQLException e) {
-                        throw new RuntimeException(e);
-                    }
-                    return null;
-                },
-                new Args<>(parameterIndex, x)
-            )
+            (StatementOperation<PreparedStatement>) statement -> {
+                statement.setDouble(parameterIndex, x);
+            }
         );
     }
 
     @Override
     public void setBigDecimal(int parameterIndex, BigDecimal x) {
         addOperation(
-            new Operation<PreparedStatement, BigDecimal>(
-                (statement, args) -> {
-                    try {
-                        statement.setBigDecimal(args.getParameterIndex(), args.getValue());
-                    } catch (SQLException e) {
-                        throw new RuntimeException(e);
-                    }
-                    return null;
-                },
-                new Args<>(parameterIndex, x)
-            )
+            (StatementOperation<PreparedStatement>) statement -> {
+                statement.setBigDecimal(parameterIndex, x);
+            }
         );
     }
 
     @Override
     public void setString(int parameterIndex, String x) {
         addOperation(
-            new Operation<PreparedStatement, String>(
-                (statement, args) -> {
-                    try {
-                        statement.setString(args.getParameterIndex(), args.getValue());
-                    } catch (SQLException e) {
-                        throw new RuntimeException(e);
-                    }
-                    return null;
-                },
-                new Args<>(parameterIndex, x)
-            )
+            (StatementOperation<PreparedStatement>) statement -> {
+                statement.setString(parameterIndex, x);
+            }
         );
     }
 
     @Override
     public void setBytes(int parameterIndex, byte[] x) {
         addOperation(
-            new Operation<PreparedStatement, byte[]>(
-                (statement, args) -> {
-                    try {
-                        statement.setBytes(args.getParameterIndex(), args.getValue());
-                    } catch (SQLException e) {
-                        throw new RuntimeException(e);
-                    }
-                    return null;
-                },
-                new Args<>(parameterIndex, x)
-            )
+            (StatementOperation<PreparedStatement>) statement -> {
+                statement.setBytes(parameterIndex, x);
+            }
         );
     }
 
     @Override
     public void setDate(int parameterIndex, Date x) {
         addOperation(
-            new Operation<PreparedStatement, Date>(
-                (statement, args) -> {
-                    try {
-                        statement.setDate(args.getParameterIndex(), args.getValue());
-                    } catch (SQLException e) {
-                        throw new RuntimeException(e);
-                    }
-                    return null;
-                },
-                new Args<>(parameterIndex, x)
-            )
+            (StatementOperation<PreparedStatement>) statement -> {
+                statement.setDate(parameterIndex, x);
+            }
         );
     }
 
     @Override
     public void setTime(int parameterIndex, Time x) {
         addOperation(
-            new Operation<PreparedStatement, Time>(
-                (statement, args) -> {
-                    try {
-                        statement.setTime(args.getParameterIndex(), args.getValue());
-                    } catch (SQLException e) {
-                        throw new RuntimeException(e);
-                    }
-                    return null;
-                },
-                new Args<>(parameterIndex, x)
-            )
+            (StatementOperation<PreparedStatement>) statement -> {
+                statement.setTime(parameterIndex, x);
+            }
         );
     }
 
     @Override
     public void setTimestamp(int parameterIndex, Timestamp x) {
         addOperation(
-            new Operation<PreparedStatement, Timestamp>(
-                (statement, args) -> {
-                    try {
-                        statement.setTimestamp(args.getParameterIndex(), args.getValue());
-                    } catch (SQLException e) {
-                        throw new RuntimeException(e);
-                    }
-                    return null;
-                },
-                new Args<>(parameterIndex, x)
-            )
+            (StatementOperation<PreparedStatement>) statement -> {
+                statement.setTimestamp(parameterIndex, x);
+            }
         );
     }
 
     @Override
     public void setAsciiStream(int parameterIndex, InputStream x, int length) {
         addOperation(
-            new Operation<PreparedStatement, InputStream>(
-                (statement, args) -> {
-                    try {
-                        statement.setAsciiStream(args.getParameterIndex(), args.getValue());
-                    } catch (SQLException e) {
-                        throw new RuntimeException(e);
-                    }
-                    return null;
-                },
-                new Args<>(parameterIndex, x)
-            )
+            (StatementOperation<PreparedStatement>) statement -> {
+                statement.setAsciiStream(parameterIndex, x);
+            }
         );
     }
 
     @Override
     public void setUnicodeStream(int parameterIndex, InputStream x, int length) {
-        throw new ReadReplicaUnsupportedOperationException();
+        addOperation(
+            (StatementOperation<PreparedStatement>) statement -> {
+                //noinspection deprecation
+                statement.setUnicodeStream(parameterIndex, x, length);
+            }
+        );
     }
 
     @Override
     public void setBinaryStream(int parameterIndex, InputStream x, int length) {
-        throw new ReadReplicaUnsupportedOperationException();
+        addOperation(
+            (StatementOperation<PreparedStatement>) statement -> {
+                statement.setBinaryStream(parameterIndex, x, length);
+            }
+        );
     }
 
     @Override
@@ -367,120 +254,79 @@ public class ReplicaPreparedStatement extends ReplicaStatement implements Prepar
 
     @Override
     public void setObject(int parameterIndex, Object x, int targetSqlType) {
-        throw new ReadReplicaUnsupportedOperationException();
+        addOperation(
+            (StatementOperation<PreparedStatement>) statement -> {
+                statement.setObject(parameterIndex, x, targetSqlType);
+            }
+        );
     }
 
     @Override
     public void setObject(int parameterIndex, Object x) {
         addOperation(
-            new Operation<PreparedStatement, Object>(
-                (statement, args) -> {
-                    try {
-                        statement.setObject(args.getParameterIndex(), args.getValue());
-                    } catch (SQLException e) {
-                        throw new RuntimeException(e);
-                    }
-                    return null;
-                },
-                new Args<>(parameterIndex, x)
-            )
+            (StatementOperation<PreparedStatement>) statement -> {
+                statement.setObject(parameterIndex, x);
+            }
         );
     }
 
     @Override
     public boolean execute() throws SQLException {
         final PreparedStatement statement = getWriteStatement();
-        final Boolean returnValue = execute(statement::execute);
-        return returnValue;
+        return execute(statement::execute);
     }
 
     @Override
     public void addBatch() {
         addOperation(
-            new Operation<PreparedStatement, Object>(
-                (statement, args) -> {
-                    try {
-                        statement.addBatch();
-                    } catch (SQLException e) {
-                        throw new RuntimeException(e);
-                    }
-                    return null;
-                },
-                new Args<>(1, null)
-            )
+            (StatementOperation<PreparedStatement>) statement -> {
+                statement.addBatch();
+            }
         );
     }
 
     @Override
     public void setCharacterStream(int parameterIndex, Reader reader, int length) {
-        throw new ReadReplicaUnsupportedOperationException();
+        addOperation(
+            (StatementOperation<PreparedStatement>) statement -> {
+                statement.setCharacterStream(parameterIndex, reader, length);
+            }
+        );
     }
 
     @Override
     public void setRef(int parameterIndex, Ref x) {
         addOperation(
-            new Operation<PreparedStatement, Ref>(
-                (statement, args) -> {
-                    try {
-                        statement.setRef(args.getParameterIndex(), args.getValue());
-                    } catch (SQLException e) {
-                        throw new RuntimeException(e);
-                    }
-                    return null;
-                },
-                new Args<>(parameterIndex, x)
-            )
+            (StatementOperation<PreparedStatement>) statement -> {
+                statement.setRef(parameterIndex, x);
+            }
         );
     }
 
     @Override
     public void setBlob(int parameterIndex, Blob x) {
         addOperation(
-            new Operation<PreparedStatement, Blob>(
-                (statement, args) -> {
-                    try {
-                        statement.setBlob(args.getParameterIndex(), args.getValue());
-                    } catch (SQLException e) {
-                        throw new RuntimeException(e);
-                    }
-                    return null;
-                },
-                new Args<>(parameterIndex, x)
-            )
+            (StatementOperation<PreparedStatement>) statement -> {
+                statement.setBlob(parameterIndex, x);
+            }
         );
     }
 
     @Override
     public void setClob(int parameterIndex, Clob x) {
         addOperation(
-            new Operation<PreparedStatement, Clob>(
-                (statement, args) -> {
-                    try {
-                        statement.setClob(args.getParameterIndex(), args.getValue());
-                    } catch (SQLException e) {
-                        throw new RuntimeException(e);
-                    }
-                    return null;
-                },
-                new Args<>(parameterIndex, x)
-            )
+            (StatementOperation<PreparedStatement>) statement -> {
+                statement.setClob(parameterIndex, x);
+            }
         );
     }
 
     @Override
     public void setArray(int parameterIndex, Array x) {
         addOperation(
-            new Operation<PreparedStatement, Array>(
-                (statement, args) -> {
-                    try {
-                        statement.setArray(args.getParameterIndex(), args.getValue());
-                    } catch (SQLException e) {
-                        throw new RuntimeException(e);
-                    }
-                    return null;
-                },
-                new Args<>(parameterIndex, x)
-            )
+            (StatementOperation<PreparedStatement>) statement -> {
+                statement.setArray(parameterIndex, x);
+            }
         );
     }
 
@@ -491,38 +337,46 @@ public class ReplicaPreparedStatement extends ReplicaStatement implements Prepar
 
     @Override
     public void setDate(int parameterIndex, Date x, Calendar cal) {
-        throw new ReadReplicaUnsupportedOperationException();
+        addOperation(
+            (StatementOperation<PreparedStatement>) statement -> {
+                statement.setDate(parameterIndex, x);
+            }
+        );
     }
 
     @Override
     public void setTime(int parameterIndex, Time x, Calendar cal) {
-        throw new ReadReplicaUnsupportedOperationException();
+        addOperation(
+            (StatementOperation<PreparedStatement>) statement -> {
+                statement.setTime(parameterIndex, x);
+            }
+        );
     }
 
     @Override
     public void setTimestamp(int parameterIndex, Timestamp x, Calendar cal) {
-        throw new ReadReplicaUnsupportedOperationException();
+        addOperation(
+            (StatementOperation<PreparedStatement>) statement -> {
+                statement.setTimestamp(parameterIndex, x, cal);
+            }
+        );
     }
 
     @Override
     public void setNull(int parameterIndex, int sqlType, String typeName) {
-        throw new ReadReplicaUnsupportedOperationException();
+        addOperation(
+            (StatementOperation<PreparedStatement>) statement -> {
+                statement.setNull(parameterIndex, sqlType, typeName);
+            }
+        );
     }
 
     @Override
     public void setURL(int parameterIndex, URL x) {
         addOperation(
-            new Operation<PreparedStatement, URL>(
-                (statement, args) -> {
-                    try {
-                        statement.setURL(args.getParameterIndex(), args.getValue());
-                    } catch (SQLException e) {
-                        throw new RuntimeException(e);
-                    }
-                    return null;
-                },
-                new Args<>(parameterIndex, x)
-            )
+            (StatementOperation<PreparedStatement>) statement -> {
+                statement.setURL(parameterIndex, x);
+            }
         );
     }
 
@@ -539,144 +393,172 @@ public class ReplicaPreparedStatement extends ReplicaStatement implements Prepar
     @Override
     public void setRowId(int parameterIndex, RowId x) {
         addOperation(
-            new Operation<PreparedStatement, RowId>(
-                (statement, args) -> {
-                    try {
-                        statement.setRowId(args.getParameterIndex(), args.getValue());
-                    } catch (SQLException e) {
-                        throw new RuntimeException(e);
-                    }
-                    return null;
-                },
-                new Args<>(parameterIndex, x)
-            )
+            (StatementOperation<PreparedStatement>) statement -> {
+                statement.setRowId(parameterIndex, x);
+            }
         );
     }
 
     @Override
     public void setNString(int parameterIndex, String value) {
         addOperation(
-            new Operation<PreparedStatement, String>(
-                (statement, args) -> {
-                    try {
-                        statement.setNString(args.getParameterIndex(), args.getValue());
-                    } catch (SQLException e) {
-                        throw new RuntimeException(e);
-                    }
-                    return null;
-                },
-                new Args<>(parameterIndex, value)
-            )
+            (StatementOperation<PreparedStatement>) statement -> {
+                statement.setNString(parameterIndex, value);
+            }
         );
     }
 
     @Override
     public void setNCharacterStream(int parameterIndex, Reader value, long length) {
-        throw new ReadReplicaUnsupportedOperationException();
+        addOperation(
+            (StatementOperation<PreparedStatement>) statement -> {
+                statement.setNCharacterStream(parameterIndex, value, length);
+            }
+        );
     }
 
     @Override
     public void setNClob(int parameterIndex, NClob value) {
         addOperation(
-            new Operation<PreparedStatement, NClob>(
-                (statement, args) -> {
-                    try {
-                        statement.setNClob(args.getParameterIndex(), args.getValue());
-                    } catch (SQLException e) {
-                        throw new RuntimeException(e);
-                    }
-                    return null;
-                },
-                new Args<>(parameterIndex, value)
-            )
+            (StatementOperation<PreparedStatement>) statement -> {
+                statement.setNClob(parameterIndex, value);
+            }
         );
     }
 
     @Override
     public void setClob(int parameterIndex, Reader reader, long length) {
-        throw new ReadReplicaUnsupportedOperationException();
+        addOperation(
+            (StatementOperation<PreparedStatement>) statement -> {
+                statement.setClob(parameterIndex, reader, length);
+            }
+        );
     }
 
     @Override
     public void setBlob(int parameterIndex, InputStream inputStream, long length) {
-        throw new ReadReplicaUnsupportedOperationException();
+        addOperation(
+            (StatementOperation<PreparedStatement>) statement -> {
+                statement.setBlob(parameterIndex, inputStream, length);
+            }
+        );
     }
 
     @Override
     public void setNClob(int parameterIndex, Reader reader, long length) {
-        throw new ReadReplicaUnsupportedOperationException();
+        addOperation(
+            (StatementOperation<PreparedStatement>) statement -> {
+                statement.setNClob(parameterIndex, reader, length);
+            }
+        );
     }
 
     @Override
     public void setSQLXML(int parameterIndex, SQLXML xmlObject) {
         addOperation(
-            new Operation<PreparedStatement, SQLXML>(
-                (statement, args) -> {
-                    try {
-                        statement.setSQLXML(args.getParameterIndex(), args.getValue());
-                    } catch (SQLException e) {
-                        throw new RuntimeException(e);
-                    }
-                    return null;
-                },
-                new Args<>(parameterIndex, xmlObject)
-            )
+            (StatementOperation<PreparedStatement>) statement -> {
+                statement.setSQLXML(parameterIndex, xmlObject);
+            }
         );
     }
 
     @Override
     public void setObject(int parameterIndex, Object x, int targetSqlType, int scaleOrLength) {
-        throw new ReadReplicaUnsupportedOperationException();
+        addOperation(
+            (StatementOperation<PreparedStatement>) statement -> {
+                statement.setObject(parameterIndex, x, targetSqlType, scaleOrLength);
+            }
+        );
     }
 
     @Override
     public void setAsciiStream(int parameterIndex, InputStream x, long length) {
-        throw new ReadReplicaUnsupportedOperationException();
+        addOperation(
+            (StatementOperation<PreparedStatement>) statement -> {
+                statement.setAsciiStream(parameterIndex, x, length);
+            }
+        );
     }
 
     @Override
     public void setBinaryStream(int parameterIndex, InputStream x, long length) {
-        throw new ReadReplicaUnsupportedOperationException();
+        addOperation(
+            (StatementOperation<PreparedStatement>) statement -> {
+                statement.setBinaryStream(parameterIndex, x, length);
+            }
+        );
     }
 
     @Override
     public void setCharacterStream(int parameterIndex, Reader reader, long length) {
-        throw new ReadReplicaUnsupportedOperationException();
+        addOperation(
+            (StatementOperation<PreparedStatement>) statement -> {
+                statement.setCharacterStream(parameterIndex, reader, length);
+            }
+        );
     }
 
     @Override
     public void setAsciiStream(int parameterIndex, InputStream x) {
-        throw new ReadReplicaUnsupportedOperationException();
+        addOperation(
+            (StatementOperation<PreparedStatement>) statement -> {
+                statement.setAsciiStream(parameterIndex, x);
+            }
+        );
     }
 
     @Override
     public void setBinaryStream(int parameterIndex, InputStream x) {
-        throw new ReadReplicaUnsupportedOperationException();
+        addOperation(
+            (StatementOperation<PreparedStatement>) statement -> {
+                statement.setBinaryStream(parameterIndex, x);
+            }
+        );
     }
 
     @Override
     public void setCharacterStream(int parameterIndex, Reader reader) {
-        throw new ReadReplicaUnsupportedOperationException();
+        addOperation(
+            (StatementOperation<PreparedStatement>) statement -> {
+                statement.setCharacterStream(parameterIndex, reader);
+            }
+        );
     }
 
     @Override
     public void setNCharacterStream(int parameterIndex, Reader value) {
-        throw new ReadReplicaUnsupportedOperationException();
+        addOperation(
+            (StatementOperation<PreparedStatement>) statement -> {
+                statement.setNCharacterStream(parameterIndex, value);
+            }
+        );
     }
 
     @Override
     public void setClob(int parameterIndex, Reader reader) {
-        throw new ReadReplicaUnsupportedOperationException();
+        addOperation(
+            (StatementOperation<PreparedStatement>) statement -> {
+                statement.setClob(parameterIndex, reader);
+            }
+        );
     }
 
     @Override
     public void setBlob(int parameterIndex, InputStream inputStream) {
-        throw new ReadReplicaUnsupportedOperationException();
+        addOperation(
+            (StatementOperation<PreparedStatement>) statement -> {
+                statement.setBlob(parameterIndex, inputStream);
+            }
+        );
     }
 
     @Override
     public void setNClob(int parameterIndex, Reader reader) {
-        throw new ReadReplicaUnsupportedOperationException();
+        addOperation(
+            (StatementOperation<PreparedStatement>) statement -> {
+                statement.setNClob(parameterIndex, reader);
+            }
+        );
     }
 
     @Override
