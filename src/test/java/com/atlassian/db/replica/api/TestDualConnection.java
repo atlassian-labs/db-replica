@@ -15,6 +15,7 @@ import static com.atlassian.db.replica.api.Queries.LARGE_SQL_QUERY;
 import static com.atlassian.db.replica.api.Queries.SIMPLE_QUERY;
 import static com.atlassian.db.replica.api.mocks.ConnectionProviderMock.ConnectionType.MAIN;
 import static com.atlassian.db.replica.api.mocks.ConnectionProviderMock.ConnectionType.REPLICA;
+import static java.sql.Connection.TRANSACTION_SERIALIZABLE;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.mockito.ArgumentMatchers.any;
@@ -499,5 +500,34 @@ public class TestDualConnection {
         final DualConnection connection = DualConnection.builder(connectionProvider, new PermanentConsistency()).build();
 
         assertThat(connection.getCatalog()).isNull();
+    }
+
+    @Test
+    public void shouldSetTransactionIsolationLevel() throws SQLException {
+        final DualConnection connection = DualConnection.builder(connectionProvider, new PermanentInconsistency()).build();
+
+        connection.setTransactionIsolation(TRANSACTION_SERIALIZABLE);
+        connection.prepareStatement(SIMPLE_QUERY).executeQuery();
+
+        verify(connectionProvider.singleProvidedConnection()).setTransactionIsolation(TRANSACTION_SERIALIZABLE);
+    }
+
+    @Test
+    public void shouldGetTransactionIsolationLevelCallMainDatabase() throws SQLException {
+        final DualConnection connection = DualConnection.builder(connectionProvider, new PermanentInconsistency()).build();
+
+        connection.getTransactionIsolation();
+
+        verify(connectionProvider.singleProvidedConnection()).getTransactionIsolation();
+    }
+
+    @Test
+    public void shouldUseSettedTransactionIsolationLevel() throws SQLException {
+        final DualConnection connection = DualConnection.builder(connectionProvider, new PermanentInconsistency()).build();
+        connection.setTransactionIsolation(TRANSACTION_SERIALIZABLE);
+
+        connection.getTransactionIsolation();
+
+        assertThat(connectionProvider.getProvidedConnections()).isEmpty();
     }
 }

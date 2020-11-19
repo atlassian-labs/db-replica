@@ -67,6 +67,14 @@ public class ReplicaConnectionProvider implements AutoCloseable {
         initializedConnections.clear();
     }
 
+    public int getTransactionIsolation() throws SQLException {
+        if (this.transactionIsolation != null) {
+            return this.transactionIsolation;
+        } else {
+            return getWriteConnection().getTransactionIsolation();
+        }
+    }
+
     public void setAutoCommit(Boolean autoCommit) {
         final Boolean autoCommitBefore = getAutoCommit();
         this.isAutoCommit = autoCommit;

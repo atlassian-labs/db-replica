@@ -128,8 +128,9 @@ public class DualConnection implements Connection {
     }
 
     @Override
-    public int getTransactionIsolation() {
-        throw new ReadReplicaUnsupportedOperationException();
+    public int getTransactionIsolation() throws SQLException {
+        //noinspection MagicConstant
+        return connectionProvider.getTransactionIsolation();
     }
 
     @Override
