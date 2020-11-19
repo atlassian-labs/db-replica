@@ -105,7 +105,7 @@ public class DualConnection implements Connection {
 
     @Override
     public void setReadOnly(boolean readOnly) throws SQLException {
-         connectionProvider.setReadOnly(readOnly);
+        connectionProvider.setReadOnly(readOnly);
     }
 
     @Override
@@ -115,12 +115,12 @@ public class DualConnection implements Connection {
 
     @Override
     public void setCatalog(String catalog) throws SQLException {
-        throw new ReadReplicaUnsupportedOperationException();
+        connectionProvider.setCatalog(catalog);
     }
 
     @Override
     public String getCatalog() throws SQLException {
-        throw new ReadReplicaUnsupportedOperationException();
+        return connectionProvider.getCatalog();
     }
 
     @Override

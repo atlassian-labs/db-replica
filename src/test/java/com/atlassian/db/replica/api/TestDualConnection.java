@@ -479,4 +479,25 @@ public class TestDualConnection {
         verify(connectionProvider.singleProvidedConnection()).setReadOnly(false);
         assertThat(connection.isReadOnly()).isFalse();
     }
+
+    @Test
+    public void shouldSetCatalog() throws SQLException {
+        final DualConnection connection = DualConnection.builder(connectionProvider, new PermanentConsistency()).build();
+        final String catalog = "catalog";
+
+        connection.setCatalog(catalog);
+        connection.prepareStatement(SIMPLE_QUERY).executeQuery();
+
+        assertThat(connectionProvider.getProvidedConnectionTypes())
+            .containsOnly(REPLICA);
+        verify(connectionProvider.singleProvidedConnection()).setCatalog(catalog);
+        assertThat(connection.getCatalog()).isEqualTo(catalog);
+    }
+
+    @Test
+    public void shouldGetNullCatalog() throws SQLException {
+        final DualConnection connection = DualConnection.builder(connectionProvider, new PermanentConsistency()).build();
+
+        assertThat(connection.getCatalog()).isNull();
+    }
 }
