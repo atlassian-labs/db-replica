@@ -156,6 +156,9 @@ public class ReplicaStatement implements Statement {
 
     @Override
     public int getUpdateCount() throws SQLException {
+        if (getCurrentStatement() == null) {
+            return -1;
+        }
         return getCurrentStatement().getUpdateCount();
     }
 

@@ -120,4 +120,36 @@ public class TestStatement {
 
         assertThat(resultSet).isNull();
     }
+
+    @Test
+    public void shouldGetUpdateCountOnMain() throws SQLException {
+        final DualConnection connection = DualConnection.builder(connectionProvider, new PermanentConsistency()).build();
+        final PreparedStatement statement = connection.prepareStatement(SIMPLE_QUERY);
+        statement.executeUpdate();
+
+        statement.getUpdateCount();
+
+        verify(connectionProvider.singleStatement()).getUpdateCount();
+    }
+
+    @Test
+    public void shouldGetUpdateCountOnReplica() throws SQLException {
+        final DualConnection connection = DualConnection.builder(connectionProvider, new PermanentConsistency()).build();
+        final PreparedStatement statement = connection.prepareStatement(SIMPLE_QUERY);
+        statement.executeQuery();
+
+        statement.getUpdateCount();
+
+        verify(connectionProvider.singleStatement()).getUpdateCount();
+    }
+
+    @Test
+    public void shouldGetMinusOneForGetUpdateCountBeforeQueryExecuted() throws SQLException {
+        final DualConnection connection = DualConnection.builder(connectionProvider, new PermanentConsistency()).build();
+        final PreparedStatement statement = connection.prepareStatement(SIMPLE_QUERY);
+
+        final int updateCount = statement.getUpdateCount();
+
+        assertThat(updateCount).isEqualTo(-1);
+    }
 }
