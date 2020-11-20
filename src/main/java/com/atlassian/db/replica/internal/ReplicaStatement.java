@@ -204,7 +204,9 @@ public class ReplicaStatement implements Statement {
 
     @Override
     public void addBatch(String sql) {
-        throw new ReadReplicaUnsupportedOperationException();
+        addOperation(
+            (StatementOperation<Statement>) statement -> statement.addBatch(sql)
+        );
     }
 
     @Override

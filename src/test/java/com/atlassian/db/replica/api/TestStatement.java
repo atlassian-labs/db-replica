@@ -193,7 +193,6 @@ public class TestStatement {
         statement.setFetchSize(10);
         statement.executeUpdate();
 
-
         verify(connectionProvider.singleStatement()).setFetchSize(10);
     }
 
@@ -205,7 +204,28 @@ public class TestStatement {
         statement.setFetchSize(10);
         statement.executeQuery();
 
-
         verify(connectionProvider.singleStatement()).setFetchSize(10);
+    }
+
+    @Test
+    public void shouldAddBatchOnMain() throws SQLException {
+        final DualConnection connection = DualConnection.builder(connectionProvider, new PermanentConsistency()).build();
+        final PreparedStatement statement = connection.prepareStatement(SIMPLE_QUERY);
+
+        statement.addBatch(SIMPLE_QUERY);
+        statement.executeUpdate();
+
+        verify(connectionProvider.singleStatement()).addBatch(SIMPLE_QUERY);
+    }
+
+    @Test
+    public void shouldAddBatchOnReplica() throws SQLException {
+        final DualConnection connection = DualConnection.builder(connectionProvider, new PermanentConsistency()).build();
+        final PreparedStatement statement = connection.prepareStatement(SIMPLE_QUERY);
+
+        statement.addBatch(SIMPLE_QUERY);
+        statement.executeQuery();
+
+        verify(connectionProvider.singleStatement()).addBatch(SIMPLE_QUERY);
     }
 }
