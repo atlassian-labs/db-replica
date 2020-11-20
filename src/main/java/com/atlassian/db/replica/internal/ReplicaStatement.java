@@ -149,7 +149,7 @@ public class ReplicaStatement implements Statement {
     @Override
     public ResultSet getResultSet() throws SQLException {
         if (getCurrentStatement() == null) {
-            throw new ReadReplicaUnsupportedOperationException();
+            return null;
         }
         return getCurrentStatement().getResultSet();
     }

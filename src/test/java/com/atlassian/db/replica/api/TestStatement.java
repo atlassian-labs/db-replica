@@ -5,6 +5,7 @@ import com.atlassian.db.replica.api.mocks.PermanentConsistency;
 import org.junit.Test;
 
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.SQLWarning;
 
@@ -86,5 +87,37 @@ public class TestStatement {
         statement.clearWarnings();
 
         verify(connectionProvider.singleStatement()).clearWarnings();
+    }
+
+    @Test
+    public void shouldGetResultSetOnMain() throws SQLException {
+        final DualConnection connection = DualConnection.builder(connectionProvider, new PermanentConsistency()).build();
+        final PreparedStatement statement = connection.prepareStatement(SIMPLE_QUERY);
+        statement.executeUpdate();
+
+        statement.getResultSet();
+
+        verify(connectionProvider.singleStatement()).getResultSet();
+    }
+
+    @Test
+    public void shouldGetResultSetOnReplica() throws SQLException {
+        final DualConnection connection = DualConnection.builder(connectionProvider, new PermanentConsistency()).build();
+        final PreparedStatement statement = connection.prepareStatement(SIMPLE_QUERY);
+        statement.executeQuery();
+
+        statement.getResultSet();
+
+        verify(connectionProvider.singleStatement()).getResultSet();
+    }
+
+    @Test
+    public void shouldGetNullResultSetBeforeQueryExecuted() throws SQLException {
+        final DualConnection connection = DualConnection.builder(connectionProvider, new PermanentConsistency()).build();
+        final PreparedStatement statement = connection.prepareStatement(SIMPLE_QUERY);
+
+        final ResultSet resultSet = statement.getResultSet();
+
+        assertThat(resultSet).isNull();
     }
 }
