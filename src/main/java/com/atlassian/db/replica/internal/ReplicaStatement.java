@@ -24,6 +24,7 @@ public class ReplicaStatement implements Statement {
     private Statement currentStatement;
     @SuppressWarnings("rawtypes")
     private final List<StatementOperation> operations = new ArrayList<>();
+    private final List<StatementOperation<Statement>> batches = new ArrayList<>();
     private final ReplicaConsistency consistency;
     private final DualCall dualCall;
     private final LazyReference<Statement> readStatement = new LazyReference<Statement>() {
@@ -204,14 +205,15 @@ public class ReplicaStatement implements Statement {
 
     @Override
     public void addBatch(String sql) {
-        addOperation(
-            (StatementOperation<Statement>) statement -> statement.addBatch(sql)
-        );
+        final StatementOperation<Statement> addBatch = statement -> statement.addBatch(sql);
+        addOperation(addBatch);
+        batches.add(addBatch);
     }
 
     @Override
     public void clearBatch() {
-        throw new ReadReplicaUnsupportedOperationException();
+        batches.forEach(operations::remove);
+        batches.clear();
     }
 
     @Override

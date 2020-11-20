@@ -11,6 +11,7 @@ import java.sql.SQLWarning;
 
 import static com.atlassian.db.replica.api.Queries.SIMPLE_QUERY;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
 @SuppressWarnings("ThrowableNotThrown")
@@ -227,5 +228,31 @@ public class TestStatement {
         statement.executeQuery();
 
         verify(connectionProvider.singleStatement()).addBatch(SIMPLE_QUERY);
+    }
+
+    @Test
+    public void shouldClearBatchOnMain() throws SQLException {
+        final DualConnection connection = DualConnection.builder(connectionProvider, new PermanentConsistency()).build();
+        final PreparedStatement statement = connection.prepareStatement(SIMPLE_QUERY);
+
+        statement.addBatch(SIMPLE_QUERY);
+        statement.addBatch(SIMPLE_QUERY);
+        statement.clearBatch();
+        statement.executeUpdate();
+
+        verify(connectionProvider.singleStatement(), never()).addBatch(SIMPLE_QUERY);
+    }
+
+    @Test
+    public void shouldClearBatchOnReplica() throws SQLException {
+        final DualConnection connection = DualConnection.builder(connectionProvider, new PermanentConsistency()).build();
+        final PreparedStatement statement = connection.prepareStatement(SIMPLE_QUERY);
+
+        statement.addBatch(SIMPLE_QUERY);
+        statement.addBatch(SIMPLE_QUERY);
+        statement.clearBatch();
+        statement.executeQuery();
+
+        verify(connectionProvider.singleStatement(), never()).addBatch(SIMPLE_QUERY);
     }
 }
