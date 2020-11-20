@@ -377,8 +377,11 @@ public class DualConnection implements Connection {
     }
 
     @Override
-    public <T> T unwrap(Class<T> iface) {
-        throw new ReadReplicaUnsupportedOperationException();
+    public <T> T unwrap(Class<T> iface) throws SQLException {
+        if (iface.isAssignableFrom(getClass())) {
+            return iface.cast(this);
+        }
+        return connectionProvider.unwrap(iface);
     }
 
     @Override

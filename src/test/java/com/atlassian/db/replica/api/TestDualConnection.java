@@ -1,6 +1,8 @@
 package com.atlassian.db.replica.api;
 
 import com.atlassian.db.replica.api.mocks.ConnectionProviderMock;
+import com.atlassian.db.replica.api.mocks.NoOpConnection;
+import com.atlassian.db.replica.api.mocks.NoOpConnectionProvider;
 import com.atlassian.db.replica.api.mocks.PermanentConsistency;
 import com.atlassian.db.replica.api.mocks.PermanentInconsistency;
 import com.atlassian.db.replica.spi.DualCall;
@@ -669,5 +671,32 @@ public class TestDualConnection {
         connection.getSchema();
 
         verify(connectionProvider.singleProvidedConnection()).getSchema();
+    }
+
+    @Test
+    public void shouldUnwrapConnection() throws SQLException {
+        final DualConnection dualConnection = DualConnection.builder(new NoOpConnectionProvider(), new PermanentConsistency()).build();
+
+        final Connection connection = dualConnection.unwrap(Connection.class);
+
+        assertThat(connection).isEqualTo(dualConnection);
+    }
+
+    @Test
+    public void shouldFailUnwrapInteger()  {
+        final DualConnection dualConnection = DualConnection.builder(new NoOpConnectionProvider(), new PermanentConsistency()).build();
+
+        Throwable thrown = catchThrowable(() -> dualConnection.unwrap(Integer.class));
+
+        assertThat(thrown).isInstanceOf(SQLException.class);
+    }
+
+    @Test
+    public void shouldUnwrapDelegate() throws SQLException {
+        final DualConnection dualConnection = DualConnection.builder(new NoOpConnectionProvider(), new PermanentConsistency()).build();
+        dualConnection.prepareStatement(SIMPLE_QUERY).executeQuery();
+        final NoOpConnection connection = dualConnection.unwrap(NoOpConnection.class);
+
+        assertThat(connection).isNotNull();
     }
 }

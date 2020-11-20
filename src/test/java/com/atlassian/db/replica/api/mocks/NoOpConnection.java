@@ -282,7 +282,7 @@ public class NoOpConnection implements Connection {
 
     @Override
     public <T> T unwrap(Class<T> iface) throws SQLException {
-        throw new RuntimeException("Not implemented");
+        throw new SQLException("Not implemented");
     }
 
     @Override

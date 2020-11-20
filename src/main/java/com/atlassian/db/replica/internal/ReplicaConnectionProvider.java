@@ -183,6 +183,19 @@ public class ReplicaConnectionProvider implements AutoCloseable {
         }
     }
 
+    public <T> T unwrap(Class<T> iface) throws SQLException {
+        final Connection currentConnection = readConnection.isInitialized() ? readConnection.get() : writeConnection.get();
+        if (iface.isAssignableFrom(currentConnection.getClass())) {
+            return iface.cast(currentConnection);
+        } else {
+            return currentConnection.unwrap(iface);
+        }
+    }
+
+    public boolean isWrapperFor(Class<?> iface) {
+        throw new ReadReplicaUnsupportedOperationException();
+    }
+
     /**
      * Provides a connection that will be used for writing operation. It will always return a connection to the
      * main database.
