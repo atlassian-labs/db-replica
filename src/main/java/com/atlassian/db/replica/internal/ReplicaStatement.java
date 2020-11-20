@@ -290,6 +290,9 @@ public class ReplicaStatement implements Statement {
 
     @Override
     public boolean isClosed() throws SQLException {
+        if (currentStatement == null) {
+            return false;
+        }
         return currentStatement.isClosed();
     }
 

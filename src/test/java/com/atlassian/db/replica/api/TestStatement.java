@@ -299,4 +299,27 @@ public class TestStatement {
 
         assertThat(isWrappedFor).isFalse();
     }
+
+    @Test
+    public void shouldNotBeClosedBeforeUse() throws SQLException {
+        final DualConnection connection = DualConnection.builder(connectionProvider, new PermanentConsistency()).build();
+        final Statement statement = connection.prepareStatement(SIMPLE_QUERY);
+
+        final boolean isClosed = statement.isClosed();
+
+        assertThat(isClosed).isFalse();
+    }
+
+    @Test
+    public void shouldClose() throws SQLException {
+        final DualConnection connection = DualConnection.builder(connectionProvider, new PermanentConsistency()).build();
+        final Statement statement = connection.prepareStatement(SIMPLE_QUERY);
+        statement.executeQuery(SIMPLE_QUERY);
+
+        statement.close();
+        statement.isClosed();
+
+        verify(connectionProvider.singleStatement()).close();
+        verify(connectionProvider.singleStatement()).isClosed();
+    }
 }
