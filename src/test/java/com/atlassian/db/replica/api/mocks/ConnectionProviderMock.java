@@ -67,6 +67,13 @@ public class ConnectionProviderMock implements ConnectionProvider {
         return providedConnections.get(0);
     }
 
+    public Statement singleStatement() {
+        if (preparedStatements.size() != 1) {
+            throw new RuntimeException("Expected to provide a single statement");
+        }
+        return preparedStatements.get(0);
+    }
+
     public List<ConnectionType> getProvidedConnectionTypes() {
         return providedConnectionTypes;
     }

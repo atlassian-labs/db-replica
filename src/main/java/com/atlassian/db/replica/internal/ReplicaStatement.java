@@ -122,13 +122,19 @@ public class ReplicaStatement implements Statement {
     }
 
     @Override
-    public SQLWarning getWarnings() {
-        throw new ReadReplicaUnsupportedOperationException();
+    public SQLWarning getWarnings() throws SQLException {
+        if (getCurrentStatement() == null) {
+            return null;
+        } else {
+            return getCurrentStatement().getWarnings();
+        }
     }
 
     @Override
-    public void clearWarnings() {
-        throw new ReadReplicaUnsupportedOperationException();
+    public void clearWarnings() throws SQLException {
+        if (getCurrentStatement() != null) {
+            getCurrentStatement().clearWarnings();
+        }
     }
 
     @Override
