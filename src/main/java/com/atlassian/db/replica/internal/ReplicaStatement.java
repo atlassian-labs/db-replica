@@ -183,9 +183,7 @@ public class ReplicaStatement implements Statement {
 
     @Override
     public void setFetchSize(int rows) {
-        addOperation(
-            (StatementOperation<Statement>) statement -> statement.setFetchSize(rows)
-        );
+        addOperation(statement -> statement.setFetchSize(rows));
     }
 
     @Override

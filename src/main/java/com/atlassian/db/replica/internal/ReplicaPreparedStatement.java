@@ -96,135 +96,105 @@ public class ReplicaPreparedStatement extends ReplicaStatement implements Prepar
     @Override
     public void setNull(int parameterIndex, int sqlType) {
         addOperation(
-            (StatementOperation<PreparedStatement>) statement -> {
-                statement.setNull(parameterIndex, sqlType);
-            }
+            (StatementOperation<PreparedStatement>) statement -> statement.setNull(parameterIndex, sqlType)
         );
     }
 
     @Override
     public void setBoolean(int parameterIndex, boolean x) {
         addOperation(
-            (StatementOperation<PreparedStatement>) statement -> {
-                statement.setBoolean(parameterIndex, x);
-            }
+            (StatementOperation<PreparedStatement>) statement -> statement.setBoolean(parameterIndex, x)
         );
     }
 
     @Override
     public void setByte(int parameterIndex, byte x) {
         addOperation(
-            (StatementOperation<PreparedStatement>) statement -> {
-                statement.setByte(parameterIndex, x);
-            }
+            (StatementOperation<PreparedStatement>) statement -> statement.setByte(parameterIndex, x)
         );
     }
 
     @Override
     public void setShort(int parameterIndex, short x) {
         addOperation(
-            (StatementOperation<PreparedStatement>) statement -> {
-                statement.setShort(parameterIndex, x);
-            }
+            (StatementOperation<PreparedStatement>) statement -> statement.setShort(parameterIndex, x)
         );
     }
 
     @Override
     public void setInt(int parameterIndex, int x) {
         addOperation(
-            (StatementOperation<PreparedStatement>) statement -> {
-                statement.setInt(parameterIndex, x);
-            }
+            (StatementOperation<PreparedStatement>) statement -> statement.setInt(parameterIndex, x)
         );
     }
 
     @Override
     public void setLong(int parameterIndex, long x) {
         addOperation(
-            (StatementOperation<PreparedStatement>) statement -> {
-                statement.setLong(parameterIndex, x);
-            }
+            (StatementOperation<PreparedStatement>) statement -> statement.setLong(parameterIndex, x)
         );
     }
 
     @Override
     public void setFloat(int parameterIndex, float x) {
         addOperation(
-            (StatementOperation<PreparedStatement>) statement -> {
-                statement.setFloat(parameterIndex, x);
-            }
+            (StatementOperation<PreparedStatement>) statement -> statement.setFloat(parameterIndex, x)
         );
     }
 
     @Override
     public void setDouble(int parameterIndex, double x) {
         addOperation(
-            (StatementOperation<PreparedStatement>) statement -> {
-                statement.setDouble(parameterIndex, x);
-            }
+            (StatementOperation<PreparedStatement>) statement -> statement.setDouble(parameterIndex, x)
         );
     }
 
     @Override
     public void setBigDecimal(int parameterIndex, BigDecimal x) {
         addOperation(
-            (StatementOperation<PreparedStatement>) statement -> {
-                statement.setBigDecimal(parameterIndex, x);
-            }
+            (StatementOperation<PreparedStatement>) statement -> statement.setBigDecimal(parameterIndex, x)
         );
     }
 
     @Override
     public void setString(int parameterIndex, String x) {
         addOperation(
-            (StatementOperation<PreparedStatement>) statement -> {
-                statement.setString(parameterIndex, x);
-            }
+            (StatementOperation<PreparedStatement>) statement -> statement.setString(parameterIndex, x)
         );
     }
 
     @Override
     public void setBytes(int parameterIndex, byte[] x) {
         addOperation(
-            (StatementOperation<PreparedStatement>) statement -> {
-                statement.setBytes(parameterIndex, x);
-            }
+            (StatementOperation<PreparedStatement>) statement -> statement.setBytes(parameterIndex, x)
         );
     }
 
     @Override
     public void setDate(int parameterIndex, Date x) {
         addOperation(
-            (StatementOperation<PreparedStatement>) statement -> {
-                statement.setDate(parameterIndex, x);
-            }
+            (StatementOperation<PreparedStatement>) statement -> statement.setDate(parameterIndex, x)
         );
     }
 
     @Override
     public void setTime(int parameterIndex, Time x) {
         addOperation(
-            (StatementOperation<PreparedStatement>) statement -> {
-                statement.setTime(parameterIndex, x);
-            }
+            (StatementOperation<PreparedStatement>) statement -> statement.setTime(parameterIndex, x)
         );
     }
 
     @Override
     public void setTimestamp(int parameterIndex, Timestamp x) {
         addOperation(
-            (StatementOperation<PreparedStatement>) statement -> {
-                statement.setTimestamp(parameterIndex, x);
-            }
+            (StatementOperation<PreparedStatement>) statement -> statement.setTimestamp(parameterIndex, x)
         );
     }
 
     @Override
     public void setAsciiStream(int parameterIndex, InputStream x, int length) {
         addOperation(
-            (StatementOperation<PreparedStatement>) statement -> {
-                statement.setAsciiStream(parameterIndex, x);
-            }
+            (StatementOperation<PreparedStatement>) statement -> statement.setAsciiStream(parameterIndex, x)
         );
     }
 
@@ -241,9 +211,7 @@ public class ReplicaPreparedStatement extends ReplicaStatement implements Prepar
     @Override
     public void setBinaryStream(int parameterIndex, InputStream x, int length) {
         addOperation(
-            (StatementOperation<PreparedStatement>) statement -> {
-                statement.setBinaryStream(parameterIndex, x, length);
-            }
+            (StatementOperation<PreparedStatement>) statement -> statement.setBinaryStream(parameterIndex, x, length)
         );
     }
 
@@ -255,18 +223,14 @@ public class ReplicaPreparedStatement extends ReplicaStatement implements Prepar
     @Override
     public void setObject(int parameterIndex, Object x, int targetSqlType) {
         addOperation(
-            (StatementOperation<PreparedStatement>) statement -> {
-                statement.setObject(parameterIndex, x, targetSqlType);
-            }
+            (StatementOperation<PreparedStatement>) statement -> statement.setObject(parameterIndex, x, targetSqlType)
         );
     }
 
     @Override
     public void setObject(int parameterIndex, Object x) {
         addOperation(
-            (StatementOperation<PreparedStatement>) statement -> {
-                statement.setObject(parameterIndex, x);
-            }
+            (StatementOperation<PreparedStatement>) statement -> statement.setObject(parameterIndex, x)
         );
     }
 
@@ -279,54 +243,42 @@ public class ReplicaPreparedStatement extends ReplicaStatement implements Prepar
     @Override
     public void addBatch() {
         addOperation(
-            (StatementOperation<PreparedStatement>) statement -> {
-                statement.addBatch();
-            }
+            (StatementOperation<PreparedStatement>) PreparedStatement::addBatch
         );
     }
 
     @Override
     public void setCharacterStream(int parameterIndex, Reader reader, int length) {
         addOperation(
-            (StatementOperation<PreparedStatement>) statement -> {
-                statement.setCharacterStream(parameterIndex, reader, length);
-            }
+            (StatementOperation<PreparedStatement>) statement -> statement.setCharacterStream(parameterIndex, reader, length)
         );
     }
 
     @Override
     public void setRef(int parameterIndex, Ref x) {
         addOperation(
-            (StatementOperation<PreparedStatement>) statement -> {
-                statement.setRef(parameterIndex, x);
-            }
+            (StatementOperation<PreparedStatement>) statement -> statement.setRef(parameterIndex, x)
         );
     }
 
     @Override
     public void setBlob(int parameterIndex, Blob x) {
         addOperation(
-            (StatementOperation<PreparedStatement>) statement -> {
-                statement.setBlob(parameterIndex, x);
-            }
+            (StatementOperation<PreparedStatement>) statement -> statement.setBlob(parameterIndex, x)
         );
     }
 
     @Override
     public void setClob(int parameterIndex, Clob x) {
         addOperation(
-            (StatementOperation<PreparedStatement>) statement -> {
-                statement.setClob(parameterIndex, x);
-            }
+            (StatementOperation<PreparedStatement>) statement -> statement.setClob(parameterIndex, x)
         );
     }
 
     @Override
     public void setArray(int parameterIndex, Array x) {
         addOperation(
-            (StatementOperation<PreparedStatement>) statement -> {
-                statement.setArray(parameterIndex, x);
-            }
+            (StatementOperation<PreparedStatement>) statement -> statement.setArray(parameterIndex, x)
         );
     }
 
@@ -338,45 +290,35 @@ public class ReplicaPreparedStatement extends ReplicaStatement implements Prepar
     @Override
     public void setDate(int parameterIndex, Date x, Calendar cal) {
         addOperation(
-            (StatementOperation<PreparedStatement>) statement -> {
-                statement.setDate(parameterIndex, x);
-            }
+            (StatementOperation<PreparedStatement>) statement -> statement.setDate(parameterIndex, x)
         );
     }
 
     @Override
     public void setTime(int parameterIndex, Time x, Calendar cal) {
         addOperation(
-            (StatementOperation<PreparedStatement>) statement -> {
-                statement.setTime(parameterIndex, x);
-            }
+            (StatementOperation<PreparedStatement>) statement -> statement.setTime(parameterIndex, x)
         );
     }
 
     @Override
     public void setTimestamp(int parameterIndex, Timestamp x, Calendar cal) {
         addOperation(
-            (StatementOperation<PreparedStatement>) statement -> {
-                statement.setTimestamp(parameterIndex, x, cal);
-            }
+            (StatementOperation<PreparedStatement>) statement -> statement.setTimestamp(parameterIndex, x, cal)
         );
     }
 
     @Override
     public void setNull(int parameterIndex, int sqlType, String typeName) {
         addOperation(
-            (StatementOperation<PreparedStatement>) statement -> {
-                statement.setNull(parameterIndex, sqlType, typeName);
-            }
+            (StatementOperation<PreparedStatement>) statement -> statement.setNull(parameterIndex, sqlType, typeName)
         );
     }
 
     @Override
     public void setURL(int parameterIndex, URL x) {
         addOperation(
-            (StatementOperation<PreparedStatement>) statement -> {
-                statement.setURL(parameterIndex, x);
-            }
+            (StatementOperation<PreparedStatement>) statement -> statement.setURL(parameterIndex, x)
         );
     }
 
@@ -393,171 +335,133 @@ public class ReplicaPreparedStatement extends ReplicaStatement implements Prepar
     @Override
     public void setRowId(int parameterIndex, RowId x) {
         addOperation(
-            (StatementOperation<PreparedStatement>) statement -> {
-                statement.setRowId(parameterIndex, x);
-            }
+            (StatementOperation<PreparedStatement>) statement -> statement.setRowId(parameterIndex, x)
         );
     }
 
     @Override
     public void setNString(int parameterIndex, String value) {
         addOperation(
-            (StatementOperation<PreparedStatement>) statement -> {
-                statement.setNString(parameterIndex, value);
-            }
+            (StatementOperation<PreparedStatement>) statement -> statement.setNString(parameterIndex, value)
         );
     }
 
     @Override
     public void setNCharacterStream(int parameterIndex, Reader value, long length) {
         addOperation(
-            (StatementOperation<PreparedStatement>) statement -> {
-                statement.setNCharacterStream(parameterIndex, value, length);
-            }
+            (StatementOperation<PreparedStatement>) statement -> statement.setNCharacterStream(parameterIndex, value, length)
         );
     }
 
     @Override
     public void setNClob(int parameterIndex, NClob value) {
         addOperation(
-            (StatementOperation<PreparedStatement>) statement -> {
-                statement.setNClob(parameterIndex, value);
-            }
+            (StatementOperation<PreparedStatement>) statement -> statement.setNClob(parameterIndex, value)
         );
     }
 
     @Override
     public void setClob(int parameterIndex, Reader reader, long length) {
         addOperation(
-            (StatementOperation<PreparedStatement>) statement -> {
-                statement.setClob(parameterIndex, reader, length);
-            }
+            (StatementOperation<PreparedStatement>) statement -> statement.setClob(parameterIndex, reader, length)
         );
     }
 
     @Override
     public void setBlob(int parameterIndex, InputStream inputStream, long length) {
         addOperation(
-            (StatementOperation<PreparedStatement>) statement -> {
-                statement.setBlob(parameterIndex, inputStream, length);
-            }
+            (StatementOperation<PreparedStatement>) statement -> statement.setBlob(parameterIndex, inputStream, length)
         );
     }
 
     @Override
     public void setNClob(int parameterIndex, Reader reader, long length) {
         addOperation(
-            (StatementOperation<PreparedStatement>) statement -> {
-                statement.setNClob(parameterIndex, reader, length);
-            }
+            (StatementOperation<PreparedStatement>) statement -> statement.setNClob(parameterIndex, reader, length)
         );
     }
 
     @Override
     public void setSQLXML(int parameterIndex, SQLXML xmlObject) {
         addOperation(
-            (StatementOperation<PreparedStatement>) statement -> {
-                statement.setSQLXML(parameterIndex, xmlObject);
-            }
+            (StatementOperation<PreparedStatement>) statement -> statement.setSQLXML(parameterIndex, xmlObject)
         );
     }
 
     @Override
     public void setObject(int parameterIndex, Object x, int targetSqlType, int scaleOrLength) {
         addOperation(
-            (StatementOperation<PreparedStatement>) statement -> {
-                statement.setObject(parameterIndex, x, targetSqlType, scaleOrLength);
-            }
+            (StatementOperation<PreparedStatement>) statement -> statement.setObject(parameterIndex, x, targetSqlType, scaleOrLength)
         );
     }
 
     @Override
     public void setAsciiStream(int parameterIndex, InputStream x, long length) {
         addOperation(
-            (StatementOperation<PreparedStatement>) statement -> {
-                statement.setAsciiStream(parameterIndex, x, length);
-            }
+            (StatementOperation<PreparedStatement>) statement -> statement.setAsciiStream(parameterIndex, x, length)
         );
     }
 
     @Override
     public void setBinaryStream(int parameterIndex, InputStream x, long length) {
         addOperation(
-            (StatementOperation<PreparedStatement>) statement -> {
-                statement.setBinaryStream(parameterIndex, x, length);
-            }
+            (StatementOperation<PreparedStatement>) statement -> statement.setBinaryStream(parameterIndex, x, length)
         );
     }
 
     @Override
     public void setCharacterStream(int parameterIndex, Reader reader, long length) {
         addOperation(
-            (StatementOperation<PreparedStatement>) statement -> {
-                statement.setCharacterStream(parameterIndex, reader, length);
-            }
+            (StatementOperation<PreparedStatement>) statement -> statement.setCharacterStream(parameterIndex, reader, length)
         );
     }
 
     @Override
     public void setAsciiStream(int parameterIndex, InputStream x) {
         addOperation(
-            (StatementOperation<PreparedStatement>) statement -> {
-                statement.setAsciiStream(parameterIndex, x);
-            }
+            (StatementOperation<PreparedStatement>) statement -> statement.setAsciiStream(parameterIndex, x)
         );
     }
 
     @Override
     public void setBinaryStream(int parameterIndex, InputStream x) {
         addOperation(
-            (StatementOperation<PreparedStatement>) statement -> {
-                statement.setBinaryStream(parameterIndex, x);
-            }
+            (StatementOperation<PreparedStatement>) statement -> statement.setBinaryStream(parameterIndex, x)
         );
     }
 
     @Override
     public void setCharacterStream(int parameterIndex, Reader reader) {
         addOperation(
-            (StatementOperation<PreparedStatement>) statement -> {
-                statement.setCharacterStream(parameterIndex, reader);
-            }
+            (StatementOperation<PreparedStatement>) statement -> statement.setCharacterStream(parameterIndex, reader)
         );
     }
 
     @Override
     public void setNCharacterStream(int parameterIndex, Reader value) {
         addOperation(
-            (StatementOperation<PreparedStatement>) statement -> {
-                statement.setNCharacterStream(parameterIndex, value);
-            }
+            (StatementOperation<PreparedStatement>) statement -> statement.setNCharacterStream(parameterIndex, value)
         );
     }
 
     @Override
     public void setClob(int parameterIndex, Reader reader) {
         addOperation(
-            (StatementOperation<PreparedStatement>) statement -> {
-                statement.setClob(parameterIndex, reader);
-            }
+            (StatementOperation<PreparedStatement>) statement -> statement.setClob(parameterIndex, reader)
         );
     }
 
     @Override
     public void setBlob(int parameterIndex, InputStream inputStream) {
         addOperation(
-            (StatementOperation<PreparedStatement>) statement -> {
-                statement.setBlob(parameterIndex, inputStream);
-            }
+            (StatementOperation<PreparedStatement>) statement -> statement.setBlob(parameterIndex, inputStream)
         );
     }
 
     @Override
     public void setNClob(int parameterIndex, Reader reader) {
         addOperation(
-            (StatementOperation<PreparedStatement>) statement -> {
-                statement.setNClob(parameterIndex, reader);
-            }
+            (StatementOperation<PreparedStatement>) statement -> statement.setNClob(parameterIndex, reader)
         );
     }
 
