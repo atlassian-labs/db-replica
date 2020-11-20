@@ -184,4 +184,28 @@ public class TestStatement {
 
         assertThat(hasMoreResults).isEqualTo(false);
     }
+
+    @Test
+    public void shouldSetFetchSizeOnMain() throws SQLException {
+        final DualConnection connection = DualConnection.builder(connectionProvider, new PermanentConsistency()).build();
+        final PreparedStatement statement = connection.prepareStatement(SIMPLE_QUERY);
+
+        statement.setFetchSize(10);
+        statement.executeUpdate();
+
+
+        verify(connectionProvider.singleStatement()).setFetchSize(10);
+    }
+
+    @Test
+    public void shouldSetFetchSizeOnReplica() throws SQLException {
+        final DualConnection connection = DualConnection.builder(connectionProvider, new PermanentConsistency()).build();
+        final PreparedStatement statement = connection.prepareStatement(SIMPLE_QUERY);
+
+        statement.setFetchSize(10);
+        statement.executeQuery();
+
+
+        verify(connectionProvider.singleStatement()).setFetchSize(10);
+    }
 }
