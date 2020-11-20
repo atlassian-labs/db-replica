@@ -683,7 +683,7 @@ public class TestDualConnection {
     }
 
     @Test
-    public void shouldFailUnwrapInteger()  {
+    public void shouldFailUnwrapInteger() {
         final DualConnection dualConnection = DualConnection.builder(new NoOpConnectionProvider(), new PermanentConsistency()).build();
 
         Throwable thrown = catchThrowable(() -> dualConnection.unwrap(Integer.class));
@@ -698,5 +698,31 @@ public class TestDualConnection {
         final NoOpConnection connection = dualConnection.unwrap(NoOpConnection.class);
 
         assertThat(connection).isNotNull();
+    }
+
+    @Test
+    public void shouldCheckIfIsWrappedForConnection() throws SQLException {
+        final DualConnection dualConnection = DualConnection.builder(new NoOpConnectionProvider(), new PermanentConsistency()).build();
+
+        final boolean isWrappedFor = dualConnection.isWrapperFor(Connection.class);
+
+        assertThat(isWrappedFor).isTrue();
+    }
+
+    @Test
+    public void shouldDelegateCheckIfIsWrappedForUnknownClass() throws SQLException {
+        final DualConnection dualConnection = DualConnection.builder(connectionProvider, new PermanentConsistency()).build();
+
+        dualConnection.isWrapperFor(Integer.class);
+
+        verify(connectionProvider.singleProvidedConnection()).isWrapperFor(Integer.class);
+    }
+
+    @Test
+    public void shouldDelegateCheckIfIsWrappedFor() throws SQLException {
+        final DualConnection dualConnection = DualConnection.builder(new NoOpConnectionProvider(), new PermanentConsistency()).build();
+        final boolean isWrappedFor = dualConnection.isWrapperFor(NoOpConnection.class);
+
+        assertThat(isWrappedFor).isTrue();
     }
 }

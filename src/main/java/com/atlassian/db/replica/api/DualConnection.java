@@ -385,8 +385,11 @@ public class DualConnection implements Connection {
     }
 
     @Override
-    public boolean isWrapperFor(Class<?> iface) {
-        throw new ReadReplicaUnsupportedOperationException();
+    public boolean isWrapperFor(Class<?> iface) throws SQLException {
+        if (iface.isAssignableFrom(getClass())) {
+            return true;
+        }
+        return connectionProvider.isWrapperFor(iface);
     }
 
     public static Builder builder(

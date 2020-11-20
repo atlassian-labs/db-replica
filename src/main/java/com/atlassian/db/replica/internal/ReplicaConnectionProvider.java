@@ -192,8 +192,13 @@ public class ReplicaConnectionProvider implements AutoCloseable {
         }
     }
 
-    public boolean isWrapperFor(Class<?> iface) {
-        throw new ReadReplicaUnsupportedOperationException();
+    public boolean isWrapperFor(Class<?> iface) throws SQLException {
+        final Connection currentConnection = readConnection.isInitialized() ? readConnection.get() : writeConnection.get();
+        if (iface.isAssignableFrom(currentConnection.getClass())) {
+            return true;
+        } else {
+            return currentConnection.isWrapperFor(iface);
+        }
     }
 
     /**
