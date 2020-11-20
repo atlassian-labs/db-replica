@@ -314,17 +314,29 @@ public class ReplicaStatement implements Statement {
     }
 
     @Override
-    public <T> T unwrap(Class<T> iface) {
-        if (isWrapperFor(iface)) {
-            //noinspection unchecked
-            return (T) this;
+    public <T> T unwrap(Class<T> iface) throws SQLException {
+        if (iface.isAssignableFrom(getClass())) {
+            return iface.cast(this);
+        } else if (currentStatement != null && iface.isAssignableFrom(currentStatement.getClass())) {
+            return iface.cast(currentStatement);
+        } else if (currentStatement != null) {
+            return currentStatement.unwrap(iface);
+        } else {
+            throw new SQLException();
         }
-        throw new ReadReplicaUnsupportedOperationException();
     }
 
     @Override
-    public boolean isWrapperFor(Class<?> iface) {
-        return iface.isInstance(this);
+    public boolean isWrapperFor(Class<?> iface) throws SQLException {
+        if (iface.isAssignableFrom(getClass())) {
+            return true;
+        } else if (currentStatement != null && iface.isAssignableFrom(currentStatement.getClass())) {
+            return true;
+        } else if (currentStatement != null) {
+            return currentStatement.isWrapperFor(iface);
+        } else {
+            return false;
+        }
     }
 
     @Override

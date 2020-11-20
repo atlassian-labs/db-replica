@@ -8,9 +8,11 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.SQLWarning;
+import java.sql.Statement;
 
 import static com.atlassian.db.replica.api.Queries.SIMPLE_QUERY;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
@@ -254,5 +256,47 @@ public class TestStatement {
         statement.executeQuery();
 
         verify(connectionProvider.singleStatement(), never()).addBatch(SIMPLE_QUERY);
+    }
+
+    @Test
+    public void shouldUnwrapStatement() throws SQLException {
+        final DualConnection connection = DualConnection.builder(connectionProvider, new PermanentConsistency()).build();
+        final PreparedStatement preparedStatement = connection.prepareStatement(SIMPLE_QUERY);
+
+        final Statement statement = preparedStatement.unwrap(Statement.class);
+
+        assertThat(statement).isEqualTo(preparedStatement);
+    }
+
+    @Test
+    public void shouldFailUnwrapWithSqlException() {
+        final DualConnection connection = DualConnection.builder(connectionProvider, new PermanentConsistency()).build();
+        final PreparedStatement preparedStatement = connection.prepareStatement(SIMPLE_QUERY);
+
+        Throwable thrown = catchThrowable(() -> preparedStatement.unwrap(Integer.class));
+
+        assertThat(thrown).isInstanceOf(SQLException.class);
+    }
+
+    @Test
+    public void shouldCheckIfIsWrappedForStatement() throws SQLException {
+        final DualConnection connection = DualConnection.builder(connectionProvider, new PermanentConsistency()).build();
+        final PreparedStatement preparedStatement = connection.prepareStatement(SIMPLE_QUERY);
+        preparedStatement.executeQuery();
+
+        final boolean isWrappedFor = preparedStatement.isWrapperFor(Statement.class);
+
+        assertThat(isWrappedFor).isTrue();
+    }
+
+    @Test
+    public void shouldCheckIfIsWrappedForInteger() throws SQLException {
+        final DualConnection connection = DualConnection.builder(connectionProvider, new PermanentConsistency()).build();
+        final PreparedStatement preparedStatement = connection.prepareStatement(SIMPLE_QUERY);
+        preparedStatement.executeQuery();
+
+        final boolean isWrappedFor = preparedStatement.isWrapperFor(Integer.class);
+
+        assertThat(isWrappedFor).isFalse();
     }
 }
