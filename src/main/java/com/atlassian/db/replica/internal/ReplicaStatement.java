@@ -164,6 +164,9 @@ public class ReplicaStatement implements Statement {
 
     @Override
     public boolean getMoreResults() throws SQLException {
+        if (getCurrentStatement() == null) {
+            return false;
+        }
         return getCurrentStatement().getMoreResults();
     }
 

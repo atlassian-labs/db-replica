@@ -152,4 +152,36 @@ public class TestStatement {
 
         assertThat(updateCount).isEqualTo(-1);
     }
+
+    @Test
+    public void shouldGetMoreResultsOnMain() throws SQLException {
+        final DualConnection connection = DualConnection.builder(connectionProvider, new PermanentConsistency()).build();
+        final PreparedStatement statement = connection.prepareStatement(SIMPLE_QUERY);
+        statement.executeUpdate();
+
+        statement.getMoreResults();
+
+        verify(connectionProvider.singleStatement()).getMoreResults();
+    }
+
+    @Test
+    public void shouldGetMoreResultsOnReplica() throws SQLException {
+        final DualConnection connection = DualConnection.builder(connectionProvider, new PermanentConsistency()).build();
+        final PreparedStatement statement = connection.prepareStatement(SIMPLE_QUERY);
+        statement.executeQuery();
+
+        statement.getMoreResults();
+
+        verify(connectionProvider.singleStatement()).getMoreResults();
+    }
+
+    @Test
+    public void shouldNotHaveMoreResultsBeforeQueryExecuted() throws SQLException {
+        final DualConnection connection = DualConnection.builder(connectionProvider, new PermanentConsistency()).build();
+        final PreparedStatement statement = connection.prepareStatement(SIMPLE_QUERY);
+
+        final boolean hasMoreResults = statement.getMoreResults();
+
+        assertThat(hasMoreResults).isEqualTo(false);
+    }
 }
