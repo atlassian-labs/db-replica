@@ -1,11 +1,11 @@
 # This is a Gradle generated file for dependency locking.
 # Manual edits can break the build and are not advised.
 # This file is expected to be part of source control.
-com.github.stephenc.jcip:jcip-annotations:1.0-1
 io.atlassian.util.concurrent:atlassian-util-concurrent:4.0.1
 junit:junit:4.12
 net.bytebuddy:byte-buddy-agent:1.10.15
 net.bytebuddy:byte-buddy:1.10.15
+net.jcip:jcip-annotations:1.0
 org.apache.commons:commons-lang3:3.11
 org.assertj:assertj-core:3.18.1
 org.hamcrest:hamcrest-core:1.3

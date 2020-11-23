@@ -16,7 +16,7 @@ configurations.all {
 }
 
 dependencies {
-    implementation("com.github.stephenc.jcip:jcip-annotations:1.0-1")
+    implementation("net.jcip:jcip-annotations:1.0")
     implementation("io.atlassian.util.concurrent:atlassian-util-concurrent:4.0.1")
     implementation("org.postgresql:postgresql:42.2.18")
     implementation("org.apache.commons:commons-lang3:3.11")
