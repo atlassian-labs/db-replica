@@ -739,4 +739,15 @@ public class TestDualConnection {
         verify(connectionProvider.singleProvidedConnection(), never()).close();
     }
 
+    @Test
+    public void shouldNotCloseConnectionForSingleConnectionProviderWhenInconsistent() throws SQLException {
+        final Connection mock = connectionProvider.getReplicaConnection();
+        final SingleConnectionProvider singleConnectionProvider = new SingleConnectionProvider(mock);
+        final DualConnection connection = DualConnection.builder(singleConnectionProvider, new PermanentInconsistency()).build();
+
+        connection.prepareStatement(SIMPLE_QUERY).executeQuery();
+
+        verify(connectionProvider.singleProvidedConnection(), never()).close();
+    }
+
 }

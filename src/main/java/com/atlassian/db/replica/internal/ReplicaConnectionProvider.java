@@ -177,7 +177,9 @@ public class ReplicaConnectionProvider implements AutoCloseable {
                 initialize(readConnection);
                 return readConnection;
             }
-            readConnection.close();
+            if (!getWriteConnection().equals(readConnection)) {
+                readConnection.close();
+            }
             this.readConnection.reset();
             return getWriteConnection();
         }
