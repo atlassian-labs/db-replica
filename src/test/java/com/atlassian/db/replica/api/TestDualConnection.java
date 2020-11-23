@@ -5,6 +5,7 @@ import com.atlassian.db.replica.api.mocks.NoOpConnection;
 import com.atlassian.db.replica.api.mocks.NoOpConnectionProvider;
 import com.atlassian.db.replica.api.mocks.PermanentConsistency;
 import com.atlassian.db.replica.api.mocks.PermanentInconsistency;
+import com.atlassian.db.replica.api.mocks.SingleConnectionProvider;
 import com.atlassian.db.replica.spi.DualCall;
 import org.junit.Test;
 import org.mockito.Mockito;
@@ -725,4 +726,17 @@ public class TestDualConnection {
 
         assertThat(isWrappedFor).isTrue();
     }
+
+    @Test
+    public void shouldNotCloseConnectionForSingleConnectionProvider() throws SQLException {
+        final Connection mock = connectionProvider.getReplicaConnection();
+        final SingleConnectionProvider singleConnectionProvider = new SingleConnectionProvider(mock);
+        final DualConnection connection = DualConnection.builder(singleConnectionProvider, new PermanentConsistency()).build();
+
+        connection.prepareStatement(SIMPLE_QUERY).executeQuery();
+        connection.prepareStatement(SIMPLE_QUERY).executeUpdate();
+
+        verify(connectionProvider.singleProvidedConnection(), never()).close();
+    }
+
 }
