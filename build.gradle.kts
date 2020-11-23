@@ -28,8 +28,8 @@ dependencies {
     testImplementation("junit:junit:4.12")
     testImplementation("org.assertj:assertj-core:3.18.1")
     testImplementation("org.mockito:mockito-core:3.6.0")
-    testImplementation("com.github.docker-java:docker-java-core:3.2.5")
-    testImplementation("com.github.docker-java:docker-java-transport-httpclient5:3.2.5")
+    testImplementation("com.github.docker-java:docker-java-core:3.2.6")
+    testImplementation("com.github.docker-java:docker-java-transport-httpclient5:3.2.6")
 }
 
 tasks.compileJava {
