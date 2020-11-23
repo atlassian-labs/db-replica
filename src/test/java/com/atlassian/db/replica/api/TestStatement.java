@@ -19,10 +19,10 @@ import static org.mockito.Mockito.verify;
 
 @SuppressWarnings("ThrowableNotThrown")
 public class TestStatement {
-    private final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
 
     @Test
     public void shouldCloseAllStatements() throws SQLException {
+        final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
         final Connection connection = DualConnection.builder(connectionProvider, new PermanentConsistency()).build();
         final PreparedStatement statement = connection.prepareStatement(SIMPLE_QUERY);
         statement.executeQuery();
@@ -41,6 +41,7 @@ public class TestStatement {
 
     @Test
     public void shouldHaveNoWarningsByDefault() throws SQLException {
+        final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
         final Connection connection = DualConnection.builder(connectionProvider, new PermanentConsistency()).build();
         final PreparedStatement statement = connection.prepareStatement(SIMPLE_QUERY);
 
@@ -51,6 +52,7 @@ public class TestStatement {
 
     @Test
     public void shouldGetWarningsOnMain() throws SQLException {
+        final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
         final Connection connection = DualConnection.builder(connectionProvider, new PermanentConsistency()).build();
         final PreparedStatement statement = connection.prepareStatement(SIMPLE_QUERY);
         statement.executeUpdate();
@@ -62,6 +64,7 @@ public class TestStatement {
 
     @Test
     public void shouldGetWarningsOnReplica() throws SQLException {
+        final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
         final Connection connection = DualConnection.builder(connectionProvider, new PermanentConsistency()).build();
         final PreparedStatement statement = connection.prepareStatement(SIMPLE_QUERY);
         statement.executeQuery();
@@ -73,6 +76,7 @@ public class TestStatement {
 
     @Test
     public void shouldClearWarningsOnMain() throws SQLException {
+        final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
         final Connection connection = DualConnection.builder(connectionProvider, new PermanentConsistency()).build();
         final PreparedStatement statement = connection.prepareStatement(SIMPLE_QUERY);
         statement.executeUpdate();
@@ -84,6 +88,7 @@ public class TestStatement {
 
     @Test
     public void shouldClearWarningsOnReplica() throws SQLException {
+        final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
         final Connection connection = DualConnection.builder(connectionProvider, new PermanentConsistency()).build();
         final PreparedStatement statement = connection.prepareStatement(SIMPLE_QUERY);
         statement.executeQuery();
@@ -95,6 +100,7 @@ public class TestStatement {
 
     @Test
     public void shouldGetResultSetOnMain() throws SQLException {
+        final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
         final Connection connection = DualConnection.builder(connectionProvider, new PermanentConsistency()).build();
         final PreparedStatement statement = connection.prepareStatement(SIMPLE_QUERY);
         statement.executeUpdate();
@@ -106,6 +112,7 @@ public class TestStatement {
 
     @Test
     public void shouldGetResultSetOnReplica() throws SQLException {
+        final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
         final Connection connection = DualConnection.builder(connectionProvider, new PermanentConsistency()).build();
         final PreparedStatement statement = connection.prepareStatement(SIMPLE_QUERY);
         statement.executeQuery();
@@ -117,6 +124,7 @@ public class TestStatement {
 
     @Test
     public void shouldGetNullResultSetBeforeQueryExecuted() throws SQLException {
+        final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
         final Connection connection = DualConnection.builder(connectionProvider, new PermanentConsistency()).build();
         final PreparedStatement statement = connection.prepareStatement(SIMPLE_QUERY);
 
@@ -127,6 +135,7 @@ public class TestStatement {
 
     @Test
     public void shouldGetUpdateCountOnMain() throws SQLException {
+        final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
         final Connection connection = DualConnection.builder(connectionProvider, new PermanentConsistency()).build();
         final PreparedStatement statement = connection.prepareStatement(SIMPLE_QUERY);
         statement.executeUpdate();
@@ -138,6 +147,7 @@ public class TestStatement {
 
     @Test
     public void shouldGetUpdateCountOnReplica() throws SQLException {
+        final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
         final Connection connection = DualConnection.builder(connectionProvider, new PermanentConsistency()).build();
         final PreparedStatement statement = connection.prepareStatement(SIMPLE_QUERY);
         statement.executeQuery();
@@ -149,6 +159,7 @@ public class TestStatement {
 
     @Test
     public void shouldGetMinusOneForGetUpdateCountBeforeQueryExecuted() throws SQLException {
+        final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
         final Connection connection = DualConnection.builder(connectionProvider, new PermanentConsistency()).build();
         final PreparedStatement statement = connection.prepareStatement(SIMPLE_QUERY);
 
@@ -159,6 +170,7 @@ public class TestStatement {
 
     @Test
     public void shouldGetMoreResultsOnMain() throws SQLException {
+        final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
         final Connection connection = DualConnection.builder(connectionProvider, new PermanentConsistency()).build();
         final PreparedStatement statement = connection.prepareStatement(SIMPLE_QUERY);
         statement.executeUpdate();
@@ -170,6 +182,7 @@ public class TestStatement {
 
     @Test
     public void shouldGetMoreResultsOnReplica() throws SQLException {
+        final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
         final Connection connection = DualConnection.builder(connectionProvider, new PermanentConsistency()).build();
         final PreparedStatement statement = connection.prepareStatement(SIMPLE_QUERY);
         statement.executeQuery();
@@ -181,6 +194,7 @@ public class TestStatement {
 
     @Test
     public void shouldNotHaveMoreResultsBeforeQueryExecuted() throws SQLException {
+        final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
         final Connection connection = DualConnection.builder(connectionProvider, new PermanentConsistency()).build();
         final PreparedStatement statement = connection.prepareStatement(SIMPLE_QUERY);
 
@@ -191,6 +205,7 @@ public class TestStatement {
 
     @Test
     public void shouldSetFetchSizeOnMain() throws SQLException {
+        final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
         final Connection connection = DualConnection.builder(connectionProvider, new PermanentConsistency()).build();
         final PreparedStatement statement = connection.prepareStatement(SIMPLE_QUERY);
 
@@ -202,6 +217,7 @@ public class TestStatement {
 
     @Test
     public void shouldSetFetchSizeOnReplica() throws SQLException {
+        final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
         final Connection connection = DualConnection.builder(connectionProvider, new PermanentConsistency()).build();
         final PreparedStatement statement = connection.prepareStatement(SIMPLE_QUERY);
 
@@ -213,6 +229,7 @@ public class TestStatement {
 
     @Test
     public void shouldAddBatchOnMain() throws SQLException {
+        final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
         final Connection connection = DualConnection.builder(connectionProvider, new PermanentConsistency()).build();
         final PreparedStatement statement = connection.prepareStatement(SIMPLE_QUERY);
 
@@ -224,6 +241,7 @@ public class TestStatement {
 
     @Test
     public void shouldAddBatchOnReplica() throws SQLException {
+        final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
         final Connection connection = DualConnection.builder(connectionProvider, new PermanentConsistency()).build();
         final PreparedStatement statement = connection.prepareStatement(SIMPLE_QUERY);
 
@@ -235,6 +253,7 @@ public class TestStatement {
 
     @Test
     public void shouldClearBatchOnMain() throws SQLException {
+        final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
         final Connection connection = DualConnection.builder(connectionProvider, new PermanentConsistency()).build();
         final PreparedStatement statement = connection.prepareStatement(SIMPLE_QUERY);
 
@@ -248,6 +267,7 @@ public class TestStatement {
 
     @Test
     public void shouldClearBatchOnReplica() throws SQLException {
+        final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
         final Connection connection = DualConnection.builder(connectionProvider, new PermanentConsistency()).build();
         final PreparedStatement statement = connection.prepareStatement(SIMPLE_QUERY);
 
@@ -261,6 +281,7 @@ public class TestStatement {
 
     @Test
     public void shouldUnwrapStatement() throws SQLException {
+        final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
         final Connection connection = DualConnection
             .builder(connectionProvider, new PermanentConsistency())
             .circuitBreaker(null)
@@ -274,6 +295,7 @@ public class TestStatement {
 
     @Test
     public void shouldFailUnwrapWithSqlException() throws SQLException {
+        final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
         final Connection connection = DualConnection.builder(connectionProvider, new PermanentConsistency()).build();
         final PreparedStatement preparedStatement = connection.prepareStatement(SIMPLE_QUERY);
 
@@ -284,6 +306,7 @@ public class TestStatement {
 
     @Test
     public void shouldCheckIfIsWrappedForStatement() throws SQLException {
+        final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
         final Connection connection = DualConnection.builder(connectionProvider, new PermanentConsistency()).build();
         final PreparedStatement preparedStatement = connection.prepareStatement(SIMPLE_QUERY);
         preparedStatement.executeQuery();
@@ -295,6 +318,7 @@ public class TestStatement {
 
     @Test
     public void shouldCheckIfIsWrappedForInteger() throws SQLException {
+        final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
         final Connection connection = DualConnection.builder(connectionProvider, new PermanentConsistency()).build();
         final PreparedStatement preparedStatement = connection.prepareStatement(SIMPLE_QUERY);
         preparedStatement.executeQuery();
@@ -306,6 +330,7 @@ public class TestStatement {
 
     @Test
     public void shouldNotBeClosedBeforeUse() throws SQLException {
+        final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
         final Connection connection = DualConnection.builder(connectionProvider, new PermanentConsistency()).build();
         final Statement statement = connection.prepareStatement(SIMPLE_QUERY);
 
@@ -316,6 +341,7 @@ public class TestStatement {
 
     @Test
     public void shouldClose() throws SQLException {
+        final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
         final Connection connection = DualConnection.builder(connectionProvider, new PermanentConsistency()).build();
         final Statement statement = connection.prepareStatement(SIMPLE_QUERY);
         statement.executeQuery(SIMPLE_QUERY);
