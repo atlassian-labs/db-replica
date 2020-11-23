@@ -43,13 +43,7 @@ tasks.withType<Test> {
     }
 }
 
-group = "com.atlassian.db.replica"
-
-gradleRelease {
-    atlassianPrivateMode = true
-}
-
-tasks.getByName("test", Test::class).apply {
+tasks.test {
     filter {
         exclude("**/*IT.class")
     }
@@ -64,3 +58,9 @@ val testIntegration = task<Test>("testIntegration") {
 }
 
 tasks["check"].dependsOn(testIntegration)
+
+group = "com.atlassian.db.replica"
+
+gradleRelease {
+    atlassianPrivateMode = true
+}
