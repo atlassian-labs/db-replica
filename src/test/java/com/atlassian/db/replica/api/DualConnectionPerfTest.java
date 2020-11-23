@@ -16,7 +16,7 @@ public class DualConnectionPerfTest {
 
     @Test
     public void shouldHaveAcceptableThruput() throws SQLException {
-        final DualConnection connection = DualConnection
+        final Connection connection = DualConnection
             .builder(
                 new NoOpConnectionProvider(),
                 new PermanentConsistency()

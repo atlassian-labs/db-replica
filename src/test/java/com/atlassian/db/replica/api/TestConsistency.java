@@ -4,6 +4,7 @@ import com.atlassian.db.replica.api.mocks.ConnectionProviderMock;
 import com.atlassian.db.replica.spi.ReplicaConsistency;
 import org.junit.Test;
 
+import java.sql.Connection;
 import java.sql.SQLException;
 
 import static com.atlassian.db.replica.api.Queries.SIMPLE_QUERY;
@@ -20,7 +21,7 @@ public class TestConsistency {
     public void shouldRefreshCommitted() throws SQLException {
         final ReplicaConsistency consistency = mock(ReplicaConsistency.class);
         when(consistency.isConsistent(any())).thenReturn(true);
-        final DualConnection connection = DualConnection.builder(connectionProvider, consistency).build();
+        final Connection connection = DualConnection.builder(connectionProvider, consistency).build();
 
         connection.setAutoCommit(false);
         connection.prepareStatement(SIMPLE_QUERY).executeUpdate();
@@ -33,7 +34,7 @@ public class TestConsistency {
     public void shouldNotRefreshWhenNotCommitted() throws SQLException {
         final ReplicaConsistency consistency = mock(ReplicaConsistency.class);
         when(consistency.isConsistent(any())).thenReturn(true);
-        final DualConnection connection = DualConnection.builder(connectionProvider, consistency).build();
+        final Connection connection = DualConnection.builder(connectionProvider, consistency).build();
 
         connection.setAutoCommit(false);
         connection.prepareStatement(SIMPLE_QUERY).executeUpdate();
@@ -45,7 +46,7 @@ public class TestConsistency {
     public void shouldNotRefreshRolledBack() throws SQLException {
         final ReplicaConsistency consistency = mock(ReplicaConsistency.class);
         when(consistency.isConsistent(any())).thenReturn(true);
-        final DualConnection connection = DualConnection.builder(connectionProvider, consistency).build();
+        final Connection connection = DualConnection.builder(connectionProvider, consistency).build();
         connection.setAutoCommit(false);
 
         connection.prepareStatement(SIMPLE_QUERY).executeUpdate();
@@ -58,7 +59,7 @@ public class TestConsistency {
     public void shouldNotRefreshWhenQueryReplica() throws SQLException {
         final ReplicaConsistency consistency = mock(ReplicaConsistency.class);
         when(consistency.isConsistent(any())).thenReturn(true);
-        final DualConnection connection = DualConnection.builder(connectionProvider, consistency).build();
+        final Connection connection = DualConnection.builder(connectionProvider, consistency).build();
 
         connection.prepareStatement(SIMPLE_QUERY).executeQuery();
 
@@ -69,7 +70,7 @@ public class TestConsistency {
     public void shouldRefreshAfterAutoCommittedQuery() throws SQLException {
         final ReplicaConsistency consistency = mock(ReplicaConsistency.class);
         when(consistency.isConsistent(any())).thenReturn(true);
-        final DualConnection connection = DualConnection.builder(connectionProvider, consistency).build();
+        final Connection connection = DualConnection.builder(connectionProvider, consistency).build();
         connection.setAutoCommit(true);
 
         connection.prepareStatement(SIMPLE_QUERY).executeUpdate();
@@ -81,7 +82,7 @@ public class TestConsistency {
     public void shouldRefreshUpdatesByDefault() throws SQLException {
         final ReplicaConsistency consistency = mock(ReplicaConsistency.class);
         when(consistency.isConsistent(any())).thenReturn(true);
-        final DualConnection connection = DualConnection.builder(connectionProvider, consistency).build();
+        final Connection connection = DualConnection.builder(connectionProvider, consistency).build();
 
         connection.prepareStatement(SIMPLE_QUERY).executeUpdate();
 
@@ -92,8 +93,9 @@ public class TestConsistency {
     public void shouldRefreshAfterFunctionCall() throws SQLException {
         final ReplicaConsistency consistency = mock(ReplicaConsistency.class);
         when(consistency.isConsistent(any())).thenReturn(true);
-        final DualConnection connection = DualConnection.builder(connectionProvider, consistency).build();
+        final Connection connection = DualConnection.builder(connectionProvider, consistency).build();
 
+        //noinspection SqlDialectInspection,SqlNoDataSourceInspection
         connection.prepareStatement("SELECT doSomething(1234)").executeQuery();
 
         verify(consistency).write(any());
@@ -103,7 +105,7 @@ public class TestConsistency {
     public void shouldSetAutoCommitRefreshWhenInTransaction() throws SQLException {
         final ReplicaConsistency consistency = mock(ReplicaConsistency.class);
         when(consistency.isConsistent(any())).thenReturn(true);
-        final DualConnection connection = DualConnection.builder(connectionProvider, consistency).build();
+        final Connection connection = DualConnection.builder(connectionProvider, consistency).build();
 
         connection.setAutoCommit(false);
         connection.prepareStatement(SIMPLE_QUERY).executeUpdate();
@@ -116,7 +118,7 @@ public class TestConsistency {
     public void shouldSetAutoCommitNotRefresh() throws SQLException {
         final ReplicaConsistency consistency = mock(ReplicaConsistency.class);
         when(consistency.isConsistent(any())).thenReturn(true);
-        final DualConnection connection = DualConnection.builder(connectionProvider, consistency).build();
+        final Connection connection = DualConnection.builder(connectionProvider, consistency).build();
 
         connection.setAutoCommit(false);
         connection.prepareStatement(SIMPLE_QUERY).executeUpdate();

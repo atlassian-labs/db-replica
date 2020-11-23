@@ -1,0 +1,16 @@
+package com.atlassian.db.replica.impl.circuitbreaker;
+
+import com.atlassian.db.replica.api.circuitbreaker.BreakerState;
+import com.atlassian.db.replica.api.circuitbreaker.CircuitBreaker;
+
+public class ClosedBreaker implements CircuitBreaker {
+    @Override
+    public BreakerState getState() {
+        return BreakerState.CLOSED;
+    }
+
+    @Override
+    public void handle(Throwable throwable) {
+
+    }
+}

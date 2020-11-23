@@ -22,7 +22,7 @@ public class TestTransactions {
 
     @Test
     public void shouldUseReadConnectionsForExecuteQueryInTransaction() throws SQLException {
-        final DualConnection connection = DualConnection.builder(connectionProvider, new PermanentConsistency()).build();
+        final Connection connection = DualConnection.builder(connectionProvider, new PermanentConsistency()).build();
 
         startTransaction(connection);
         connection.prepareStatement(SIMPLE_QUERY).executeQuery();
@@ -36,7 +36,7 @@ public class TestTransactions {
 
     @Test
     public void shouldUseTransactionForBothReadAndWriteConnections() throws SQLException {
-        final DualConnection connection = DualConnection.builder(connectionProvider, new PermanentConsistency()).build();
+        final Connection connection = DualConnection.builder(connectionProvider, new PermanentConsistency()).build();
 
         startTransaction(connection);
         connection.prepareStatement(SIMPLE_QUERY).executeQuery();
@@ -52,7 +52,7 @@ public class TestTransactions {
 
     @Test
     public void shouldUseTransactionForWriteConnection() throws SQLException {
-        final DualConnection connection = DualConnection.builder(connectionProvider, new PermanentConsistency()).build();
+        final Connection connection = DualConnection.builder(connectionProvider, new PermanentConsistency()).build();
 
         connection.prepareStatement(SIMPLE_QUERY).executeQuery();
         startTransaction(connection);
@@ -68,7 +68,7 @@ public class TestTransactions {
 
     @Test
     public void shouldNotStartTransactionIfNeverUsed() throws SQLException {
-        final DualConnection connection = DualConnection.builder(connectionProvider, new PermanentConsistency()).build();
+        final Connection connection = DualConnection.builder(connectionProvider, new PermanentConsistency()).build();
 
         connection.prepareStatement(SIMPLE_QUERY).executeQuery();
         connection.prepareStatement(SIMPLE_QUERY).execute();
@@ -84,7 +84,7 @@ public class TestTransactions {
 
     @Test
     public void shouldShouldUseTransactionForTheSameStatement() throws SQLException {
-        final DualConnection connection = DualConnection.builder(connectionProvider, new PermanentConsistency()).build();
+        final Connection connection = DualConnection.builder(connectionProvider, new PermanentConsistency()).build();
 
         final PreparedStatement preparedStatement = connection.prepareStatement(SIMPLE_QUERY);
         preparedStatement.executeQuery();
@@ -102,7 +102,7 @@ public class TestTransactions {
 
     @Test
     public void shouldRollbackMain() throws SQLException {
-        final DualConnection connection = DualConnection.builder(connectionProvider, new PermanentConsistency()).build();
+        final Connection connection = DualConnection.builder(connectionProvider, new PermanentConsistency()).build();
 
         final PreparedStatement preparedStatement = connection.prepareStatement(SIMPLE_QUERY);
         startTransaction(connection);
@@ -115,7 +115,7 @@ public class TestTransactions {
 
     @Test
     public void shouldRollbackReplica() throws SQLException {
-        final DualConnection connection = DualConnection.builder(connectionProvider, new PermanentConsistency()).build();
+        final Connection connection = DualConnection.builder(connectionProvider, new PermanentConsistency()).build();
 
         final PreparedStatement preparedStatement = connection.prepareStatement(SIMPLE_QUERY);
         startTransaction(connection);
@@ -128,7 +128,7 @@ public class TestTransactions {
 
     @Test
     public void shouldCommitTransactions() throws SQLException {
-        final DualConnection connection = DualConnection.builder(connectionProvider, new PermanentConsistency()).build();
+        final Connection connection = DualConnection.builder(connectionProvider, new PermanentConsistency()).build();
 
         final PreparedStatement preparedStatement = connection.prepareStatement(SIMPLE_QUERY);
         startTransaction(connection);
@@ -145,7 +145,7 @@ public class TestTransactions {
 
     @Test
     public void shouldUseMainForRepeatableReadTransactionIsolationLevel() throws SQLException {
-        final DualConnection connection = DualConnection.builder(connectionProvider, new PermanentInconsistency()).build();
+        final Connection connection = DualConnection.builder(connectionProvider, new PermanentInconsistency()).build();
         connection.setTransactionIsolation(Connection.TRANSACTION_REPEATABLE_READ);
         connection.prepareStatement(SIMPLE_QUERY).executeQuery();
 
@@ -155,7 +155,7 @@ public class TestTransactions {
 
     @Test
     public void shouldUseMainForSerializableTransactionIsolationLevel() throws SQLException {
-        final DualConnection connection = DualConnection.builder(connectionProvider, new PermanentInconsistency()).build();
+        final Connection connection = DualConnection.builder(connectionProvider, new PermanentInconsistency()).build();
         connection.setTransactionIsolation(Connection.TRANSACTION_SERIALIZABLE);
         connection.prepareStatement(SIMPLE_QUERY).executeQuery();
 

@@ -1,11 +1,16 @@
 package com.atlassian.db.replica.api;
 
+import com.atlassian.db.replica.api.circuitbreaker.BreakerState;
+import com.atlassian.db.replica.api.circuitbreaker.CircuitBreaker;
 import com.atlassian.db.replica.impl.ForwardCall;
+import com.atlassian.db.replica.impl.circuitbreaker.BreakOnNotSupportedOperations;
 import com.atlassian.db.replica.internal.ReadReplicaUnsupportedOperationException;
 import com.atlassian.db.replica.internal.ReplicaCallableStatement;
 import com.atlassian.db.replica.internal.ReplicaConnectionProvider;
 import com.atlassian.db.replica.internal.ReplicaPreparedStatement;
 import com.atlassian.db.replica.internal.ReplicaStatement;
+import com.atlassian.db.replica.internal.circuitbreaker.BreakerConnection;
+import com.atlassian.db.replica.internal.circuitbreaker.BreakerHandler;
 import com.atlassian.db.replica.spi.ConnectionProvider;
 import com.atlassian.db.replica.spi.DualCall;
 import com.atlassian.db.replica.spi.ReplicaConsistency;
@@ -40,8 +45,7 @@ public class DualConnection implements Connection {
     private DualConnection(
         ConnectionProvider connectionProvider,
         ReplicaConsistency consistency,
-        DualCall dualCall
-    ) {
+        DualCall dualCall) {
         this.connectionProvider = new ReplicaConnectionProvider(connectionProvider, consistency);
         this.consistency = consistency;
         this.dualCall = dualCall;
@@ -403,6 +407,7 @@ public class DualConnection implements Connection {
         private final ConnectionProvider connectionProvider;
         private final ReplicaConsistency consistency;
         private DualCall dualCall = new ForwardCall();
+        private CircuitBreaker circuitBreaker = new BreakOnNotSupportedOperations();
 
         private Builder(
             ConnectionProvider connectionProvider,
@@ -417,12 +422,29 @@ public class DualConnection implements Connection {
             return this;
         }
 
-        public DualConnection build() {
-            return new DualConnection(
+        public DualConnection.Builder circuitBreaker(CircuitBreaker circuitBreaker) {
+            this.circuitBreaker = circuitBreaker;
+            return this;
+        }
+
+        public Connection build() {
+            if (circuitBreaker == null) {
+                return new DualConnection(
+                    connectionProvider,
+                    consistency,
+                    dualCall
+                );
+            }
+            if (circuitBreaker.getState().equals(BreakerState.OPEN)) {
+                return connectionProvider.getMainConnection();
+            }
+            final BreakerHandler breakerHandler = new BreakerHandler(circuitBreaker);
+            final DualConnection dualConnection = new DualConnection(
                 connectionProvider,
                 consistency,
                 dualCall
             );
+            return new BreakerConnection(dualConnection, breakerHandler);
         }
     }
 }
