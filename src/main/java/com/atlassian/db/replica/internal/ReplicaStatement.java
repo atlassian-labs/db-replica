@@ -478,7 +478,7 @@ public class ReplicaStatement implements Statement {
         return queryStart.contains("(");
     }
 
-    public Statement getWriteStatement() {
+    protected Statement getWriteStatement() {
         setCurrentStatement(writeStatement.get());
         performOperations();
         return getCurrentStatement();
