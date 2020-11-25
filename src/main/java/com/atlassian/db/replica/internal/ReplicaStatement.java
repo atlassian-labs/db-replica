@@ -484,7 +484,7 @@ public class ReplicaStatement implements Statement {
         return getCurrentStatement();
     }
 
-    public Statement createStatement(Connection connection) throws SQLException {
+    protected Statement createStatement(Connection connection) throws SQLException {
         if (resultSetType == null) {
             return connection.createStatement();
         } else if (resultSetHoldability == null) {
