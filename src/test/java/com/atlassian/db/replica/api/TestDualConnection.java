@@ -798,4 +798,20 @@ public class TestDualConnection {
         verify(connectionProvider.singleProvidedConnection(), never()).close();
     }
 
+    @Test
+    public void shouldNotHideConnectionCloseProblems() throws SQLException {
+        final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
+        final Connection connectionMock = connectionProvider.getReplicaConnection();
+        doThrow(new SQLException("Can't Close connection.")).when(connectionMock).close();
+        final SingleConnectionProvider singleConnectionProvider = new SingleConnectionProvider(connectionMock);
+        final Connection connection = DualConnection.builder(singleConnectionProvider, new PermanentConsistency()).build();
+
+        connection.prepareStatement(SIMPLE_QUERY).executeQuery();
+        connection.prepareStatement(SIMPLE_QUERY).executeUpdate();
+
+        Throwable thrown = catchThrowable(connection::close);
+
+        assertThat(thrown.getCause()).isInstanceOf(SQLException.class);
+    }
+
 }

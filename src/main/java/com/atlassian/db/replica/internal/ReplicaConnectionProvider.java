@@ -263,6 +263,9 @@ public class ReplicaConnectionProvider implements AutoCloseable {
                 lastException = e;
             }
             if (isWriteAndReadTheSameConnection) {
+                if (lastException != null) {
+                    throw new SQLException(lastException);
+                }
                 return;
             }
         }
