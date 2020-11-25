@@ -81,10 +81,10 @@ public class ReplicaStatement implements Statement {
     }
 
     @Override
-    public void setMaxFieldSize(int max) throws SQLException {
-        getWriteStatement().setMaxFieldSize(max); //TODO: should I set it for both write and read statements?
-        // I guess it's a bug. It probably should be postponed and run
-        // only when we know which statement to use
+    public void setMaxFieldSize(int max) {
+        addOperation(
+            (StatementOperation<Statement>) statement -> statement.setMaxFieldSize(max)
+        );
     }
 
     @Override
