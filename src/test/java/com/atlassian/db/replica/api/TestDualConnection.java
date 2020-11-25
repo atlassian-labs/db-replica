@@ -760,7 +760,7 @@ public class TestDualConnection {
 
         Throwable thrown = catchThrowable(() -> dualConnection.unwrap(Integer.class));
 
-        assertThat(thrown.getCause()).isInstanceOf(SQLException.class);
+        assertThat(thrown).isInstanceOf(SQLException.class);
     }
 
     @Test

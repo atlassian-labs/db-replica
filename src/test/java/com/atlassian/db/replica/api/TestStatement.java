@@ -301,7 +301,7 @@ public class TestStatement {
 
         Throwable thrown = catchThrowable(() -> preparedStatement.unwrap(Integer.class));
 
-        assertThat(thrown.getCause()).isInstanceOf(SQLException.class);
+        assertThat(thrown).isInstanceOf(SQLException.class);
     }
 
     @Test

@@ -4,6 +4,7 @@ import com.atlassian.db.replica.api.DualConnection;
 import com.atlassian.db.replica.api.mocks.ConnectionProviderMock;
 import com.atlassian.db.replica.api.mocks.PermanentConsistency;
 import com.atlassian.db.replica.impl.circuitbreaker.BreakOnNotSupportedOperations;
+import com.atlassian.db.replica.internal.ReadReplicaUnsupportedOperationException;
 import org.junit.After;
 import org.junit.Test;
 
@@ -32,6 +33,6 @@ public class TestCircuitBreaker {
         newConnection.prepareStatement(SIMPLE_QUERY).isCloseOnCompletion();
 
         verify(connectionProvider.getPreparedStatements().get(0)).isCloseOnCompletion();
-        assertThat(thrown).isInstanceOf(DualConnectionException.class);
+        assertThat(thrown).isInstanceOf(ReadReplicaUnsupportedOperationException.class);
     }
 }

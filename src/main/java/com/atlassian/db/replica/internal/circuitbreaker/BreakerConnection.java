@@ -10,6 +10,7 @@ import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.NClob;
 import java.sql.PreparedStatement;
+import java.sql.SQLException;
 import java.sql.SQLWarning;
 import java.sql.SQLXML;
 import java.sql.Savepoint;
@@ -29,108 +30,108 @@ public class BreakerConnection implements Connection {
     }
 
     @Override
-    public Statement createStatement() {
+    public Statement createStatement() throws SQLException {
         return new BreakerStatement(breakerHandler.handle((SqlCall<Statement>) delegate::createStatement), breakerHandler);
     }
 
     @Override
-    public PreparedStatement prepareStatement(String sql) {
+    public PreparedStatement prepareStatement(String sql) throws SQLException {
         return new BreakerPreparedStatement(breakerHandler.handle(() -> delegate.prepareStatement(sql)), breakerHandler);
     }
 
     @Override
-    public CallableStatement prepareCall(String sql) {
+    public CallableStatement prepareCall(String sql) throws SQLException {
         return new BreakerCallableStatement(breakerHandler.handle(() -> delegate.prepareCall(sql)), breakerHandler);
     }
 
     @Override
-    public String nativeSQL(String sql) {
+    public String nativeSQL(String sql) throws SQLException {
         return breakerHandler.handle(() -> delegate.nativeSQL(sql));
     }
 
     @Override
-    public void setAutoCommit(boolean autoCommit) {
+    public void setAutoCommit(boolean autoCommit) throws SQLException {
         breakerHandler.handle(() -> delegate.setAutoCommit(autoCommit));
     }
 
     @Override
-    public boolean getAutoCommit() {
+    public boolean getAutoCommit() throws SQLException {
         return breakerHandler.handle(delegate::getAutoCommit);
     }
 
     @Override
-    public void commit() {
+    public void commit() throws SQLException {
         breakerHandler.handle(delegate::commit);
     }
 
     @Override
-    public void rollback() {
+    public void rollback() throws SQLException {
         breakerHandler.handle((BreakerHandler.SqlRunnable) delegate::rollback);
     }
 
     @Override
-    public void close() {
+    public void close() throws SQLException {
         breakerHandler.handle(delegate::close);
     }
 
     @Override
-    public boolean isClosed() {
+    public boolean isClosed() throws SQLException {
         return breakerHandler.handle(delegate::isClosed);
     }
 
     @Override
-    public DatabaseMetaData getMetaData() {
+    public DatabaseMetaData getMetaData() throws SQLException {
         return breakerHandler.handle(delegate::getMetaData);
     }
 
     @Override
-    public void setReadOnly(boolean readOnly) {
+    public void setReadOnly(boolean readOnly) throws SQLException {
         breakerHandler.handle(() -> delegate.setReadOnly(readOnly));
     }
 
     @Override
-    public boolean isReadOnly() {
+    public boolean isReadOnly() throws SQLException {
         return breakerHandler.handle(delegate::isReadOnly);
     }
 
     @Override
-    public void setCatalog(String catalog) {
+    public void setCatalog(String catalog) throws SQLException {
         breakerHandler.handle(() -> delegate.setCatalog(catalog));
     }
 
     @Override
-    public String getCatalog() {
+    public String getCatalog() throws SQLException {
         return breakerHandler.handle(delegate::getCatalog);
     }
 
     @Override
-    public void setTransactionIsolation(int level) {
+    public void setTransactionIsolation(int level) throws SQLException {
         breakerHandler.handle(() -> delegate.setTransactionIsolation(level));
     }
 
     @Override
-    public int getTransactionIsolation() {
+    public int getTransactionIsolation() throws SQLException {
         //noinspection MagicConstant
         return breakerHandler.handle(delegate::getTransactionIsolation);
     }
 
     @Override
-    public SQLWarning getWarnings() {
+    public SQLWarning getWarnings() throws SQLException {
         return breakerHandler.handle(delegate::getWarnings);
     }
 
     @Override
-    public void clearWarnings() {
+    public void clearWarnings() throws SQLException {
         breakerHandler.handle(delegate::clearWarnings);
     }
 
     @Override
-    public Statement createStatement(int resultSetType, int resultSetConcurrency) {
+    public Statement createStatement(int resultSetType, int resultSetConcurrency) throws SQLException {
         return new BreakerStatement(breakerHandler.handle(() -> delegate.createStatement(resultSetType, resultSetConcurrency)), breakerHandler);
     }
 
     @Override
-    public PreparedStatement prepareStatement(String sql, int resultSetType, int resultSetConcurrency) {
+    public PreparedStatement prepareStatement(String sql, int resultSetType, int resultSetConcurrency) throws SQLException {
         return new BreakerPreparedStatement(
             breakerHandler.handle(() -> delegate.prepareStatement(sql, resultSetType, resultSetConcurrency)),
             breakerHandler
@@ -138,7 +139,7 @@ public class BreakerConnection implements Connection {
     }
 
     @Override
-    public CallableStatement prepareCall(String sql, int resultSetType, int resultSetConcurrency) {
+    public CallableStatement prepareCall(String sql, int resultSetType, int resultSetConcurrency) throws SQLException {
         return new BreakerCallableStatement(
             breakerHandler.handle(() -> delegate.prepareCall(sql, resultSetType, resultSetConcurrency)),
             breakerHandler
@@ -146,47 +147,47 @@ public class BreakerConnection implements Connection {
     }
 
     @Override
-    public Map<String, Class<?>> getTypeMap() {
+    public Map<String, Class<?>> getTypeMap() throws SQLException {
         return breakerHandler.handle(delegate::getTypeMap);
     }
 
     @Override
-    public void setTypeMap(Map<String, Class<?>> map) {
+    public void setTypeMap(Map<String, Class<?>> map) throws SQLException {
         breakerHandler.handle(() -> delegate.setTypeMap(map));
     }
 
     @Override
-    public void setHoldability(int holdability) {
+    public void setHoldability(int holdability) throws SQLException {
         breakerHandler.handle(() -> delegate.setHoldability(holdability));
     }
 
     @Override
-    public int getHoldability() {
+    public int getHoldability() throws SQLException {
         return breakerHandler.handle(delegate::getHoldability);
     }
 
     @Override
-    public Savepoint setSavepoint() {
+    public Savepoint setSavepoint() throws SQLException {
         return breakerHandler.handle((SqlCall<Savepoint>) delegate::setSavepoint);
     }
 
     @Override
-    public Savepoint setSavepoint(String name) {
+    public Savepoint setSavepoint(String name) throws SQLException {
         return breakerHandler.handle(() -> delegate.setSavepoint(name));
     }
 
     @Override
-    public void rollback(Savepoint savepoint) {
+    public void rollback(Savepoint savepoint) throws SQLException {
         breakerHandler.handle(() -> delegate.rollback(savepoint));
     }
 
     @Override
-    public void releaseSavepoint(Savepoint savepoint) {
+    public void releaseSavepoint(Savepoint savepoint) throws SQLException {
         breakerHandler.handle(() -> delegate.releaseSavepoint(savepoint));
     }
 
     @Override
-    public Statement createStatement(int resultSetType, int resultSetConcurrency, int resultSetHoldability) {
+    public Statement createStatement(int resultSetType, int resultSetConcurrency, int resultSetHoldability) throws SQLException {
         return new BreakerStatement(
             breakerHandler.handle(() -> delegate.createStatement(resultSetType, resultSetConcurrency, resultSetHoldability)),
             breakerHandler
@@ -194,7 +195,7 @@ public class BreakerConnection implements Connection {
     }
 
     @Override
-    public PreparedStatement prepareStatement(String sql, int resultSetType, int resultSetConcurrency, int resultSetHoldability) {
+    public PreparedStatement prepareStatement(String sql, int resultSetType, int resultSetConcurrency, int resultSetHoldability) throws SQLException {
         return new BreakerPreparedStatement(
             breakerHandler.handle(() -> delegate.prepareStatement(sql, resultSetType, resultSetConcurrency, resultSetHoldability)),
             breakerHandler
@@ -202,7 +203,7 @@ public class BreakerConnection implements Connection {
     }
 
     @Override
-    public CallableStatement prepareCall(String sql, int resultSetType, int resultSetConcurrency, int resultSetHoldability) {
+    public CallableStatement prepareCall(String sql, int resultSetType, int resultSetConcurrency, int resultSetHoldability) throws SQLException {
         return new BreakerCallableStatement(
             breakerHandler.handle(() -> delegate.prepareCall(sql, resultSetType, resultSetConcurrency, resultSetHoldability)),
             breakerHandler
@@ -210,7 +211,7 @@ public class BreakerConnection implements Connection {
     }
 
     @Override
-    public PreparedStatement prepareStatement(String sql, int autoGeneratedKeys) {
+    public PreparedStatement prepareStatement(String sql, int autoGeneratedKeys) throws SQLException {
         return new BreakerPreparedStatement(
             breakerHandler.handle(() -> delegate.prepareStatement(sql, autoGeneratedKeys)),
             breakerHandler
@@ -218,7 +219,7 @@ public class BreakerConnection implements Connection {
     }
 
     @Override
-    public PreparedStatement prepareStatement(String sql, int[] columnIndexes) {
+    public PreparedStatement prepareStatement(String sql, int[] columnIndexes) throws SQLException {
         return new BreakerPreparedStatement(
             breakerHandler.handle(() -> delegate.prepareStatement(sql, columnIndexes)),
             breakerHandler
@@ -226,7 +227,7 @@ public class BreakerConnection implements Connection {
     }
 
     @Override
-    public PreparedStatement prepareStatement(String sql, String[] columnNames) {
+    public PreparedStatement prepareStatement(String sql, String[] columnNames) throws SQLException {
         return new BreakerPreparedStatement(
             breakerHandler.handle(() -> delegate.prepareStatement(sql, columnNames)),
             breakerHandler
@@ -234,92 +235,100 @@ public class BreakerConnection implements Connection {
     }
 
     @Override
-    public Clob createClob() {
+    public Clob createClob() throws SQLException {
         return breakerHandler.handle(delegate::createClob);
     }
 
     @Override
-    public Blob createBlob() {
+    public Blob createBlob() throws SQLException {
         return breakerHandler.handle(delegate::createBlob);
     }
 
     @Override
-    public NClob createNClob() {
+    public NClob createNClob() throws SQLException {
         return breakerHandler.handle(delegate::createNClob);
     }
 
     @Override
-    public SQLXML createSQLXML() {
+    public SQLXML createSQLXML() throws SQLException {
         return breakerHandler.handle(delegate::createSQLXML);
     }
 
     @Override
-    public boolean isValid(int timeout) {
+    public boolean isValid(int timeout) throws SQLException {
         return breakerHandler.handle(() -> delegate.isValid(timeout));
     }
 
     @Override
     public void setClientInfo(String name, String value) {
-        breakerHandler.handle(() -> delegate.setClientInfo(name, value));
+        try {
+            breakerHandler.handle(() -> delegate.setClientInfo(name, value));
+        } catch (SQLException throwables) {
+            throw new RuntimeException(throwables);
+        }
     }
 
     @Override
     public void setClientInfo(Properties properties) {
-        breakerHandler.handle(() -> delegate.setClientInfo(properties));
+        try {
+            breakerHandler.handle(() -> delegate.setClientInfo(properties));
+        } catch (SQLException throwables) {
+            throw new RuntimeException(throwables);
+        }
     }
 
     @Override
-    public String getClientInfo(String name) {
+    public String getClientInfo(String name) throws SQLException {
         return breakerHandler.handle(() -> delegate.getClientInfo(name));
     }
 
     @Override
-    public Properties getClientInfo() {
+    public Properties getClientInfo() throws SQLException {
         return breakerHandler.handle((SqlCall<Properties>) delegate::getClientInfo);
     }
 
     @Override
-    public Array createArrayOf(String typeName, Object[] elements) {
+    public Array createArrayOf(String typeName, Object[] elements) throws SQLException {
         return breakerHandler.handle(() -> delegate.createArrayOf(typeName, elements));
     }
 
     @Override
-    public Struct createStruct(String typeName, Object[] attributes) {
+    public Struct createStruct(String typeName, Object[] attributes) throws SQLException {
         return breakerHandler.handle(() -> delegate.createStruct(typeName, attributes));
     }
 
     @Override
-    public void setSchema(String schema) {
+    public void setSchema(String schema) throws SQLException {
         breakerHandler.handle(() -> delegate.setSchema(schema));
     }
 
     @Override
-    public String getSchema() {
+    public String getSchema() throws SQLException {
         return breakerHandler.handle(delegate::getSchema);
     }
 
     @Override
-    public void abort(Executor executor) {
+    public void abort(Executor executor) throws SQLException {
         breakerHandler.handle(() -> delegate.abort(executor));
     }
 
     @Override
-    public void setNetworkTimeout(Executor executor, int milliseconds) {
+    public void setNetworkTimeout(Executor executor, int milliseconds) throws SQLException {
         breakerHandler.handle(() -> delegate.setNetworkTimeout(executor, milliseconds));
     }
 
     @Override
-    public int getNetworkTimeout() {
+    public int getNetworkTimeout() throws SQLException {
         return breakerHandler.handle(delegate::getNetworkTimeout);
     }
 
     @Override
-    public <T> T unwrap(Class<T> iface) {
+    public <T> T unwrap(Class<T> iface) throws SQLException {
         return breakerHandler.handle(() -> delegate.unwrap(iface));
     }
 
     @Override
-    public boolean isWrapperFor(Class<?> iface) {
+    public boolean isWrapperFor(Class<?> iface) throws SQLException {
         return breakerHandler.handle(() -> delegate.isWrapperFor(iface));
     }
 }
