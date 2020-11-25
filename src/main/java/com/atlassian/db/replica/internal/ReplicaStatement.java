@@ -3,7 +3,6 @@ package com.atlassian.db.replica.internal;
 import com.atlassian.db.replica.api.SqlCall;
 import com.atlassian.db.replica.spi.DualCall;
 import com.atlassian.db.replica.spi.ReplicaConsistency;
-import io.atlassian.util.concurrent.LazyReference;
 
 import java.sql.Connection;
 import java.sql.ResultSet;

@@ -2,7 +2,6 @@ package com.atlassian.db.replica.internal;
 
 import com.atlassian.db.replica.spi.ConnectionProvider;
 import com.atlassian.db.replica.spi.ReplicaConsistency;
-import io.atlassian.util.concurrent.ResettableLazyReference;
 
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -25,7 +24,7 @@ public class ReplicaConnectionProvider implements AutoCloseable {
     private Map<String, Class<?>> typeMap;
     private Integer holdability;
     private Boolean isClosed = false;
-    private final ResettableLazyReference<Connection> readConnection = new ResettableLazyReference<Connection>() {
+    private final LazyReference<Connection> readConnection = new LazyReference<Connection>() {
         @Override
         protected Connection create() {
             if (connectionProvider.isReplicaAvailable()) {
@@ -36,7 +35,7 @@ public class ReplicaConnectionProvider implements AutoCloseable {
         }
     };
 
-    private final ResettableLazyReference<Connection> writeConnection = new ResettableLazyReference<Connection>() {
+    private final LazyReference<Connection> writeConnection = new LazyReference<Connection>() {
         @Override
         protected Connection create() {
             return connectionProvider.getMainConnection();
@@ -279,7 +278,7 @@ public class ReplicaConnectionProvider implements AutoCloseable {
         }
     }
 
-    private void closeConnection(ResettableLazyReference<Connection> connectionReference) throws SQLException {
+    private void closeConnection(LazyReference<Connection> connectionReference) throws SQLException {
         try {
             final Connection connection = connectionReference.get();
             saveWarning(connection.getWarnings());
