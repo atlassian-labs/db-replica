@@ -22,7 +22,7 @@ configurations.all {
 
 dependencies {
     implementation("net.jcip:jcip-annotations:1.0")
-    implementation("org.postgresql:postgresql:42.2.18")
+    testImplementation("org.postgresql:postgresql:42.2.18")
     testImplementation("junit:junit:4.12")
     testImplementation("org.assertj:assertj-core:3.18.1")
     testImplementation("org.mockito:mockito-core:3.6.0")

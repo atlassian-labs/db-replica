@@ -19,6 +19,8 @@ import static com.atlassian.db.replica.internal.util.Comparables.max;
  * @see <a href="https://www.postgresql.org/docs/9.6/datatype-pg-lsn.html">LSN</a>
  * @see <a href="https://www.postgresql.org/docs/9.6/functions-admin.html#FUNCTIONS-RECOVERY-INFO-TABLE">recovery info</a>
  * @see <a href="https://www.postgresql.org/docs/9.6/functions-admin.html#FUNCTIONS-ADMIN-BACKUP-TABLE">backup control</a>
+ *
+ * It's a DB specific implementation used in integration tests.
  */
 @ThreadSafe
 public class LsnReplicaConsistency implements ReplicaConsistency {
