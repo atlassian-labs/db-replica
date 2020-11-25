@@ -419,11 +419,11 @@ public class ReplicaStatement implements Statement {
         operations.clear();
     }
 
-    public Statement getCurrentStatement() {
+    protected Statement getCurrentStatement() {
         return this.currentStatement;
     }
 
-    public void setCurrentStatement(Statement statement) {
+    protected void setCurrentStatement(Statement statement) {
         this.currentStatement = statement;
     }
 
