@@ -466,7 +466,7 @@ public class ReplicaStatement implements Statement {
     }
 
     private boolean isUpdate(String sql) {
-        return sql != null && (sql.startsWith("update") || sql.startsWith("UPDATE"));
+        return sql != null && (sql.contains("returning") || sql.contains("RETURNING"));
     }
 
     private boolean isFunctionCall(String sql) {

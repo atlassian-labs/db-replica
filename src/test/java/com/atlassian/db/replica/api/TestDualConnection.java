@@ -191,7 +191,7 @@ public class TestDualConnection {
 
         connection.prepareStatement("update \"jiraissue\" \"ISSUE\"\n" +
             "set \"version\" = \"ISSUE\".\"version\" + 1\n" +
-            "where \"ISSUE\".\"id\" in (42, 43) RETURNING \"ISSUE\".\"id\", \"ISSUE\".\"version\"").executeQuery();
+            "where \"ISSUE\".\"id\" in (42, 43) returning \"ISSUE\".\"id\", \"ISSUE\".\"version\"").executeQuery();
 
         assertThat(connectionProvider.getProvidedConnectionTypes())
             .containsOnly(MAIN);
@@ -204,6 +204,30 @@ public class TestDualConnection {
 
         connection.prepareStatement("UPDATE \"jiraissue\" \"ISSUE\"\n" +
             "set \"version\" = \"ISSUE\".\"version\" + 1\n" +
+            "where \"ISSUE\".\"id\" in (42, 43) RETURNING \"ISSUE\".\"id\", \"ISSUE\".\"version\"").executeQuery();
+
+        assertThat(connectionProvider.getProvidedConnectionTypes())
+            .containsOnly(MAIN);
+    }
+
+    @Test
+    public void shouldUseMainConnectionForDeleteInExecuteQuery() throws SQLException {
+        final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
+        final Connection connection = DualConnection.builder(connectionProvider, new PermanentConsistency()).build();
+
+        connection.prepareStatement("delete from \"jiraissue\" \"ISSUE\"\n" +
+            "where \"ISSUE\".\"id\" in (42, 43) returning \"ISSUE\".\"id\", \"ISSUE\".\"version\"").executeQuery();
+
+        assertThat(connectionProvider.getProvidedConnectionTypes())
+            .containsOnly(MAIN);
+    }
+
+    @Test
+    public void shouldUseMainConnectionForDeleteInExecuteQueryUpperCase() throws SQLException {
+        final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
+        final Connection connection = DualConnection.builder(connectionProvider, new PermanentConsistency()).build();
+
+        connection.prepareStatement("DELETE FROM \"jiraissue\" \"ISSUE\"\n" +
             "where \"ISSUE\".\"id\" in (42, 43) RETURNING \"ISSUE\".\"id\", \"ISSUE\".\"version\"").executeQuery();
 
         assertThat(connectionProvider.getProvidedConnectionTypes())
