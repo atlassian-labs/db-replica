@@ -1,13 +1,15 @@
 package com.atlassian.db.replica.impl;
 
-import com.atlassian.db.replica.spi.*;
-import net.jcip.annotations.*;
+import com.atlassian.db.replica.spi.ReplicaConsistency;
+import net.jcip.annotations.ThreadSafe;
 
-import java.sql.*;
-import java.time.*;
-import java.util.concurrent.atomic.*;
+import java.sql.Connection;
+import java.time.Clock;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.concurrent.atomic.AtomicReference;
 
-import static org.apache.commons.lang3.ObjectUtils.*;
+import static com.atlassian.db.replica.internal.util.Comparables.max;
 
 /**
  * Assumes replica is up to date after a specified time.

@@ -1,13 +1,15 @@
 package com.atlassian.db.replica.impl;
 
-import com.atlassian.db.replica.spi.*;
-import net.jcip.annotations.*;
-import org.postgresql.replication.*;
+import com.atlassian.db.replica.spi.ReplicaConsistency;
+import net.jcip.annotations.ThreadSafe;
+import org.postgresql.replication.LogSequenceNumber;
 
-import java.sql.*;
-import java.util.concurrent.atomic.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.util.concurrent.atomic.AtomicReference;
 
-import static org.apache.commons.lang3.ObjectUtils.*;
+import static com.atlassian.db.replica.internal.util.Comparables.max;
 
 /**
  * [LSN] means "log sequence number". It points to a place in the PostgreSQL write-ahead log.
