@@ -427,11 +427,11 @@ public class ReplicaStatement implements Statement {
         this.currentStatement = statement;
     }
 
-    public void addOperation(@SuppressWarnings("rawtypes") StatementOperation operation) {
+    protected void addOperation(@SuppressWarnings("rawtypes") StatementOperation operation) {
         operations.add(operation);
     }
 
-    public void clearOperations() {
+    protected void clearOperations() {
         operations.clear();
     }
 
