@@ -352,4 +352,16 @@ public class TestStatement {
         verify(connectionProvider.singleStatement()).close();
         verify(connectionProvider.singleStatement()).isClosed();
     }
+
+    @Test
+    public void shouldSetEscapeProcessing() throws SQLException {
+        final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
+        final Connection connection = DualConnection.builder(connectionProvider, new PermanentConsistency()).build();
+        final PreparedStatement statement = connection.prepareStatement(SIMPLE_QUERY);
+
+        statement.setEscapeProcessing(true);
+        statement.executeQuery();
+
+        verify(connectionProvider.singleStatement()).setEscapeProcessing(true);
+    }
 }

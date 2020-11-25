@@ -99,7 +99,9 @@ public class ReplicaStatement implements Statement {
 
     @Override
     public void setEscapeProcessing(boolean enable) {
-        throw new ReadReplicaUnsupportedOperationException();
+        addOperation(
+            (StatementOperation<Statement>) statement -> statement.setEscapeProcessing(enable)
+        );
     }
 
     @Override

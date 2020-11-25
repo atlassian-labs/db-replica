@@ -7,6 +7,9 @@ This project **DOES NOT** adhere to [Semantic Versioning](http://semver.org/spec
 ## [Unreleased]
 [Unreleased]: https://bitbucket.org/atlassian/db-replica/branches/compare/master%0Drelease-0.1.6
 
+### Fixed
+- implementation of `Statement#setEscapeProcessing`
+
 ### Removed
 - dependency on `jcip-annotations`
 - dependency on `postgresql` 
