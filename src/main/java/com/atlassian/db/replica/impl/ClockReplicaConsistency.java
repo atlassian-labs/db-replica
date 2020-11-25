@@ -1,7 +1,7 @@
 package com.atlassian.db.replica.impl;
 
+import com.atlassian.db.replica.internal.util.ThreadSafe;
 import com.atlassian.db.replica.spi.ReplicaConsistency;
-import net.jcip.annotations.ThreadSafe;
 
 import java.sql.Connection;
 import java.time.Clock;

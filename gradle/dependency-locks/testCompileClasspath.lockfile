@@ -16,7 +16,6 @@ junit:junit:4.12
 net.bytebuddy:byte-buddy-agent:1.10.15
 net.bytebuddy:byte-buddy:1.10.15
 net.java.dev.jna:jna:5.5.0
-net.jcip:jcip-annotations:1.0
 org.apache.commons:commons-compress:1.20
 org.apache.httpcomponents.client5:httpclient5:5.0
 org.apache.httpcomponents.core5:httpcore5:5.0

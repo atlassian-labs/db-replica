@@ -1,6 +1,7 @@
 package com.atlassian.db.replica.spi;
 
-import net.jcip.annotations.ThreadSafe;
+
+import com.atlassian.db.replica.internal.util.ThreadSafe;
 
 import java.sql.Connection;
 
