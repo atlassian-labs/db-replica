@@ -12,6 +12,7 @@ This project **DOES NOT** adhere to [Semantic Versioning](http://semver.org/spec
 - implementation of `Statement#setMaxRows`
 - implementation of `Statement#setMaxFieldSize`
 - implementation of `Statement#setFetchDirection`
+- implementation of `Statement#.setPoolable`
 
 ### Removed
 - dependency on `jcip-annotations`

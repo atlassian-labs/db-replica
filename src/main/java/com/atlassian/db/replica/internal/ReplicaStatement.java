@@ -303,7 +303,9 @@ public class ReplicaStatement implements Statement {
 
     @Override
     public void setPoolable(boolean poolable) {
-        throw new ReadReplicaUnsupportedOperationException();
+        addOperation(
+            (StatementOperation<Statement>) statement -> statement.setPoolable(poolable)
+        );
     }
 
     @Override

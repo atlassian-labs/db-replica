@@ -400,4 +400,16 @@ public class TestStatement {
 
         verify(connectionProvider.singleStatement()).setFetchDirection(ResultSet.FETCH_FORWARD);
     }
+
+    @Test
+    public void shouldSetPoolable() throws SQLException {
+        final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
+        final Connection connection = DualConnection.builder(connectionProvider, new PermanentConsistency()).build();
+        final PreparedStatement statement = connection.prepareStatement(SIMPLE_QUERY);
+
+        statement.setPoolable(false);
+        statement.executeQuery();
+
+        verify(connectionProvider.singleStatement()).setPoolable(false);
+    }
 }
