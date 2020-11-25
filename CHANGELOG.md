@@ -11,6 +11,7 @@ This project **DOES NOT** adhere to [Semantic Versioning](http://semver.org/spec
 - implementation of `Statement#setEscapeProcessing`
 - implementation of `Statement#setMaxRows`
 - implementation of `Statement#setMaxFieldSize`
+- implementation of `Statement#setFetchDirection`
 
 ### Removed
 - dependency on `jcip-annotations`

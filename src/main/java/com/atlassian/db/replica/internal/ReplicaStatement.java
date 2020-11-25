@@ -176,7 +176,9 @@ public class ReplicaStatement implements Statement {
 
     @Override
     public void setFetchDirection(int direction) {
-        throw new ReadReplicaUnsupportedOperationException();
+        addOperation(
+            (StatementOperation<Statement>) statement -> statement.setFetchDirection(direction)
+        );
     }
 
     @Override

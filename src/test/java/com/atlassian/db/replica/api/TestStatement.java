@@ -388,4 +388,16 @@ public class TestStatement {
 
         verify(connectionProvider.singleStatement()).setMaxFieldSize(123);
     }
+
+    @Test
+    public void shouldSetFetchDirection() throws SQLException {
+        final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
+        final Connection connection = DualConnection.builder(connectionProvider, new PermanentConsistency()).build();
+        final PreparedStatement statement = connection.prepareStatement(SIMPLE_QUERY);
+
+        statement.setFetchDirection(ResultSet.FETCH_FORWARD);
+        statement.executeQuery();
+
+        verify(connectionProvider.singleStatement()).setFetchDirection(ResultSet.FETCH_FORWARD);
+    }
 }
