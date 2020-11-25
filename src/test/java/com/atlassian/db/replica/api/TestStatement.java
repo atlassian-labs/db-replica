@@ -364,4 +364,16 @@ public class TestStatement {
 
         verify(connectionProvider.singleStatement()).setEscapeProcessing(true);
     }
+
+    @Test
+    public void shouldSetMaxRows() throws SQLException {
+        final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
+        final Connection connection = DualConnection.builder(connectionProvider, new PermanentConsistency()).build();
+        final PreparedStatement statement = connection.prepareStatement(SIMPLE_QUERY);
+
+        statement.setMaxRows(123);
+        statement.executeQuery();
+
+        verify(connectionProvider.singleStatement()).setMaxRows(123);
+    }
 }

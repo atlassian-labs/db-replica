@@ -9,6 +9,7 @@ This project **DOES NOT** adhere to [Semantic Versioning](http://semver.org/spec
 
 ### Fixed
 - implementation of `Statement#setEscapeProcessing`
+- implementation of `Statement#setMaxRows`
 
 ### Removed
 - dependency on `jcip-annotations`
