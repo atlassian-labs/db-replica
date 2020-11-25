@@ -9,6 +9,7 @@ This project **DOES NOT** adhere to [Semantic Versioning](http://semver.org/spec
 
 ### Fixed
 - Hiding `Connection#close` failure
+- Assign updates to the main connection for `executeQuery` calls
 
 ## [0.1.7] - 2020-11-25
 [0.1.7]: https://bitbucket.org/atlassian/db-replica/branches/compare/release-0.1.7%0Drelease-0.1.6

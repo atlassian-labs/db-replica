@@ -185,6 +185,32 @@ public class TestDualConnection {
     }
 
     @Test
+    public void shouldUseMainConnectionForUpdateInExecuteQuery() throws SQLException {
+        final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
+        final Connection connection = DualConnection.builder(connectionProvider, new PermanentConsistency()).build();
+
+        connection.prepareStatement("update \"jiraissue\" \"ISSUE\"\n" +
+            "set \"version\" = \"ISSUE\".\"version\" + 1\n" +
+            "where \"ISSUE\".\"id\" in (42, 43) RETURNING \"ISSUE\".\"id\", \"ISSUE\".\"version\"").executeQuery();
+
+        assertThat(connectionProvider.getProvidedConnectionTypes())
+            .containsOnly(MAIN);
+    }
+
+    @Test
+    public void shouldUseMainConnectionForUpdateInExecuteQueryUpperCase() throws SQLException {
+        final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
+        final Connection connection = DualConnection.builder(connectionProvider, new PermanentConsistency()).build();
+
+        connection.prepareStatement("UPDATE \"jiraissue\" \"ISSUE\"\n" +
+            "set \"version\" = \"ISSUE\".\"version\" + 1\n" +
+            "where \"ISSUE\".\"id\" in (42, 43) RETURNING \"ISSUE\".\"id\", \"ISSUE\".\"version\"").executeQuery();
+
+        assertThat(connectionProvider.getProvidedConnectionTypes())
+            .containsOnly(MAIN);
+    }
+
+    @Test
     public void shouldGetAutoCommitFalse() throws SQLException {
         final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
         final Connection connection = DualConnection.builder(connectionProvider, new PermanentConsistency()).build();
