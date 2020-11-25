@@ -453,7 +453,7 @@ public class ReplicaStatement implements Statement {
     public Statement getReadStatement(String sql) {
         // if write connection is already initialized, but the current statement is null
         // we should use a write statement, regardless of the fact that readStatement has been called.
-        if (connectionProvider.hasWriteConnection() || isSelectForUpdate(sql) || isFunctionCall(sql) || isUpdate(sql)) {
+        if (connectionProvider.hasWriteConnection() || isSelectForUpdate(sql) || isFunctionCall(sql) || isUpdate(sql) || isDelete(sql)) {
             return getWriteStatement();
         }
         setCurrentStatement(getCurrentStatement() != null ? getCurrentStatement() : readStatement.get());
@@ -466,7 +466,11 @@ public class ReplicaStatement implements Statement {
     }
 
     private boolean isUpdate(String sql) {
-        return sql != null && (sql.contains("returning") || sql.contains("RETURNING"));
+        return sql != null && (sql.startsWith("update") || sql.startsWith("UPDATE"));
+    }
+
+    private boolean isDelete(String sql) {
+        return sql != null && (sql.startsWith("delete") || sql.startsWith("DELETE"));
     }
 
     private boolean isFunctionCall(String sql) {
