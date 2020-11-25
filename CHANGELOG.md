@@ -9,6 +9,8 @@ This project **DOES NOT** adhere to [Semantic Versioning](http://semver.org/spec
 
 ### Fixed
 - Assign deletes to the main connection for `executeQuery` calls
+- Keep using the main connection
+- `setReadOnly` determines connection
 
 ### Removed
 - `api.circuitbreaker.DualConnectionException`

@@ -107,7 +107,7 @@ public class DualConnection implements Connection {
     }
 
     @Override
-    public void setReadOnly(boolean readOnly) {
+    public void setReadOnly(boolean readOnly) throws SQLException {
         connectionProvider.setReadOnly(readOnly);
     }
 

@@ -108,8 +108,13 @@ public class ReplicaConnectionProvider implements AutoCloseable {
         return isReadOnly;
     }
 
-    public void setReadOnly(Boolean readOnly) {
+    public void setReadOnly(Boolean readOnly) throws SQLException {
         isReadOnly = readOnly;
+        if (readOnly) {
+            getReadConnection();
+        } else {
+            getWriteConnection();
+        }
     }
 
     public String getCatalog() {
@@ -166,6 +171,9 @@ public class ReplicaConnectionProvider implements AutoCloseable {
     public Connection getReadConnection() throws SQLException {
         if (transactionIsolation != null && transactionIsolation > Connection.TRANSACTION_READ_COMMITTED) {
             return getWriteConnection();
+        }
+        if (writeConnection.isInitialized()) {
+            return writeConnection.get();
         }
         final Connection readConnection = this.readConnection.get();
         if (consistency.isConsistent(readConnection)) {

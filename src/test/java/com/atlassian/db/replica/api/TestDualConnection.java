@@ -540,7 +540,6 @@ public class TestDualConnection {
         final Connection connection = DualConnection.builder(connectionProvider, new PermanentConsistency()).build();
 
         connection.setReadOnly(true);
-        connection.prepareStatement(SIMPLE_QUERY).executeQuery();
 
         assertThat(connectionProvider.getProvidedConnectionTypes())
             .containsOnly(REPLICA);
@@ -554,12 +553,24 @@ public class TestDualConnection {
         final Connection connection = DualConnection.builder(connectionProvider, new PermanentConsistency()).build();
 
         connection.setReadOnly(false);
-        connection.prepareStatement(SIMPLE_QUERY).executeQuery();
 
         assertThat(connectionProvider.getProvidedConnectionTypes())
-            .containsOnly(REPLICA);
+            .containsOnly(MAIN);
         verify(connectionProvider.singleProvidedConnection()).setReadOnly(false);
         assertThat(connection.isReadOnly()).isFalse();
+    }
+
+    @Test
+    public void shouldNotSwitchBackToReplica() throws SQLException {
+        final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
+        final Connection connection = DualConnection.builder(connectionProvider, new PermanentConsistency()).build();
+
+        connection.setReadOnly(false);
+        connection.setReadOnly(true);
+
+        assertThat(connectionProvider.getProvidedConnectionTypes())
+            .containsOnly(MAIN);
+        assertThat(connection.isReadOnly()).isTrue();
     }
 
     @Test
@@ -740,8 +751,9 @@ public class TestDualConnection {
         connection.prepareStatement(SIMPLE_QUERY).executeUpdate();
 
         connection.isValid(10);
-
-        verify(connectionProvider.getProvidedConnections().get(1)).isValid(10);
+        assertThat(connectionProvider.getProvidedConnectionTypes())
+            .containsOnly(MAIN);
+        verify(connectionProvider.singleProvidedConnection()).isValid(10);
     }
 
     @Test
