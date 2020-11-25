@@ -356,7 +356,9 @@ public class ReplicaStatement implements Statement {
 
     @Override
     public void setLargeMaxRows(long max) {
-        throw new ReadReplicaUnsupportedOperationException();
+        addOperation(
+            (StatementOperation<Statement>) statement -> statement.setLargeMaxRows(max)
+        );
     }
 
     @Override

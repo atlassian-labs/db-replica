@@ -412,4 +412,16 @@ public class TestStatement {
 
         verify(connectionProvider.singleStatement()).setPoolable(false);
     }
+
+    @Test
+    public void shouldSetLargeMaxRows() throws SQLException {
+        final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
+        final Connection connection = DualConnection.builder(connectionProvider, new PermanentConsistency()).build();
+        final PreparedStatement statement = connection.prepareStatement(SIMPLE_QUERY);
+
+        statement.setLargeMaxRows(12);
+        statement.executeQuery();
+
+        verify(connectionProvider.singleStatement()).setLargeMaxRows(12);
+    }
 }
