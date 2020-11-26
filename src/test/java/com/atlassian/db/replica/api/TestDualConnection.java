@@ -25,11 +25,7 @@ import static java.sql.Connection.TRANSACTION_SERIALIZABLE;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @SuppressWarnings({"SqlDialectInspection", "SqlNoDataSourceInspection"})
 public class TestDualConnection {
@@ -876,4 +872,31 @@ public class TestDualConnection {
         assertThat(thrown.getCause()).isInstanceOf(SQLException.class);
     }
 
+    @Test
+    public void shouldPersistReadOnly() throws SQLException {
+        final ReadOnlyAwareConnection readOnlyAwareConnection = mock(ReadOnlyAwareConnection.class);
+        doCallRealMethod().when(readOnlyAwareConnection).isReadOnly();
+        doCallRealMethod().when(readOnlyAwareConnection).setReadOnly(anyBoolean());
+
+        final Connection connection = DualConnection.builder(new SingleConnectionProvider(readOnlyAwareConnection), new PermanentConsistency()).build();
+
+        connection.setReadOnly(true);
+        connection.setReadOnly(false);
+
+        assertThat(readOnlyAwareConnection.isReadOnly()).isFalse();
+    }
+
+    private static abstract class ReadOnlyAwareConnection implements Connection {
+        private boolean isReadOnly;
+
+        @Override
+        public void setReadOnly(boolean readOnly) {
+            this.isReadOnly = readOnly;
+        }
+
+        @Override
+        public boolean isReadOnly() {
+            return isReadOnly;
+        }
+    }
 }
