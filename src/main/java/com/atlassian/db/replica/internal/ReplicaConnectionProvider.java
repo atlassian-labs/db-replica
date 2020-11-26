@@ -58,9 +58,6 @@ public class ReplicaConnectionProvider implements AutoCloseable {
             if (transactionIsolation != null) {
                 connection.setTransactionIsolation(transactionIsolation);
             }
-            if (isReadOnly != null) {
-                connection.setReadOnly(isReadOnly);
-            }
             if (catalog != null) {
                 connection.setCatalog(catalog);
             }
@@ -110,10 +107,11 @@ public class ReplicaConnectionProvider implements AutoCloseable {
 
     public void setReadOnly(Boolean readOnly) throws SQLException {
         isReadOnly = readOnly;
+
         if (readOnly) {
-            getReadConnection();
+            getReadConnection().setReadOnly(isReadOnly);
         } else {
-            getWriteConnection();
+            getWriteConnection().setReadOnly(isReadOnly);
         }
     }
 
