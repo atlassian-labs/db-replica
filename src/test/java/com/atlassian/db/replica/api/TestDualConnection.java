@@ -5,6 +5,7 @@ import com.atlassian.db.replica.api.mocks.NoOpConnection;
 import com.atlassian.db.replica.api.mocks.NoOpConnectionProvider;
 import com.atlassian.db.replica.api.mocks.PermanentConsistency;
 import com.atlassian.db.replica.api.mocks.PermanentInconsistency;
+import com.atlassian.db.replica.api.mocks.ReadOnlyAwareConnection;
 import com.atlassian.db.replica.api.mocks.SingleConnectionProvider;
 import com.atlassian.db.replica.spi.DualCall;
 import org.junit.Test;
@@ -892,20 +893,6 @@ public class TestDualConnection {
         connection.setReadOnly(false);
 
         assertThat(readOnlyAwareConnection.isReadOnly()).isFalse();
-    }
-
-    private static abstract class ReadOnlyAwareConnection implements Connection {
-        private boolean isReadOnly;
-
-        @Override
-        public void setReadOnly(boolean readOnly) {
-            this.isReadOnly = readOnly;
-        }
-
-        @Override
-        public boolean isReadOnly() {
-            return isReadOnly;
-        }
     }
 
     @Test
