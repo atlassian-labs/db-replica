@@ -1,15 +1,13 @@
 package com.atlassian.db.replica.impl;
 
 import com.atlassian.db.replica.internal.util.ThreadSafe;
-import com.atlassian.db.replica.spi.ReplicaConsistency;
+import com.atlassian.db.replica.spi.*;
 import org.postgresql.replication.LogSequenceNumber;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.util.concurrent.atomic.AtomicReference;
-
-import static com.atlassian.db.replica.internal.util.Comparables.max;
+import java.util.*;
 
 /**
  * [LSN] means "log sequence number". It points to a place in the PostgreSQL write-ahead log.
@@ -25,22 +23,22 @@ import static com.atlassian.db.replica.internal.util.Comparables.max;
 @ThreadSafe
 public class LsnReplicaConsistency implements ReplicaConsistency {
 
-    private final AtomicReference<LogSequenceNumber> lastWrite = new AtomicReference<>();
+    private final Cache<LogSequenceNumber> lastWrite = Cache.cacheMonotonicValuesInMemory();
 
     @Override
     public void write(Connection main) {
         try {
-            final LogSequenceNumber next = queryLsn(main);
-            lastWrite.updateAndGet(prev -> max(prev, next));
+            lastWrite.put(queryLsn(main));
         } catch (Exception e) {
             //TODO: log warning
-            lastWrite.set(null);
+            lastWrite.reset();
         }
     }
 
     @Override
     public boolean isConsistent(Connection replica) {
-        if (lastWrite.get() == null) {
+        Optional<LogSequenceNumber> maybeLastWrite = lastWrite.get();
+        if (!maybeLastWrite.isPresent()) {
             return false;
         }
         LogSequenceNumber lastRefresh;
@@ -50,7 +48,7 @@ public class LsnReplicaConsistency implements ReplicaConsistency {
             //TODO: log warning
             return false;
         }
-        return lastRefresh.asLong() >= lastWrite.get().asLong();
+        return lastRefresh.asLong() >= maybeLastWrite.get().asLong();
     }
 
     private LogSequenceNumber queryLsn(Connection connection) throws Exception {

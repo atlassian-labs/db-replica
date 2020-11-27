@@ -1,22 +1,36 @@
 package com.atlassian.db.replica.spi;
 
+import com.atlassian.db.replica.impl.*;
+import com.atlassian.db.replica.internal.util.*;
 
-import com.atlassian.db.replica.internal.util.ThreadSafe;
-
-import java.sql.Connection;
+import java.sql.*;
+import java.time.*;
 
 @ThreadSafe
 public interface ReplicaConsistency {
-    /**
-     * This method is called after each UPDATE, INSERT or DELETE.
-     * TODO: Just an idea. If we pass a table that is updated to the listener. Then it can ignore bump for some writes.
-     * @param main to the main database
-     */
-     void write(Connection main);
 
     /**
-     * Judge if replica is ready to be queried.
-     * @return true if replica is consistent with main
+     * @param maxPropagation how long do writes propagate from main to replica
+     * @param clock          measures flow of time
+     * @param lastWrite      remembers last write
+     * @return consistency checker assuming consistency after {@code maxPropagation} since {@code lastWrite} (if known)
      */
-     boolean isConsistent(Connection replica);
+    static ReplicaConsistency assumePropagationDelay(Duration maxPropagation, Clock clock, Cache<Instant> lastWrite) {
+        return new PessimisticPropagationConsistency(clock, maxPropagation, lastWrite);
+    }
+
+    /**
+     * Informs that {@code main} received an UPDATE, INSERT or DELETE.
+     *
+     * @param main connects to the main database
+     */
+    void write(Connection main);
+
+    /**
+     * Judges if {@code replica} is ready to be queried.
+     *
+     * @param replica connects to the replica database
+     * @return true if {@code replica} is consistent with main
+     */
+    boolean isConsistent(Connection replica);
 }

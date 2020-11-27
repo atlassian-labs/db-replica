@@ -7,6 +7,11 @@ This project **DOES NOT** adhere to [Semantic Versioning](http://semver.org/spec
 ## [Unreleased]
 [Unreleased]: https://bitbucket.org/atlassian/db-replica/branches/compare/master%0Drelease-0.1.10
 
+### Added
+- Inject `Cache` to allow multiple ways of holding the "last write to main".
+- Add `ReplicaConsistency.assumePropagationDelay`.
+- Add `Cache.assumePropagationDelay.cacheMonotonicValuesInMemory`.
+
 ### Fixed
 - implementation of `Connection#setSavepoint`
 - implementation of `Connection#rollback(Savepoint savepoint)`
