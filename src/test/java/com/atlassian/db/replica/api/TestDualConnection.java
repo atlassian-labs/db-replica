@@ -937,4 +937,15 @@ public class TestDualConnection {
 
         verify(connectionProvider.singleProvidedConnection()).rollback(savepoint);
     }
+
+    @Test
+    public void shouldReleaseSavepoint() throws SQLException {
+        final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
+        final Connection dualConnection = DualConnection.builder(connectionProvider, new PermanentConsistency()).build();
+        final Savepoint savepoint = mock(Savepoint.class);
+
+        dualConnection.releaseSavepoint(savepoint);
+
+        verify(connectionProvider.singleProvidedConnection()).releaseSavepoint(savepoint);
+    }
 }

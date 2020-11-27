@@ -217,8 +217,8 @@ public class DualConnection implements Connection {
     }
 
     @Override
-    public void releaseSavepoint(Savepoint savepoint) {
-        throw new ReadReplicaUnsupportedOperationException();
+    public void releaseSavepoint(Savepoint savepoint) throws SQLException {
+        connectionProvider.getWriteConnection().releaseSavepoint(savepoint);
     }
 
     @Override
