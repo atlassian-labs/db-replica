@@ -1,4 +1,4 @@
-package com.atlassian.db.replica.impl.circuitbreaker;
+package com.atlassian.db.replica.internal.circuitbreaker;
 
 import com.atlassian.db.replica.api.circuitbreaker.BreakerState;
 import com.atlassian.db.replica.spi.circuitbreaker.CircuitBreaker;

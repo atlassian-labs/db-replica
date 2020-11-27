@@ -1,7 +1,7 @@
 package com.atlassian.db.replica.it;
 
 import com.atlassian.db.replica.api.*;
-import com.atlassian.db.replica.impl.*;
+import com.atlassian.db.replica.internal.*;
 import org.assertj.core.api.*;
 import org.junit.*;
 

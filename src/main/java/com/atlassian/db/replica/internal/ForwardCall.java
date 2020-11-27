@@ -1,9 +1,9 @@
-package com.atlassian.db.replica.impl;
+package com.atlassian.db.replica.internal;
 
-import com.atlassian.db.replica.api.SqlCall;
-import com.atlassian.db.replica.spi.DualCall;
+import com.atlassian.db.replica.api.*;
+import com.atlassian.db.replica.spi.*;
 
-import java.sql.SQLException;
+import java.sql.*;
 
 public class ForwardCall implements DualCall {
     @Override

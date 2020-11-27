@@ -3,7 +3,7 @@ package com.atlassian.db.replica.api.circuitbreaker;
 import com.atlassian.db.replica.api.DualConnection;
 import com.atlassian.db.replica.api.mocks.ConnectionProviderMock;
 import com.atlassian.db.replica.api.mocks.PermanentConsistency;
-import com.atlassian.db.replica.impl.circuitbreaker.BreakOnNotSupportedOperations;
+import com.atlassian.db.replica.internal.circuitbreaker.BreakOnNotSupportedOperations;
 import com.atlassian.db.replica.internal.ReadReplicaUnsupportedOperationException;
 import org.junit.After;
 import org.junit.Test;
