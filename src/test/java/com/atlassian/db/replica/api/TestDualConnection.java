@@ -882,6 +882,7 @@ public class TestDualConnection {
     @Test
     public void shouldPersistReadOnly() throws SQLException {
         final ReadOnlyAwareConnection readOnlyAwareConnection = mock(ReadOnlyAwareConnection.class);
+        //noinspection ResultOfMethodCallIgnored
         doCallRealMethod().when(readOnlyAwareConnection).isReadOnly();
         doCallRealMethod().when(readOnlyAwareConnection).setReadOnly(anyBoolean());
 
