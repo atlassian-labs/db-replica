@@ -1,7 +1,6 @@
 package com.atlassian.db.replica.api;
 
 import com.atlassian.db.replica.api.circuitbreaker.BreakerState;
-import com.atlassian.db.replica.spi.circuitbreaker.CircuitBreaker;
 import com.atlassian.db.replica.impl.ForwardCall;
 import com.atlassian.db.replica.impl.circuitbreaker.BreakOnNotSupportedOperations;
 import com.atlassian.db.replica.internal.ReadReplicaUnsupportedOperationException;
@@ -14,6 +13,7 @@ import com.atlassian.db.replica.internal.circuitbreaker.BreakerHandler;
 import com.atlassian.db.replica.spi.ConnectionProvider;
 import com.atlassian.db.replica.spi.DualCall;
 import com.atlassian.db.replica.spi.ReplicaConsistency;
+import com.atlassian.db.replica.spi.circuitbreaker.CircuitBreaker;
 
 import java.sql.Array;
 import java.sql.Blob;
@@ -202,13 +202,13 @@ public class DualConnection implements Connection {
     }
 
     @Override
-    public Savepoint setSavepoint() {
-        throw new ReadReplicaUnsupportedOperationException();
+    public Savepoint setSavepoint() throws SQLException {
+        return connectionProvider.getWriteConnection().setSavepoint();
     }
 
     @Override
-    public Savepoint setSavepoint(String name) {
-        throw new ReadReplicaUnsupportedOperationException();
+    public Savepoint setSavepoint(String name) throws SQLException {
+        return connectionProvider.getWriteConnection().setSavepoint(name);
     }
 
     @Override

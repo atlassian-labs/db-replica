@@ -899,4 +899,24 @@ public class TestDualConnection {
             return isReadOnly;
         }
     }
+
+    @Test
+    public void shouldSetSavepoint() throws SQLException {
+        final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
+        final Connection dualConnection = DualConnection.builder(connectionProvider, new PermanentConsistency()).build();
+
+        dualConnection.setSavepoint();
+
+        verify(connectionProvider.singleProvidedConnection()).setSavepoint();
+    }
+
+    @Test
+    public void shouldSetNamedSavepoint() throws SQLException {
+        final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
+        final Connection dualConnection = DualConnection.builder(connectionProvider, new PermanentConsistency()).build();
+
+        dualConnection.setSavepoint("name");
+
+        verify(connectionProvider.singleProvidedConnection()).setSavepoint("name");
+    }
 }

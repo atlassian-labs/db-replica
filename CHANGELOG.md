@@ -7,6 +7,9 @@ This project **DOES NOT** adhere to [Semantic Versioning](http://semver.org/spec
 ## [Unreleased]
 [Unreleased]: https://bitbucket.org/atlassian/db-replica/branches/compare/master%0Drelease-0.1.10
 
+### Fixed
+- implementation of `Connection#setSavepoint`
+
 ## [0.1.10] - 2020-11-26
 [0.1.10]: https://bitbucket.org/atlassian/db-replica/branches/compare/release-0.1.10%0Drelease-0.1.9
 
