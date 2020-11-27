@@ -212,8 +212,8 @@ public class DualConnection implements Connection {
     }
 
     @Override
-    public void rollback(Savepoint savepoint) {
-        throw new ReadReplicaUnsupportedOperationException();
+    public void rollback(Savepoint savepoint) throws SQLException {
+        connectionProvider.getWriteConnection().rollback(savepoint);
     }
 
     @Override

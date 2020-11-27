@@ -9,6 +9,7 @@ This project **DOES NOT** adhere to [Semantic Versioning](http://semver.org/spec
 
 ### Fixed
 - implementation of `Connection#setSavepoint`
+- implementation of `Connection#rollback(Savepoint savepoint)`
 
 ## [0.1.10] - 2020-11-26
 [0.1.10]: https://bitbucket.org/atlassian/db-replica/branches/compare/release-0.1.10%0Drelease-0.1.9

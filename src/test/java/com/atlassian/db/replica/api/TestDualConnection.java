@@ -13,6 +13,7 @@ import org.mockito.Mockito;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Savepoint;
 import java.sql.Statement;
 import java.util.HashMap;
 import java.util.Map;
@@ -25,7 +26,13 @@ import static java.sql.Connection.TRANSACTION_SERIALIZABLE;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.anyBoolean;
+import static org.mockito.Mockito.doCallRealMethod;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @SuppressWarnings({"SqlDialectInspection", "SqlNoDataSourceInspection"})
 public class TestDualConnection {
@@ -918,5 +925,16 @@ public class TestDualConnection {
         dualConnection.setSavepoint("name");
 
         verify(connectionProvider.singleProvidedConnection()).setSavepoint("name");
+    }
+
+    @Test
+    public void shouldRollbackSavepoint() throws SQLException {
+        final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
+        final Connection dualConnection = DualConnection.builder(connectionProvider, new PermanentConsistency()).build();
+        final Savepoint savepoint = mock(Savepoint.class);
+
+        dualConnection.rollback(savepoint);
+
+        verify(connectionProvider.singleProvidedConnection()).rollback(savepoint);
     }
 }
