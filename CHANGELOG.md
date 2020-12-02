@@ -5,12 +5,23 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 This project **DOES NOT** adhere to [Semantic Versioning](http://semver.org/spec/v2.0.0.html) yet.
 
 ## [Unreleased]
-[Unreleased]: https://bitbucket.org/atlassian/db-replica/branches/compare/master%0Drelease-0.1.10
+[Unreleased]: https://bitbucket.org/atlassian/db-replica/branches/compare/master%0Drelease-0.1.12
+
+### Fixed
+- Release connection's reference on close
+- Keep `close` related contract in `DualConnection` API
+- Make `close` safe
+
+## [0.1.12] - 2020-11-27
+[0.1.12]: https://bitbucket.org/atlassian/db-replica/branches/compare/release-0.1.12%0Drelease-0.1.11
 
 ### Added
 - Inject `Cache` to allow multiple ways of holding the "last write to main".
 - Add `ReplicaConsistency.assumePropagationDelay`.
 - Add `Cache.assumePropagationDelay.cacheMonotonicValuesInMemory`.
+
+## [0.1.11] - 2020-11-27
+[0.1.11]: https://bitbucket.org/atlassian/db-replica/branches/compare/release-0.1.11%0Drelease-0.1.10
 
 ### Fixed
 - implementation of `Connection#setSavepoint`
