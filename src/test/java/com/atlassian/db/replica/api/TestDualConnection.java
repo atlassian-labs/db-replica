@@ -427,7 +427,6 @@ public class TestDualConnection {
 
         dualConnection.setAutoCommit(false);
         dualConnection.prepareStatement(SIMPLE_QUERY).executeQuery();
-        dualConnection.close();
 
         provider.getProvidedConnections().forEach(connection -> {
             try {
@@ -980,5 +979,29 @@ public class TestDualConnection {
         final Throwable thrown = catchThrowable(dualConnection::close);
 
         assertThat(thrown).isNull();
+    }
+
+    @Test
+    public void shouldNotReuseClosedConnection() throws SQLException {
+        final Connection connection = new ConnectionMock();
+        final SingleConnectionProvider singleConnectionProvider = new SingleConnectionProvider(connection);
+        final Connection dualConnection = DualConnection.builder(singleConnectionProvider, new PermanentConsistency()).build();
+        dualConnection.prepareStatement(SIMPLE_QUERY).executeUpdate();
+        dualConnection.close();
+
+        final Throwable thrown = catchThrowable(() ->dualConnection.prepareStatement(SIMPLE_QUERY));
+
+        assertThat(thrown).isInstanceOf(SQLException.class);
+    }
+
+    @Test
+    public void shouldClosedConnectionBeNotValid() throws SQLException {
+        final Connection connection = new ConnectionMock();
+        final SingleConnectionProvider singleConnectionProvider = new SingleConnectionProvider(connection);
+        final Connection dualConnection = DualConnection.builder(singleConnectionProvider, new PermanentConsistency()).build();
+
+        dualConnection.close();
+
+        assertThat(dualConnection.isValid(1)).isFalse();
     }
 }
