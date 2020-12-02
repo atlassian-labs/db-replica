@@ -14,8 +14,7 @@ import java.sql.Statement;
 import static com.atlassian.db.replica.api.Queries.SIMPLE_QUERY;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 
 @SuppressWarnings("ThrowableNotThrown")
 public class TestStatement {
@@ -27,7 +26,13 @@ public class TestStatement {
         final PreparedStatement statement = connection.prepareStatement(SIMPLE_QUERY);
         statement.executeQuery();
         statement.executeUpdate();
-
+        connectionProvider.getPreparedStatements().forEach(st -> {
+            try {
+                doThrow(new RuntimeException()).when(st).close();
+            } catch (SQLException e) {
+                throw new RuntimeException(e);
+            }
+        });
         statement.close();
 
         connectionProvider.getPreparedStatements().forEach(st -> {

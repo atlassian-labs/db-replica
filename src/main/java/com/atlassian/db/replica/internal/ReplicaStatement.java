@@ -75,7 +75,11 @@ public class ReplicaStatement implements Statement {
     public void close() throws SQLException {
         isClosed = true;
         for (final Statement statement : allStatements()) {
-            statement.close();
+            try {
+                statement.close();
+            } catch (Exception e) {
+                // Ignore. We can't add it to warnings. It's impossible to read them after Statement#close
+            }
         }
         readStatement.reset();
         writeStatement.reset();
