@@ -23,7 +23,7 @@ public class ReplicaConnectionProvider implements AutoCloseable {
     private SQLWarning warning;
     private Map<String, Class<?>> typeMap;
     private Integer holdability;
-    private Boolean isClosed = false;
+    private volatile Boolean isClosed = false;
     private final LazyReference<Connection> readConnection = new LazyReference<Connection>() {
         @Override
         protected Connection create() {

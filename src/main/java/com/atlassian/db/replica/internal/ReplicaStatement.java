@@ -21,7 +21,7 @@ public class ReplicaStatement implements Statement {
     private final Integer resultSetConcurrency;
     private final Integer resultSetHoldability;
     private Statement currentStatement;
-    private boolean isClosed = false;
+    private volatile boolean isClosed = false;
     @SuppressWarnings("rawtypes")
     private final List<StatementOperation> operations = new ArrayList<>();
     private final List<StatementOperation<Statement>> batches = new ArrayList<>();
