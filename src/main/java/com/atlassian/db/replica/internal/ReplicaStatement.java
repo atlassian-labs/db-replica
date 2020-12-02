@@ -59,12 +59,14 @@ public class ReplicaStatement implements Statement {
 
     @Override
     public ResultSet executeQuery(String sql) throws SQLException {
+        checkClosed();
         final Statement statement = getReadStatement(sql);
         return execute(() -> statement.executeQuery(sql));
     }
 
     @Override
     public int executeUpdate(String sql) throws SQLException {
+        checkClosed();
         final Statement statement = getWriteStatement();
         return execute(() -> statement.executeUpdate(sql));
     }
@@ -82,11 +84,13 @@ public class ReplicaStatement implements Statement {
 
     @Override
     public int getMaxFieldSize() throws SQLException {
+        checkClosed();
         return getWriteStatement().getMaxFieldSize();
     }
 
     @Override
-    public void setMaxFieldSize(int max) {
+    public void setMaxFieldSize(int max) throws SQLException {
+        checkClosed();
         addOperation(
             (StatementOperation<Statement>) statement -> statement.setMaxFieldSize(max)
         );
@@ -94,42 +98,49 @@ public class ReplicaStatement implements Statement {
 
     @Override
     public int getMaxRows() throws SQLException {
+        checkClosed();
         return getWriteStatement().getMaxRows();
     }
 
     @Override
-    public void setMaxRows(int max) {
+    public void setMaxRows(int max) throws SQLException {
+        checkClosed();
         addOperation(
             (StatementOperation<Statement>) statement -> statement.setMaxRows(max)
         );
     }
 
     @Override
-    public void setEscapeProcessing(boolean enable) {
+    public void setEscapeProcessing(boolean enable) throws SQLException {
+        checkClosed();
         addOperation(
             (StatementOperation<Statement>) statement -> statement.setEscapeProcessing(enable)
         );
     }
 
     @Override
-    public int getQueryTimeout() {
+    public int getQueryTimeout() throws SQLException {
+        checkClosed();
         throw new ReadReplicaUnsupportedOperationException();
     }
 
     @Override
-    public void setQueryTimeout(int seconds) {
+    public void setQueryTimeout(int seconds) throws SQLException {
+        checkClosed();
         addOperation(
             (StatementOperation<Statement>) statement -> statement.setQueryTimeout(seconds)
         );
     }
 
     @Override
-    public void cancel() {
+    public void cancel() throws SQLException {
+        checkClosed();
         throw new ReadReplicaUnsupportedOperationException();
     }
 
     @Override
     public SQLWarning getWarnings() throws SQLException {
+        checkClosed();
         if (getCurrentStatement() == null) {
             return null;
         } else {
@@ -139,24 +150,28 @@ public class ReplicaStatement implements Statement {
 
     @Override
     public void clearWarnings() throws SQLException {
+        checkClosed();
         if (getCurrentStatement() != null) {
             getCurrentStatement().clearWarnings();
         }
     }
 
     @Override
-    public void setCursorName(String name) {
+    public void setCursorName(String name) throws SQLException {
+        checkClosed();
         throw new ReadReplicaUnsupportedOperationException();
     }
 
     @Override
     public boolean execute(String sql) throws SQLException {
+        checkClosed();
         final Statement statement = getWriteStatement();
         return execute(() -> statement.execute(sql));
     }
 
     @Override
     public ResultSet getResultSet() throws SQLException {
+        checkClosed();
         if (getCurrentStatement() == null) {
             return null;
         }
@@ -165,6 +180,7 @@ public class ReplicaStatement implements Statement {
 
     @Override
     public int getUpdateCount() throws SQLException {
+        checkClosed();
         if (getCurrentStatement() == null) {
             return -1;
         }
@@ -173,6 +189,7 @@ public class ReplicaStatement implements Statement {
 
     @Override
     public boolean getMoreResults() throws SQLException {
+        checkClosed();
         if (getCurrentStatement() == null) {
             return false;
         }
@@ -180,73 +197,86 @@ public class ReplicaStatement implements Statement {
     }
 
     @Override
-    public void setFetchDirection(int direction) {
+    public void setFetchDirection(int direction) throws SQLException {
+        checkClosed();
         addOperation(
             (StatementOperation<Statement>) statement -> statement.setFetchDirection(direction)
         );
     }
 
     @Override
-    public int getFetchDirection() {
+    public int getFetchDirection() throws SQLException {
+        checkClosed();
         throw new ReadReplicaUnsupportedOperationException();
     }
 
     @Override
-    public void setFetchSize(int rows) {
+    public void setFetchSize(int rows) throws SQLException {
+        checkClosed();
         addOperation(statement -> statement.setFetchSize(rows));
     }
 
     @Override
-    public int getFetchSize() {
+    public int getFetchSize() throws SQLException {
+        checkClosed();
         throw new ReadReplicaUnsupportedOperationException();
     }
 
     @Override
-    public int getResultSetConcurrency() {
+    public int getResultSetConcurrency() throws SQLException {
+        checkClosed();
         throw new ReadReplicaUnsupportedOperationException();
     }
 
     @Override
-    public int getResultSetType() {
+    public int getResultSetType() throws SQLException {
+        checkClosed();
         throw new ReadReplicaUnsupportedOperationException();
     }
 
     @Override
-    public void addBatch(String sql) {
+    public void addBatch(String sql) throws SQLException {
+        checkClosed();
         final StatementOperation<Statement> addBatch = statement -> statement.addBatch(sql);
         addOperation(addBatch);
         batches.add(addBatch);
     }
 
     @Override
-    public void clearBatch() {
+    public void clearBatch() throws SQLException {
+        checkClosed();
         batches.forEach(operations::remove);
         batches.clear();
     }
 
     @Override
     public int[] executeBatch() throws SQLException {
+        checkClosed();
         final Statement statement = getWriteStatement();
         return execute(statement::executeBatch);
     }
 
     @Override
     public Connection getConnection() throws SQLException {
+        checkClosed();
         return connectionProvider.getWriteConnection();
     }
 
     @Override
     public boolean getMoreResults(int current) throws SQLException {
+        checkClosed();
         return currentStatement.getMoreResults(current);
     }
 
     @Override
     public ResultSet getGeneratedKeys() throws SQLException {
+        checkClosed();
         return currentStatement.getGeneratedKeys();
     }
 
     @Override
     public int executeUpdate(String sql, int autoGeneratedKeys) throws SQLException {
+        checkClosed();
         final Statement statement = getWriteStatement();
         return execute(
             () -> statement.executeUpdate(sql, autoGeneratedKeys)
@@ -255,6 +285,7 @@ public class ReplicaStatement implements Statement {
 
     @Override
     public int executeUpdate(String sql, int[] columnIndexes) throws SQLException {
+        checkClosed();
         final Statement statement = getWriteStatement();
         return execute(
             () -> statement.executeUpdate(sql, columnIndexes)
@@ -263,6 +294,7 @@ public class ReplicaStatement implements Statement {
 
     @Override
     public int executeUpdate(String sql, String[] columnNames) throws SQLException {
+        checkClosed();
         final Statement statement = getWriteStatement();
         return execute(
             () -> statement.executeUpdate(sql, columnNames)
@@ -271,6 +303,7 @@ public class ReplicaStatement implements Statement {
 
     @Override
     public boolean execute(String sql, int autoGeneratedKeys) throws SQLException {
+        checkClosed();
         final Statement statement = getWriteStatement();
         return execute(
             () -> statement.execute(sql, autoGeneratedKeys)
@@ -279,6 +312,7 @@ public class ReplicaStatement implements Statement {
 
     @Override
     public boolean execute(String sql, int[] columnIndexes) throws SQLException {
+        checkClosed();
         final Statement state = getWriteStatement();
         return execute(
             () -> state.execute(sql, columnIndexes)
@@ -287,6 +321,7 @@ public class ReplicaStatement implements Statement {
 
     @Override
     public boolean execute(String sql, String[] columnNames) throws SQLException {
+        checkClosed();
         final Statement statement = getWriteStatement();
         return execute(
             () -> statement.execute(sql, columnNames)
@@ -295,6 +330,7 @@ public class ReplicaStatement implements Statement {
 
     @Override
     public int getResultSetHoldability() throws SQLException {
+        checkClosed();
         return currentStatement.getResultSetHoldability();
     }
 
@@ -304,24 +340,28 @@ public class ReplicaStatement implements Statement {
     }
 
     @Override
-    public void setPoolable(boolean poolable) {
+    public void setPoolable(boolean poolable) throws SQLException {
+        checkClosed();
         addOperation(
             (StatementOperation<Statement>) statement -> statement.setPoolable(poolable)
         );
     }
 
     @Override
-    public boolean isPoolable() {
+    public boolean isPoolable() throws SQLException {
+        checkClosed();
         throw new ReadReplicaUnsupportedOperationException();
     }
 
     @Override
-    public void closeOnCompletion() {
+    public void closeOnCompletion() throws SQLException {
+        checkClosed();
         throw new ReadReplicaUnsupportedOperationException();
     }
 
     @Override
-    public boolean isCloseOnCompletion() {
+    public boolean isCloseOnCompletion() throws SQLException {
+        checkClosed();
         throw new ReadReplicaUnsupportedOperationException();
     }
 
@@ -353,47 +393,55 @@ public class ReplicaStatement implements Statement {
 
     @Override
     public long getLargeUpdateCount() throws SQLException {
+        checkClosed();
         return currentStatement.getLargeUpdateCount();
     }
 
     @Override
-    public void setLargeMaxRows(long max) {
+    public void setLargeMaxRows(long max) throws SQLException {
+        checkClosed();
         addOperation(
             (StatementOperation<Statement>) statement -> statement.setLargeMaxRows(max)
         );
     }
 
     @Override
-    public long getLargeMaxRows() {
+    public long getLargeMaxRows() throws SQLException {
+        checkClosed();
         throw new ReadReplicaUnsupportedOperationException();
     }
 
     @Override
     public long[] executeLargeBatch() throws SQLException {
+        checkClosed();
         final Statement statement = getWriteStatement();
         return execute(statement::executeLargeBatch);
     }
 
     @Override
     public long executeLargeUpdate(String sql) throws SQLException {
+        checkClosed();
         final Statement statement = getWriteStatement();
         return execute(() -> statement.executeLargeUpdate(sql));
     }
 
     @Override
     public long executeLargeUpdate(String sql, int autoGeneratedKeys) throws SQLException {
+        checkClosed();
         final Statement statement = getWriteStatement();
         return execute(() -> statement.executeLargeUpdate(sql, autoGeneratedKeys));
     }
 
     @Override
     public long executeLargeUpdate(String sql, int[] columnIndexes) throws SQLException {
+        checkClosed();
         final Statement statement = getWriteStatement();
         return execute(() -> statement.executeLargeUpdate(sql, columnIndexes));
     }
 
     @Override
     public long executeLargeUpdate(String sql, String[] columnNames) throws SQLException {
+        checkClosed();
         final Statement statement = getWriteStatement();
         return execute(() -> statement.executeLargeUpdate(sql, columnNames));
     }
@@ -557,6 +605,12 @@ public class ReplicaStatement implements Statement {
                 resultSetConcurrency,
                 resultSetHoldability
             );
+        }
+    }
+
+    protected void checkClosed() throws SQLException {
+        if (isClosed()) {
+            throw new SQLException("This connection has been closed.");
         }
     }
 }

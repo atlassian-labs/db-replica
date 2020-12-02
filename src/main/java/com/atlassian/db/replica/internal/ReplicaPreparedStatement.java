@@ -77,129 +77,148 @@ public class ReplicaPreparedStatement extends ReplicaStatement implements Prepar
 
     @Override
     public ResultSet executeQuery() throws SQLException {
+        checkClosed();
         final PreparedStatement statement = getReadStatement(sql);
         return execute(statement::executeQuery);
     }
 
     @Override
     public int executeUpdate() throws SQLException {
+        checkClosed();
         final PreparedStatement statement = getWriteStatement();
         return execute(statement::executeUpdate);
     }
 
     @Override
     public long executeLargeUpdate() throws SQLException {
+        checkClosed();
         final PreparedStatement statement = getWriteStatement();
         return execute(statement::executeLargeUpdate);
     }
 
     @Override
-    public void setNull(int parameterIndex, int sqlType) {
+    public void setNull(int parameterIndex, int sqlType) throws SQLException {
+        checkClosed();
         addOperation(
             (StatementOperation<PreparedStatement>) statement -> statement.setNull(parameterIndex, sqlType)
         );
     }
 
     @Override
-    public void setBoolean(int parameterIndex, boolean x) {
+    public void setBoolean(int parameterIndex, boolean x) throws SQLException {
+        checkClosed();
         addOperation(
             (StatementOperation<PreparedStatement>) statement -> statement.setBoolean(parameterIndex, x)
         );
     }
 
     @Override
-    public void setByte(int parameterIndex, byte x) {
+    public void setByte(int parameterIndex, byte x) throws SQLException {
+        checkClosed();
         addOperation(
             (StatementOperation<PreparedStatement>) statement -> statement.setByte(parameterIndex, x)
         );
     }
 
     @Override
-    public void setShort(int parameterIndex, short x) {
+    public void setShort(int parameterIndex, short x) throws SQLException {
+        checkClosed();
         addOperation(
             (StatementOperation<PreparedStatement>) statement -> statement.setShort(parameterIndex, x)
         );
     }
 
     @Override
-    public void setInt(int parameterIndex, int x) {
+    public void setInt(int parameterIndex, int x) throws SQLException {
+        checkClosed();
         addOperation(
             (StatementOperation<PreparedStatement>) statement -> statement.setInt(parameterIndex, x)
         );
     }
 
     @Override
-    public void setLong(int parameterIndex, long x) {
+    public void setLong(int parameterIndex, long x) throws SQLException {
+        checkClosed();
         addOperation(
             (StatementOperation<PreparedStatement>) statement -> statement.setLong(parameterIndex, x)
         );
     }
 
     @Override
-    public void setFloat(int parameterIndex, float x) {
+    public void setFloat(int parameterIndex, float x) throws SQLException {
+        checkClosed();
         addOperation(
             (StatementOperation<PreparedStatement>) statement -> statement.setFloat(parameterIndex, x)
         );
     }
 
     @Override
-    public void setDouble(int parameterIndex, double x) {
+    public void setDouble(int parameterIndex, double x) throws SQLException {
+        checkClosed();
         addOperation(
             (StatementOperation<PreparedStatement>) statement -> statement.setDouble(parameterIndex, x)
         );
     }
 
     @Override
-    public void setBigDecimal(int parameterIndex, BigDecimal x) {
+    public void setBigDecimal(int parameterIndex, BigDecimal x) throws SQLException {
+        checkClosed();
         addOperation(
             (StatementOperation<PreparedStatement>) statement -> statement.setBigDecimal(parameterIndex, x)
         );
     }
 
     @Override
-    public void setString(int parameterIndex, String x) {
+    public void setString(int parameterIndex, String x) throws SQLException {
+        checkClosed();
         addOperation(
             (StatementOperation<PreparedStatement>) statement -> statement.setString(parameterIndex, x)
         );
     }
 
     @Override
-    public void setBytes(int parameterIndex, byte[] x) {
+    public void setBytes(int parameterIndex, byte[] x) throws SQLException {
+        checkClosed();
         addOperation(
             (StatementOperation<PreparedStatement>) statement -> statement.setBytes(parameterIndex, x)
         );
     }
 
     @Override
-    public void setDate(int parameterIndex, Date x) {
+    public void setDate(int parameterIndex, Date x) throws SQLException {
+        checkClosed();
         addOperation(
             (StatementOperation<PreparedStatement>) statement -> statement.setDate(parameterIndex, x)
         );
     }
 
     @Override
-    public void setTime(int parameterIndex, Time x) {
+    public void setTime(int parameterIndex, Time x) throws SQLException {
+        checkClosed();
         addOperation(
             (StatementOperation<PreparedStatement>) statement -> statement.setTime(parameterIndex, x)
         );
     }
 
     @Override
-    public void setTimestamp(int parameterIndex, Timestamp x) {
+    public void setTimestamp(int parameterIndex, Timestamp x) throws SQLException {
+        checkClosed();
         addOperation(
             (StatementOperation<PreparedStatement>) statement -> statement.setTimestamp(parameterIndex, x)
         );
     }
 
     @Override
-    public void setAsciiStream(int parameterIndex, InputStream x, int length) {
+    public void setAsciiStream(int parameterIndex, InputStream x, int length) throws SQLException {
+        checkClosed();
         addOperation(
             (StatementOperation<PreparedStatement>) statement -> statement.setAsciiStream(parameterIndex, x)
         );
     }
 
     @Override
-    public void setUnicodeStream(int parameterIndex, InputStream x, int length) {
+    public void setUnicodeStream(int parameterIndex, InputStream x, int length) throws SQLException {
+        checkClosed();
         addOperation(
             (StatementOperation<PreparedStatement>) statement -> {
                 //noinspection deprecation
@@ -209,26 +228,30 @@ public class ReplicaPreparedStatement extends ReplicaStatement implements Prepar
     }
 
     @Override
-    public void setBinaryStream(int parameterIndex, InputStream x, int length) {
+    public void setBinaryStream(int parameterIndex, InputStream x, int length) throws SQLException {
+        checkClosed();
         addOperation(
             (StatementOperation<PreparedStatement>) statement -> statement.setBinaryStream(parameterIndex, x, length)
         );
     }
 
     @Override
-    public void clearParameters() {
+    public void clearParameters() throws SQLException {
+        checkClosed();
         clearOperations();
     }
 
     @Override
-    public void setObject(int parameterIndex, Object x, int targetSqlType) {
+    public void setObject(int parameterIndex, Object x, int targetSqlType) throws SQLException {
+        checkClosed();
         addOperation(
             (StatementOperation<PreparedStatement>) statement -> statement.setObject(parameterIndex, x, targetSqlType)
         );
     }
 
     @Override
-    public void setObject(int parameterIndex, Object x) {
+    public void setObject(int parameterIndex, Object x) throws SQLException {
+        checkClosed();
         addOperation(
             (StatementOperation<PreparedStatement>) statement -> statement.setObject(parameterIndex, x)
         );
@@ -236,87 +259,100 @@ public class ReplicaPreparedStatement extends ReplicaStatement implements Prepar
 
     @Override
     public boolean execute() throws SQLException {
+        checkClosed();
         final PreparedStatement statement = getWriteStatement();
         return execute(statement::execute);
     }
 
     @Override
-    public void addBatch() {
+    public void addBatch() throws SQLException {
+        checkClosed();
         addOperation(
             (StatementOperation<PreparedStatement>) PreparedStatement::addBatch
         );
     }
 
     @Override
-    public void setCharacterStream(int parameterIndex, Reader reader, int length) {
+    public void setCharacterStream(int parameterIndex, Reader reader, int length) throws SQLException {
+        checkClosed();
         addOperation(
             (StatementOperation<PreparedStatement>) statement -> statement.setCharacterStream(parameterIndex, reader, length)
         );
     }
 
     @Override
-    public void setRef(int parameterIndex, Ref x) {
+    public void setRef(int parameterIndex, Ref x) throws SQLException {
+        checkClosed();
         addOperation(
             (StatementOperation<PreparedStatement>) statement -> statement.setRef(parameterIndex, x)
         );
     }
 
     @Override
-    public void setBlob(int parameterIndex, Blob x) {
+    public void setBlob(int parameterIndex, Blob x) throws SQLException {
+        checkClosed();
         addOperation(
             (StatementOperation<PreparedStatement>) statement -> statement.setBlob(parameterIndex, x)
         );
     }
 
     @Override
-    public void setClob(int parameterIndex, Clob x) {
+    public void setClob(int parameterIndex, Clob x) throws SQLException {
+        checkClosed();
         addOperation(
             (StatementOperation<PreparedStatement>) statement -> statement.setClob(parameterIndex, x)
         );
     }
 
     @Override
-    public void setArray(int parameterIndex, Array x) {
+    public void setArray(int parameterIndex, Array x) throws SQLException {
+        checkClosed();
         addOperation(
             (StatementOperation<PreparedStatement>) statement -> statement.setArray(parameterIndex, x)
         );
     }
 
     @Override
-    public ResultSetMetaData getMetaData() {
+    public ResultSetMetaData getMetaData() throws SQLException {
+        checkClosed();
         throw new ReadReplicaUnsupportedOperationException();
     }
 
     @Override
-    public void setDate(int parameterIndex, Date x, Calendar cal) {
+    public void setDate(int parameterIndex, Date x, Calendar cal) throws SQLException {
+        checkClosed();
         addOperation(
             (StatementOperation<PreparedStatement>) statement -> statement.setDate(parameterIndex, x)
         );
     }
 
     @Override
-    public void setTime(int parameterIndex, Time x, Calendar cal) {
+    public void setTime(int parameterIndex, Time x, Calendar cal) throws SQLException {
+        checkClosed();
         addOperation(
             (StatementOperation<PreparedStatement>) statement -> statement.setTime(parameterIndex, x)
         );
     }
 
     @Override
-    public void setTimestamp(int parameterIndex, Timestamp x, Calendar cal) {
+    public void setTimestamp(int parameterIndex, Timestamp x, Calendar cal) throws SQLException {
+        checkClosed();
         addOperation(
             (StatementOperation<PreparedStatement>) statement -> statement.setTimestamp(parameterIndex, x, cal)
         );
     }
 
     @Override
-    public void setNull(int parameterIndex, int sqlType, String typeName) {
+    public void setNull(int parameterIndex, int sqlType, String typeName) throws SQLException {
+        checkClosed();
         addOperation(
             (StatementOperation<PreparedStatement>) statement -> statement.setNull(parameterIndex, sqlType, typeName)
         );
     }
 
     @Override
-    public void setURL(int parameterIndex, URL x) {
+    public void setURL(int parameterIndex, URL x) throws SQLException {
+        checkClosed();
         addOperation(
             (StatementOperation<PreparedStatement>) statement -> statement.setURL(parameterIndex, x)
         );
@@ -324,6 +360,7 @@ public class ReplicaPreparedStatement extends ReplicaStatement implements Prepar
 
     @Override
     public ParameterMetaData getParameterMetaData() throws SQLException {
+        checkClosed();
         final PreparedStatement currentStatement = getCurrentStatement();
         if (currentStatement != null) {
             return currentStatement.getParameterMetaData();
@@ -333,133 +370,152 @@ public class ReplicaPreparedStatement extends ReplicaStatement implements Prepar
     }
 
     @Override
-    public void setRowId(int parameterIndex, RowId x) {
+    public void setRowId(int parameterIndex, RowId x) throws SQLException {
+        checkClosed();
         addOperation(
             (StatementOperation<PreparedStatement>) statement -> statement.setRowId(parameterIndex, x)
         );
     }
 
     @Override
-    public void setNString(int parameterIndex, String value) {
+    public void setNString(int parameterIndex, String value) throws SQLException {
+        checkClosed();
         addOperation(
             (StatementOperation<PreparedStatement>) statement -> statement.setNString(parameterIndex, value)
         );
     }
 
     @Override
-    public void setNCharacterStream(int parameterIndex, Reader value, long length) {
+    public void setNCharacterStream(int parameterIndex, Reader value, long length) throws SQLException {
+        checkClosed();
         addOperation(
             (StatementOperation<PreparedStatement>) statement -> statement.setNCharacterStream(parameterIndex, value, length)
         );
     }
 
     @Override
-    public void setNClob(int parameterIndex, NClob value) {
+    public void setNClob(int parameterIndex, NClob value) throws SQLException {
+        checkClosed();
         addOperation(
             (StatementOperation<PreparedStatement>) statement -> statement.setNClob(parameterIndex, value)
         );
     }
 
     @Override
-    public void setClob(int parameterIndex, Reader reader, long length) {
+    public void setClob(int parameterIndex, Reader reader, long length) throws SQLException {
+        checkClosed();
         addOperation(
             (StatementOperation<PreparedStatement>) statement -> statement.setClob(parameterIndex, reader, length)
         );
     }
 
     @Override
-    public void setBlob(int parameterIndex, InputStream inputStream, long length) {
+    public void setBlob(int parameterIndex, InputStream inputStream, long length) throws SQLException {
+        checkClosed();
         addOperation(
             (StatementOperation<PreparedStatement>) statement -> statement.setBlob(parameterIndex, inputStream, length)
         );
     }
 
     @Override
-    public void setNClob(int parameterIndex, Reader reader, long length) {
+    public void setNClob(int parameterIndex, Reader reader, long length) throws SQLException {
+        checkClosed();
         addOperation(
             (StatementOperation<PreparedStatement>) statement -> statement.setNClob(parameterIndex, reader, length)
         );
     }
 
     @Override
-    public void setSQLXML(int parameterIndex, SQLXML xmlObject) {
+    public void setSQLXML(int parameterIndex, SQLXML xmlObject) throws SQLException {
+        checkClosed();
         addOperation(
             (StatementOperation<PreparedStatement>) statement -> statement.setSQLXML(parameterIndex, xmlObject)
         );
     }
 
     @Override
-    public void setObject(int parameterIndex, Object x, int targetSqlType, int scaleOrLength) {
+    public void setObject(int parameterIndex, Object x, int targetSqlType, int scaleOrLength) throws SQLException {
+        checkClosed();
         addOperation(
             (StatementOperation<PreparedStatement>) statement -> statement.setObject(parameterIndex, x, targetSqlType, scaleOrLength)
         );
     }
 
     @Override
-    public void setAsciiStream(int parameterIndex, InputStream x, long length) {
+    public void setAsciiStream(int parameterIndex, InputStream x, long length) throws SQLException {
+        checkClosed();
         addOperation(
             (StatementOperation<PreparedStatement>) statement -> statement.setAsciiStream(parameterIndex, x, length)
         );
     }
 
     @Override
-    public void setBinaryStream(int parameterIndex, InputStream x, long length) {
+    public void setBinaryStream(int parameterIndex, InputStream x, long length) throws SQLException {
+        checkClosed();
         addOperation(
             (StatementOperation<PreparedStatement>) statement -> statement.setBinaryStream(parameterIndex, x, length)
         );
     }
 
     @Override
-    public void setCharacterStream(int parameterIndex, Reader reader, long length) {
+    public void setCharacterStream(int parameterIndex, Reader reader, long length) throws SQLException {
+        checkClosed();
         addOperation(
             (StatementOperation<PreparedStatement>) statement -> statement.setCharacterStream(parameterIndex, reader, length)
         );
     }
 
     @Override
-    public void setAsciiStream(int parameterIndex, InputStream x) {
+    public void setAsciiStream(int parameterIndex, InputStream x) throws SQLException {
+        checkClosed();
         addOperation(
             (StatementOperation<PreparedStatement>) statement -> statement.setAsciiStream(parameterIndex, x)
         );
     }
 
     @Override
-    public void setBinaryStream(int parameterIndex, InputStream x) {
+    public void setBinaryStream(int parameterIndex, InputStream x) throws SQLException {
+        checkClosed();
         addOperation(
             (StatementOperation<PreparedStatement>) statement -> statement.setBinaryStream(parameterIndex, x)
         );
     }
 
     @Override
-    public void setCharacterStream(int parameterIndex, Reader reader) {
+    public void setCharacterStream(int parameterIndex, Reader reader) throws SQLException {
+        checkClosed();
         addOperation(
             (StatementOperation<PreparedStatement>) statement -> statement.setCharacterStream(parameterIndex, reader)
         );
     }
 
     @Override
-    public void setNCharacterStream(int parameterIndex, Reader value) {
+    public void setNCharacterStream(int parameterIndex, Reader value) throws SQLException {
+        checkClosed();
         addOperation(
             (StatementOperation<PreparedStatement>) statement -> statement.setNCharacterStream(parameterIndex, value)
         );
     }
 
     @Override
-    public void setClob(int parameterIndex, Reader reader) {
+    public void setClob(int parameterIndex, Reader reader) throws SQLException {
+        checkClosed();
         addOperation(
             (StatementOperation<PreparedStatement>) statement -> statement.setClob(parameterIndex, reader)
         );
     }
 
     @Override
-    public void setBlob(int parameterIndex, InputStream inputStream) {
+    public void setBlob(int parameterIndex, InputStream inputStream) throws SQLException {
+        checkClosed();
         addOperation(
             (StatementOperation<PreparedStatement>) statement -> statement.setBlob(parameterIndex, inputStream)
         );
     }
 
     @Override
-    public void setNClob(int parameterIndex, Reader reader) {
+    public void setNClob(int parameterIndex, Reader reader) throws SQLException {
+        checkClosed();
         addOperation(
             (StatementOperation<PreparedStatement>) statement -> statement.setNClob(parameterIndex, reader)
         );

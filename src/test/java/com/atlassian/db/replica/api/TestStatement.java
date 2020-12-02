@@ -449,4 +449,16 @@ public class TestStatement {
 
         assertThat(statement.isClosed()).isTrue();
     }
+
+    @Test
+    public void shouldNotReuseClosedStatement() throws SQLException {
+        final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
+        final Connection connection = DualConnection.builder(connectionProvider, new PermanentConsistency()).build();
+        final PreparedStatement statement = connection.prepareStatement(SIMPLE_QUERY);
+        statement.close();
+
+        final Throwable thrown = catchThrowable(statement::executeQuery);
+
+        assertThat(thrown).isInstanceOf(SQLException.class);
+    }
 }
