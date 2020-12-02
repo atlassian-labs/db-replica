@@ -11,6 +11,7 @@ This project **DOES NOT** adhere to [Semantic Versioning](http://semver.org/spec
 - Release connection's reference on close
 - Keep `close` related contract in `DualConnection` API
 - Make `close` safe
+- Release `Statement` when closed
 
 ## [0.1.12] - 2020-11-27
 [0.1.12]: https://bitbucket.org/atlassian/db-replica/branches/compare/release-0.1.12%0Drelease-0.1.11

@@ -21,6 +21,7 @@ public class ReplicaStatement implements Statement {
     private final Integer resultSetConcurrency;
     private final Integer resultSetHoldability;
     private Statement currentStatement;
+    private boolean isClosed = false;
     @SuppressWarnings("rawtypes")
     private final List<StatementOperation> operations = new ArrayList<>();
     private final List<StatementOperation<Statement>> batches = new ArrayList<>();
@@ -70,9 +71,13 @@ public class ReplicaStatement implements Statement {
 
     @Override
     public void close() throws SQLException {
+        isClosed = true;
         for (final Statement statement : allStatements()) {
             statement.close();
         }
+        readStatement.reset();
+        writeStatement.reset();
+        currentStatement = null;
     }
 
     @Override
@@ -294,11 +299,8 @@ public class ReplicaStatement implements Statement {
     }
 
     @Override
-    public boolean isClosed() throws SQLException {
-        if (currentStatement == null) {
-            return false;
-        }
-        return currentStatement.isClosed();
+    public boolean isClosed() {
+        return isClosed;
     }
 
     @Override

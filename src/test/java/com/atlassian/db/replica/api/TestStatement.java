@@ -347,10 +347,9 @@ public class TestStatement {
         statement.executeQuery(SIMPLE_QUERY);
 
         statement.close();
-        statement.isClosed();
 
+        assertThat(statement.isClosed()).isTrue();
         verify(connectionProvider.singleStatement()).close();
-        verify(connectionProvider.singleStatement()).isClosed();
     }
 
     @Test
@@ -423,5 +422,31 @@ public class TestStatement {
         statement.executeQuery();
 
         verify(connectionProvider.singleStatement()).setLargeMaxRows(12);
+    }
+
+    @Test
+    public void shouldShouldNotDelegateToClosedStatement() throws SQLException {
+        final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
+        final Connection connection = DualConnection.builder(connectionProvider, new PermanentConsistency()).build();
+        final PreparedStatement statement = connection.prepareStatement(SIMPLE_QUERY);
+        statement.executeQuery();
+
+        statement.close();
+        final Throwable thrown = catchThrowable(statement::getResultSetHoldability);
+
+        verify(connectionProvider.singleStatement(), never()).getResultSetHoldability();
+        assertThat(thrown).isNotNull();
+    }
+
+
+    @Test
+    public void shouldCloseStatement() throws SQLException {
+        final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
+        final Connection connection = DualConnection.builder(connectionProvider, new PermanentConsistency()).build();
+        final PreparedStatement statement = connection.prepareStatement(SIMPLE_QUERY);
+
+        statement.close();
+
+        assertThat(statement.isClosed()).isTrue();
     }
 }
