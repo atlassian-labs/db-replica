@@ -269,6 +269,7 @@ public class ReplicaConnectionProvider implements AutoCloseable {
                 lastException = e;
             }
             if (isWriteAndReadTheSameConnection) {
+                writeConnection.reset();
                 if (lastException != null) {
                     throw new SQLException(lastException);
                 }
@@ -290,7 +291,11 @@ public class ReplicaConnectionProvider implements AutoCloseable {
     private void closeConnection(LazyReference<Connection> connectionReference) throws SQLException {
         try {
             final Connection connection = connectionReference.get();
-            saveWarning(connection.getWarnings());
+            try {
+                saveWarning(connection.getWarnings());
+            } catch (Exception e) {
+                saveWarning(new SQLWarning(e));
+            }
             connection.close();
         } finally {
             connectionReference.reset();

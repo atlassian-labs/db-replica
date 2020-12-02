@@ -1,12 +1,6 @@
 package com.atlassian.db.replica.api;
 
-import com.atlassian.db.replica.api.mocks.ConnectionProviderMock;
-import com.atlassian.db.replica.api.mocks.NoOpConnection;
-import com.atlassian.db.replica.api.mocks.NoOpConnectionProvider;
-import com.atlassian.db.replica.api.mocks.PermanentConsistency;
-import com.atlassian.db.replica.api.mocks.PermanentInconsistency;
-import com.atlassian.db.replica.api.mocks.ReadOnlyAwareConnection;
-import com.atlassian.db.replica.api.mocks.SingleConnectionProvider;
+import com.atlassian.db.replica.api.mocks.*;
 import com.atlassian.db.replica.spi.DualCall;
 import org.junit.Test;
 import org.mockito.Mockito;
@@ -327,6 +321,28 @@ public class TestDualConnection {
         dualConnection.close();
 
         assertThat(thrown.getCause()).hasMessageContaining("Connection already closed");
+        assertThat(connectionProvider.getProvidedConnectionTypes())
+            .containsExactly(REPLICA, MAIN);
+        connectionProvider.getProvidedConnections().forEach(connection -> {
+            try {
+                verify(connection).close();
+            } catch (SQLException e) {
+                throw new RuntimeException(e);
+            }
+        });
+    }
+
+    @Test
+    public void shouldCloseSubConnectionsRegardlessOfWarnings() throws SQLException {
+        final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
+        final Connection dualConnection = DualConnection.builder(connectionProvider, new PermanentConsistency()).build();
+        dualConnection.prepareStatement(SIMPLE_QUERY).executeQuery();
+        dualConnection.prepareStatement(SIMPLE_QUERY).executeUpdate();
+        final Connection main = connectionProvider.getProvidedConnections().get(1);
+        doThrow(new RuntimeException("Connection already closed")).when(main).getWarnings();
+
+        dualConnection.close();
+
         assertThat(connectionProvider.getProvidedConnectionTypes())
             .containsExactly(REPLICA, MAIN);
         connectionProvider.getProvidedConnections().forEach(connection -> {
@@ -935,5 +951,34 @@ public class TestDualConnection {
         dualConnection.releaseSavepoint(savepoint);
 
         verify(connectionProvider.singleProvidedConnection()).releaseSavepoint(savepoint);
+    }
+
+    @Test
+    public void shouldReleaseClosedConnection() throws SQLException {
+        final Connection connection = new ConnectionProviderMock().getMainConnection();
+        final SingleConnectionProvider singleConnectionProvider = new SingleConnectionProvider(connection);
+        final Connection dualConnection = DualConnection.builder(singleConnectionProvider, new PermanentConsistency()).build();
+        dualConnection.prepareStatement(SIMPLE_QUERY).executeQuery();
+        dualConnection.prepareStatement(SIMPLE_QUERY).executeUpdate();
+        dualConnection.close();
+        singleConnectionProvider.setConnection(null);
+
+        final Throwable thrown = catchThrowable(() ->dualConnection.prepareStatement(SIMPLE_QUERY).executeQuery());
+
+        assertThat(thrown).isNotNull();
+    }
+
+    @Test
+    public void shouldCallingCloseOnClosedConnectionBeNoOp() throws SQLException {
+        final Connection connection = new ConnectionMock();
+        final SingleConnectionProvider singleConnectionProvider = new SingleConnectionProvider(connection);
+        final Connection dualConnection = DualConnection.builder(singleConnectionProvider, new PermanentConsistency()).build();
+        dualConnection.prepareStatement(SIMPLE_QUERY).executeQuery();
+        dualConnection.prepareStatement(SIMPLE_QUERY).executeUpdate();
+        dualConnection.close();
+
+        final Throwable thrown = catchThrowable(dualConnection::close);
+
+        assertThat(thrown).isNull();
     }
 }

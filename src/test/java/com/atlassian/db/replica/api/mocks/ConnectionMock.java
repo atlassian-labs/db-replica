@@ -6,7 +6,10 @@ import java.util.concurrent.*;
 
 import static org.mockito.Mockito.*;
 
-class ConnectionMock implements Connection {
+@SuppressWarnings("RedundantThrows")
+public class ConnectionMock implements Connection {
+    private boolean isClosed = false;
+    private boolean isAutoCommit = true;
 
     @Override
     public Statement createStatement() throws SQLException {
@@ -15,7 +18,9 @@ class ConnectionMock implements Connection {
 
     @Override
     public PreparedStatement prepareStatement(String sql) throws SQLException {
-        return mock(PreparedStatement.class);
+        final PreparedStatement preparedStatement = mock(PreparedStatement.class);
+        when(preparedStatement.getConnection()).thenReturn(this);
+        return preparedStatement;
     }
 
     @Override
@@ -30,12 +35,12 @@ class ConnectionMock implements Connection {
 
     @Override
     public void setAutoCommit(boolean autoCommit) throws SQLException {
-        throw new RuntimeException();
+        this.isAutoCommit = autoCommit;
     }
 
     @Override
     public boolean getAutoCommit() throws SQLException {
-        throw new RuntimeException();
+        return isAutoCommit;
     }
 
     @Override
@@ -50,7 +55,7 @@ class ConnectionMock implements Connection {
 
     @Override
     public void close() throws SQLException {
-        throw new RuntimeException();
+        isClosed = true;
     }
 
     @Override
@@ -95,7 +100,11 @@ class ConnectionMock implements Connection {
 
     @Override
     public SQLWarning getWarnings() throws SQLException {
-        throw new RuntimeException();
+        if (isClosed) {
+            throw new SQLException("Connection closed");
+        } else {
+            return null;
+        }
     }
 
     @Override
@@ -110,9 +119,9 @@ class ConnectionMock implements Connection {
 
     @Override
     public PreparedStatement prepareStatement(
-        String sql,
-        int resultSetType,
-        int resultSetConcurrency
+            String sql,
+            int resultSetType,
+            int resultSetConcurrency
     ) throws SQLException {
         return mock(PreparedStatement.class);
     }
@@ -164,29 +173,29 @@ class ConnectionMock implements Connection {
 
     @Override
     public Statement createStatement(
-        int resultSetType,
-        int resultSetConcurrency,
-        int resultSetHoldability
+            int resultSetType,
+            int resultSetConcurrency,
+            int resultSetHoldability
     ) throws SQLException {
         return mock(Statement.class);
     }
 
     @Override
     public PreparedStatement prepareStatement(
-        String sql,
-        int resultSetType,
-        int resultSetConcurrency,
-        int resultSetHoldability
+            String sql,
+            int resultSetType,
+            int resultSetConcurrency,
+            int resultSetHoldability
     ) throws SQLException {
         return mock(PreparedStatement.class);
     }
 
     @Override
     public CallableStatement prepareCall(
-        String sql,
-        int resultSetType,
-        int resultSetConcurrency,
-        int resultSetHoldability
+            String sql,
+            int resultSetType,
+            int resultSetConcurrency,
+            int resultSetHoldability
     ) throws SQLException {
         return mock(CallableStatement.class);
     }

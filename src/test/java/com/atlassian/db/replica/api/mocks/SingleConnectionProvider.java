@@ -5,7 +5,7 @@ import com.atlassian.db.replica.spi.ConnectionProvider;
 import java.sql.Connection;
 
 public class SingleConnectionProvider implements ConnectionProvider {
-    private final Connection connection;
+    private Connection connection;
 
     public SingleConnectionProvider(Connection connection) {
         this.connection = connection;
@@ -24,5 +24,9 @@ public class SingleConnectionProvider implements ConnectionProvider {
     @Override
     public Connection getReplicaConnection() {
         return connection;
+    }
+
+    public void setConnection(Connection connection) {
+        this.connection = connection;
     }
 }
