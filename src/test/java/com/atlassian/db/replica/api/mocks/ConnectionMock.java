@@ -119,9 +119,9 @@ public class ConnectionMock implements Connection {
 
     @Override
     public PreparedStatement prepareStatement(
-            String sql,
-            int resultSetType,
-            int resultSetConcurrency
+        String sql,
+        int resultSetType,
+        int resultSetConcurrency
     ) throws SQLException {
         return mock(PreparedStatement.class);
     }
@@ -173,29 +173,29 @@ public class ConnectionMock implements Connection {
 
     @Override
     public Statement createStatement(
-            int resultSetType,
-            int resultSetConcurrency,
-            int resultSetHoldability
+        int resultSetType,
+        int resultSetConcurrency,
+        int resultSetHoldability
     ) throws SQLException {
         return mock(Statement.class);
     }
 
     @Override
     public PreparedStatement prepareStatement(
-            String sql,
-            int resultSetType,
-            int resultSetConcurrency,
-            int resultSetHoldability
+        String sql,
+        int resultSetType,
+        int resultSetConcurrency,
+        int resultSetHoldability
     ) throws SQLException {
         return mock(PreparedStatement.class);
     }
 
     @Override
     public CallableStatement prepareCall(
-            String sql,
-            int resultSetType,
-            int resultSetConcurrency,
-            int resultSetHoldability
+        String sql,
+        int resultSetType,
+        int resultSetConcurrency,
+        int resultSetHoldability
     ) throws SQLException {
         return mock(CallableStatement.class);
     }

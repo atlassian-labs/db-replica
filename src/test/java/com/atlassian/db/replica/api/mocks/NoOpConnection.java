@@ -175,12 +175,22 @@ public class NoOpConnection implements Connection {
     }
 
     @Override
-    public PreparedStatement prepareStatement(String sql, int resultSetType, int resultSetConcurrency, int resultSetHoldability) {
+    public PreparedStatement prepareStatement(
+        String sql,
+        int resultSetType,
+        int resultSetConcurrency,
+        int resultSetHoldability
+    ) {
         throw new RuntimeException("Not implemented");
     }
 
     @Override
-    public CallableStatement prepareCall(String sql, int resultSetType, int resultSetConcurrency, int resultSetHoldability) {
+    public CallableStatement prepareCall(
+        String sql,
+        int resultSetType,
+        int resultSetConcurrency,
+        int resultSetHoldability
+    ) {
         throw new RuntimeException("Not implemented");
     }
 

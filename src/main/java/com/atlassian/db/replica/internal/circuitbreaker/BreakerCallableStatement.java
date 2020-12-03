@@ -596,8 +596,10 @@ public class BreakerCallableStatement extends BreakerPreparedStatement implement
     }
 
     @Override
-    public void setObject(String parameterName, Object x, SQLType targetSqlType,
-                          int scaleOrLength) throws SQLException {
+    public void setObject(
+        String parameterName, Object x, SQLType targetSqlType,
+        int scaleOrLength
+    ) throws SQLException {
         breakerHandler.handle(() -> delegate.setObject(parameterName, x, targetSqlType, scaleOrLength));
     }
 
@@ -612,14 +614,18 @@ public class BreakerCallableStatement extends BreakerPreparedStatement implement
     }
 
     @Override
-    public void registerOutParameter(int parameterIndex, SQLType sqlType,
-                                     int scale) throws SQLException {
+    public void registerOutParameter(
+        int parameterIndex, SQLType sqlType,
+        int scale
+    ) throws SQLException {
         breakerHandler.handle(() -> delegate.registerOutParameter(parameterIndex, sqlType, scale));
     }
 
     @Override
-    public void registerOutParameter(int parameterIndex, SQLType sqlType,
-                                     String typeName) throws SQLException {
+    public void registerOutParameter(
+        int parameterIndex, SQLType sqlType,
+        String typeName
+    ) throws SQLException {
         breakerHandler.handle(() -> delegate.registerOutParameter(parameterIndex, sqlType, typeName));
     }
 
@@ -629,14 +635,18 @@ public class BreakerCallableStatement extends BreakerPreparedStatement implement
     }
 
     @Override
-    public void registerOutParameter(String parameterName, SQLType sqlType,
-                                     int scale) throws SQLException {
+    public void registerOutParameter(
+        String parameterName, SQLType sqlType,
+        int scale
+    ) throws SQLException {
         breakerHandler.handle(() -> delegate.registerOutParameter(parameterName, sqlType, scale));
     }
 
     @Override
-    public void registerOutParameter(String parameterName, SQLType sqlType,
-                                     String typeName) throws SQLException {
+    public void registerOutParameter(
+        String parameterName, SQLType sqlType,
+        String typeName
+    ) throws SQLException {
         breakerHandler.handle(() -> delegate.registerOutParameter(parameterName, sqlType, typeName));
     }
 }

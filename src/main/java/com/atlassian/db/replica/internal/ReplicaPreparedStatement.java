@@ -276,7 +276,11 @@ public class ReplicaPreparedStatement extends ReplicaStatement implements Prepar
     public void setCharacterStream(int parameterIndex, Reader reader, int length) throws SQLException {
         checkClosed();
         addOperation(
-            (StatementOperation<PreparedStatement>) statement -> statement.setCharacterStream(parameterIndex, reader, length)
+            (StatementOperation<PreparedStatement>) statement -> statement.setCharacterStream(
+                parameterIndex,
+                reader,
+                length
+            )
         );
     }
 
@@ -389,7 +393,11 @@ public class ReplicaPreparedStatement extends ReplicaStatement implements Prepar
     public void setNCharacterStream(int parameterIndex, Reader value, long length) throws SQLException {
         checkClosed();
         addOperation(
-            (StatementOperation<PreparedStatement>) statement -> statement.setNCharacterStream(parameterIndex, value, length)
+            (StatementOperation<PreparedStatement>) statement -> statement.setNCharacterStream(
+                parameterIndex,
+                value,
+                length
+            )
         );
     }
 
@@ -437,7 +445,12 @@ public class ReplicaPreparedStatement extends ReplicaStatement implements Prepar
     public void setObject(int parameterIndex, Object x, int targetSqlType, int scaleOrLength) throws SQLException {
         checkClosed();
         addOperation(
-            (StatementOperation<PreparedStatement>) statement -> statement.setObject(parameterIndex, x, targetSqlType, scaleOrLength)
+            (StatementOperation<PreparedStatement>) statement -> statement.setObject(
+                parameterIndex,
+                x,
+                targetSqlType,
+                scaleOrLength
+            )
         );
     }
 
@@ -461,7 +474,11 @@ public class ReplicaPreparedStatement extends ReplicaStatement implements Prepar
     public void setCharacterStream(int parameterIndex, Reader reader, long length) throws SQLException {
         checkClosed();
         addOperation(
-            (StatementOperation<PreparedStatement>) statement -> statement.setCharacterStream(parameterIndex, reader, length)
+            (StatementOperation<PreparedStatement>) statement -> statement.setCharacterStream(
+                parameterIndex,
+                reader,
+                length
+            )
         );
     }
 

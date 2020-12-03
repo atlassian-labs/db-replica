@@ -126,17 +126,32 @@ public class ConnectionProviderMock implements ConnectionProvider {
             throw new RuntimeException(e);
         }
         try {
-            Mockito.when(connection.createStatement()).thenAnswer((Answer<Statement>) invocationOnMock -> createStatement(connection));
-            Mockito.when(connection.createStatement(anyInt(), anyInt())).thenAnswer((Answer<Statement>) invocationOnMock -> createStatement(connection));
-            Mockito.when(connection.createStatement(anyInt(), anyInt(), anyInt())).thenAnswer((Answer<Statement>) invocationOnMock -> createStatement(connection));
-            Mockito.when(connection.prepareCall(anyString())).thenAnswer((Answer<CallableStatement>) invocationOnMock -> prepareCall(connection));
+            Mockito.when(connection.createStatement()).thenAnswer((Answer<Statement>) invocationOnMock -> createStatement(
+                connection));
+            Mockito.when(connection.createStatement(
+                anyInt(),
+                anyInt()
+            )).thenAnswer((Answer<Statement>) invocationOnMock -> createStatement(connection));
+            Mockito.when(connection.createStatement(
+                anyInt(),
+                anyInt(),
+                anyInt()
+            )).thenAnswer((Answer<Statement>) invocationOnMock -> createStatement(connection));
+            Mockito.when(connection.prepareCall(anyString())).thenAnswer((Answer<CallableStatement>) invocationOnMock -> prepareCall(
+                connection));
             Mockito.when(connection.prepareCall(
                 anyString(),
                 anyInt(),
                 anyInt()
             )).thenAnswer((Answer<CallableStatement>) invocationOnMock -> prepareCall(connection));
-            Mockito.when(connection.prepareCall(anyString(), anyInt(), anyInt(), anyInt())).thenAnswer((Answer<CallableStatement>) invocationOnMock -> prepareCall(connection));
-            Mockito.when(connection.prepareStatement(anyString())).thenAnswer((Answer<PreparedStatement>) invocationOnMock -> prepareStatement(connection));
+            Mockito.when(connection.prepareCall(
+                anyString(),
+                anyInt(),
+                anyInt(),
+                anyInt()
+            )).thenAnswer((Answer<CallableStatement>) invocationOnMock -> prepareCall(connection));
+            Mockito.when(connection.prepareStatement(anyString())).thenAnswer((Answer<PreparedStatement>) invocationOnMock -> prepareStatement(
+                connection));
             Mockito.when(connection.prepareStatement(
                 anyString(),
                 anyInt()

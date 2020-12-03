@@ -28,7 +28,8 @@ public class DualConnection implements Connection {
     private DualConnection(
         ConnectionProvider connectionProvider,
         ReplicaConsistency consistency,
-        DualCall dualCall) {
+        DualCall dualCall
+    ) {
         this.connectionProvider = new ReplicaConnectionProvider(connectionProvider, consistency);
         this.consistency = consistency;
         this.dualCall = dualCall;

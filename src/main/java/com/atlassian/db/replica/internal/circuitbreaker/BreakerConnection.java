@@ -31,12 +31,18 @@ public class BreakerConnection implements Connection {
 
     @Override
     public Statement createStatement() throws SQLException {
-        return new BreakerStatement(breakerHandler.handle((SqlCall<Statement>) delegate::createStatement), breakerHandler);
+        return new BreakerStatement(
+            breakerHandler.handle((SqlCall<Statement>) delegate::createStatement),
+            breakerHandler
+        );
     }
 
     @Override
     public PreparedStatement prepareStatement(String sql) throws SQLException {
-        return new BreakerPreparedStatement(breakerHandler.handle(() -> delegate.prepareStatement(sql)), breakerHandler);
+        return new BreakerPreparedStatement(
+            breakerHandler.handle(() -> delegate.prepareStatement(sql)),
+            breakerHandler
+        );
     }
 
     @Override
@@ -127,11 +133,18 @@ public class BreakerConnection implements Connection {
 
     @Override
     public Statement createStatement(int resultSetType, int resultSetConcurrency) throws SQLException {
-        return new BreakerStatement(breakerHandler.handle(() -> delegate.createStatement(resultSetType, resultSetConcurrency)), breakerHandler);
+        return new BreakerStatement(breakerHandler.handle(() -> delegate.createStatement(
+            resultSetType,
+            resultSetConcurrency
+        )), breakerHandler);
     }
 
     @Override
-    public PreparedStatement prepareStatement(String sql, int resultSetType, int resultSetConcurrency) throws SQLException {
+    public PreparedStatement prepareStatement(
+        String sql,
+        int resultSetType,
+        int resultSetConcurrency
+    ) throws SQLException {
         return new BreakerPreparedStatement(
             breakerHandler.handle(() -> delegate.prepareStatement(sql, resultSetType, resultSetConcurrency)),
             breakerHandler
@@ -187,25 +200,53 @@ public class BreakerConnection implements Connection {
     }
 
     @Override
-    public Statement createStatement(int resultSetType, int resultSetConcurrency, int resultSetHoldability) throws SQLException {
+    public Statement createStatement(
+        int resultSetType,
+        int resultSetConcurrency,
+        int resultSetHoldability
+    ) throws SQLException {
         return new BreakerStatement(
-            breakerHandler.handle(() -> delegate.createStatement(resultSetType, resultSetConcurrency, resultSetHoldability)),
+            breakerHandler.handle(() -> delegate.createStatement(
+                resultSetType,
+                resultSetConcurrency,
+                resultSetHoldability
+            )),
             breakerHandler
         );
     }
 
     @Override
-    public PreparedStatement prepareStatement(String sql, int resultSetType, int resultSetConcurrency, int resultSetHoldability) throws SQLException {
+    public PreparedStatement prepareStatement(
+        String sql,
+        int resultSetType,
+        int resultSetConcurrency,
+        int resultSetHoldability
+    ) throws SQLException {
         return new BreakerPreparedStatement(
-            breakerHandler.handle(() -> delegate.prepareStatement(sql, resultSetType, resultSetConcurrency, resultSetHoldability)),
+            breakerHandler.handle(() -> delegate.prepareStatement(
+                sql,
+                resultSetType,
+                resultSetConcurrency,
+                resultSetHoldability
+            )),
             breakerHandler
         );
     }
 
     @Override
-    public CallableStatement prepareCall(String sql, int resultSetType, int resultSetConcurrency, int resultSetHoldability) throws SQLException {
+    public CallableStatement prepareCall(
+        String sql,
+        int resultSetType,
+        int resultSetConcurrency,
+        int resultSetHoldability
+    ) throws SQLException {
         return new BreakerCallableStatement(
-            breakerHandler.handle(() -> delegate.prepareCall(sql, resultSetType, resultSetConcurrency, resultSetHoldability)),
+            breakerHandler.handle(() -> delegate.prepareCall(
+                sql,
+                resultSetType,
+                resultSetConcurrency,
+                resultSetHoldability
+            )),
             breakerHandler
         );
     }

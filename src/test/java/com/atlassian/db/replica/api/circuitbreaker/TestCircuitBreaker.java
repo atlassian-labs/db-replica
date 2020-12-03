@@ -25,7 +25,10 @@ public class TestCircuitBreaker {
 
     @Test
     public void shouldServeOnlyMasterConnectionAfterUnimplementedMethodCall() throws SQLException {
-        final Connection connection = DualConnection.builder(new ConnectionProviderMock(), new PermanentConsistency()).build();
+        final Connection connection = DualConnection.builder(
+            new ConnectionProviderMock(),
+            new PermanentConsistency()
+        ).build();
         Throwable thrown = catchThrowable(() -> connection.prepareStatement(SIMPLE_QUERY).isCloseOnCompletion());
         final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
         final Connection newConnection = DualConnection.builder(connectionProvider, new PermanentConsistency()).build();
