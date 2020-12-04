@@ -5,7 +5,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 This project **DOES NOT** adhere to [Semantic Versioning](http://semver.org/spec/v2.0.0.html) yet.
 
 ## [Unreleased]
-[Unreleased]: https://bitbucket.org/atlassian/db-replica/branches/compare/master%0Drelease-0.1.12
+[Unreleased]: https://bitbucket.org/atlassian/db-replica/branches/compare/master%0Drelease-0.1.13
+
+## [0.1.13] - 2020-12-02
+[0.1.13]: https://bitbucket.org/atlassian/db-replica/branches/compare/release-0.1.13%0Drelease-0.1.12
 
 ### Fixed
 - Release connection's reference on close
