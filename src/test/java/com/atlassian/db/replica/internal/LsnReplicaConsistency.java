@@ -8,6 +8,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.*;
+import java.util.function.Supplier;
 
 /**
  * [LSN] means "log sequence number". It points to a place in the PostgreSQL write-ahead log.
@@ -36,14 +37,14 @@ public class LsnReplicaConsistency implements ReplicaConsistency {
     }
 
     @Override
-    public boolean isConsistent(Connection replica) {
+    public boolean isConsistent(Supplier<Connection> replica) {
         Optional<LogSequenceNumber> maybeLastWrite = lastWrite.get();
         if (!maybeLastWrite.isPresent()) {
             return false;
         }
         LogSequenceNumber lastRefresh;
         try {
-            lastRefresh = queryLsn(replica);
+            lastRefresh = queryLsn(replica.get());
         } catch (Exception e) {
             //TODO: log warning
             return false;

@@ -2,8 +2,9 @@ package com.atlassian.db.replica.internal;
 
 
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Supplier;
 
-public abstract class LazyReference<T> {
+public abstract class LazyReference<T> implements Supplier<T> {
     private final AtomicReference<T> reference = new AtomicReference<>();
 
     protected abstract T create() throws Exception;
@@ -12,6 +13,7 @@ public abstract class LazyReference<T> {
         return reference.get() != null;
     }
 
+    @Override
     public T get() {
         if (!isInitialized()) {
             try {

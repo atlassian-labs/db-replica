@@ -7,6 +7,12 @@ This project **DOES NOT** adhere to [Semantic Versioning](http://semver.org/spec
 ## [Unreleased]
 [Unreleased]: https://bitbucket.org/atlassian/db-replica/branches/compare/master%0Drelease-0.1.13
 
+### Changed
+- `spi.ReplicaConsistency#isConsistent(Connection replica)` to `spi.ReplicaConsistency#isConsistent(Supplier<Connection> replica)`
+
+### Fixed
+- Avoid fetching replica connections when not needed.
+
 ## [0.1.13] - 2020-12-02
 [0.1.13]: https://bitbucket.org/atlassian/db-replica/branches/compare/release-0.1.13%0Drelease-0.1.12
 
@@ -74,10 +80,10 @@ This project **DOES NOT** adhere to [Semantic Versioning](http://semver.org/spec
 
 ### Removed
 - dependency on `jcip-annotations`
-- dependency on `postgresql` 
+- dependency on `postgresql`
 - dependency on `commons-lang3`
 - dependency on `atlassian-util-concurrent`
-- `impl.LsnReplicaConsistency` 
+- `impl.LsnReplicaConsistency`
 
 ## [0.1.6] - 2020-11-23
 [0.1.6]: https://bitbucket.org/atlassian/db-replica/branches/compare/release-0.1.6%0Drelease-0.1.5
@@ -126,7 +132,7 @@ This project **DOES NOT** adhere to [Semantic Versioning](http://semver.org/spec
 - implementation of `Statemtent#clearWarnings`
 
 - NPE in `ReplicaStatement#isClosed`
-    
+
 ## [0.1.2] - 2020-11-18
 [0.1.2]: https://bitbucket.org/atlassian/db-replica/branches/compare/release-0.1.2%0Drelease-0.1.1
 

@@ -1,5 +1,6 @@
 package com.atlassian.db.replica.internal;
 
+import com.atlassian.db.replica.internal.util.ConnectionSupplier;
 import com.atlassian.db.replica.spi.*;
 import org.junit.*;
 import org.threeten.extra.*;
@@ -31,7 +32,7 @@ public class PessimisticPropagationConsistencyTest {
 
         consistency.write(main);
         clock.add(Duration.ofMillis(300));
-        boolean consistent = consistency.isConsistent(replica);
+        boolean consistent = consistency.isConsistent(new ConnectionSupplier(replica));
 
         assertThat(consistent).isTrue();
     }
@@ -43,7 +44,7 @@ public class PessimisticPropagationConsistencyTest {
 
         consistency.write(main);
         clock.add(Duration.ofMillis(50));
-        boolean consistent = consistency.isConsistent(replica);
+        boolean consistent = consistency.isConsistent(new ConnectionSupplier(replica));
 
         assertThat(consistent).isFalse();
     }
@@ -54,7 +55,7 @@ public class PessimisticPropagationConsistencyTest {
         ReplicaConsistency consistency = new PessimisticPropagationConsistency(clock, maxPropagation, lastWrite);
 
         clock.add(Duration.ofMillis(700));
-        boolean consistent = consistency.isConsistent(replica);
+        boolean consistent = consistency.isConsistent(new ConnectionSupplier(replica));
 
         assertThat(consistent).isFalse();
     }

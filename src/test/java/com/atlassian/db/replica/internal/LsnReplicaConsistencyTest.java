@@ -1,9 +1,11 @@
 package com.atlassian.db.replica.internal;
 
+import com.atlassian.db.replica.internal.util.ConnectionSupplier;
 import com.atlassian.db.replica.spi.*;
 import org.junit.*;
 
 import java.sql.*;
+import java.util.function.Supplier;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
@@ -16,7 +18,7 @@ public class LsnReplicaConsistencyTest {
         final ReplicaConsistency consistency = new LsnReplicaConsistency();
         consistency.write(getConnection("16/3002D50"));
 
-        final boolean isConsistent = consistency.isConsistent(getConnection("16/3002D50"));
+        final boolean isConsistent = consistency.isConsistent(getConnectionSupplier("16/3002D50"));
 
         assertThat(isConsistent).isTrue();
     }
@@ -29,7 +31,7 @@ public class LsnReplicaConsistencyTest {
 
         consistency.write(main);
 
-        final boolean isConsistent = consistency.isConsistent(getConnection("16/3002D50"));
+        final boolean isConsistent = consistency.isConsistent(getConnectionSupplier("16/3002D50"));
 
         assertThat(isConsistent).isFalse();
     }
@@ -43,7 +45,7 @@ public class LsnReplicaConsistencyTest {
         consistency.write(main);
         consistency.write(getConnection("16/3002D50"));
 
-        final boolean isConsistent = consistency.isConsistent(getConnection("16/3002D50"));
+        final boolean isConsistent = consistency.isConsistent(getConnectionSupplier("16/3002D50"));
 
         assertThat(isConsistent).isTrue();
     }
@@ -51,7 +53,7 @@ public class LsnReplicaConsistencyTest {
     @Test
     public void shouldNotBeConsistentBeforeTheFirstWrite() {
         final ReplicaConsistency consistency = new LsnReplicaConsistency();
-        final Connection replica = mock(Connection.class);
+        final Supplier<Connection> replica = mock(ConnectionSupplier.class);
 
         final boolean isConsistent = consistency.isConsistent(replica);
 
@@ -66,9 +68,13 @@ public class LsnReplicaConsistencyTest {
         final Connection replica = mock(Connection.class);
         when(replica.prepareStatement(anyString())).thenThrow(new SQLException("Replica connection fails"));
 
-        final boolean isConsistent = consistency.isConsistent(replica);
+        final boolean isConsistent = consistency.isConsistent(new ConnectionSupplier(replica));
 
         assertThat(isConsistent).isFalse();
+    }
+
+    private Supplier<Connection> getConnectionSupplier(String lsn) throws SQLException {
+        return new ConnectionSupplier(getConnection(lsn));
     }
 
     private Connection getConnection(String lsn) throws SQLException {

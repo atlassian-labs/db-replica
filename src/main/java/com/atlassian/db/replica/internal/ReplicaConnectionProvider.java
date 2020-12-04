@@ -173,19 +173,10 @@ public class ReplicaConnectionProvider implements AutoCloseable {
         if (writeConnection.isInitialized()) {
             return writeConnection.get();
         }
-        final Connection readConnection = this.readConnection.get();
         if (consistency.isConsistent(readConnection)) {
-            initialize(readConnection);
-            return readConnection;
+            initialize(readConnection.get());
+            return readConnection.get();
         } else {
-            if (writeConnection.isInitialized() && writeConnection.get().equals(readConnection)) {
-                initialize(readConnection);
-                return readConnection;
-            }
-            if (!getWriteConnection().equals(readConnection)) {
-                readConnection.close();
-            }
-            this.readConnection.reset();
             return getWriteConnection();
         }
     }

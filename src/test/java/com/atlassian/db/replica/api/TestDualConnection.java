@@ -142,6 +142,17 @@ public class TestDualConnection {
     }
 
     @Test
+    public void shouldAvoidFetchingReadConnectionWhenNotNecessary() throws SQLException {
+        final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
+        final Connection connection = DualConnection.builder(connectionProvider, new PermanentInconsistency(false)).build();
+
+        connection.prepareStatement(SIMPLE_QUERY).executeQuery();
+
+        assertThat(connectionProvider.getProvidedConnectionTypes())
+            .containsExactly(MAIN);
+    }
+
+    @Test
     public void shouldRunNativeSqlOnMain() throws SQLException {
         final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
         final Connection connection = DualConnection.builder(connectionProvider, new PermanentInconsistency()).build();
@@ -351,6 +362,7 @@ public class TestDualConnection {
         dualConnection.prepareStatement(SIMPLE_QUERY).executeQuery();
         dualConnection.prepareStatement(SIMPLE_QUERY).executeUpdate();
         final Connection main = connectionProvider.getProvidedConnections().get(1);
+        //noinspection ThrowableNotThrown
         doThrow(new RuntimeException("Connection already closed")).when(main).getWarnings();
 
         dualConnection.close();

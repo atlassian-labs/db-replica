@@ -4,6 +4,7 @@ import com.atlassian.db.replica.spi.*;
 
 import java.sql.*;
 import java.time.*;
+import java.util.function.Supplier;
 
 /**
  * Assumes that writes propagate from main to replicas in at most a given amount of time.
@@ -27,7 +28,7 @@ public class PessimisticPropagationConsistency implements ReplicaConsistency {
     }
 
     @Override
-    public boolean isConsistent(Connection replica) {
+    public boolean isConsistent(Supplier<Connection> replica) {
         Instant assumedRefresh = assumeLastRefresh();
         Instant assumedWrite = assumeLastWrite();
         return assumedRefresh.isAfter(assumedWrite);

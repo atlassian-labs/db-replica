@@ -5,6 +5,7 @@ import com.atlassian.db.replica.internal.util.*;
 
 import java.sql.*;
 import java.time.*;
+import java.util.function.Supplier;
 
 @ThreadSafe
 public interface ReplicaConsistency {
@@ -32,5 +33,5 @@ public interface ReplicaConsistency {
      * @param replica connects to the replica database
      * @return true if {@code replica} is consistent with main
      */
-    boolean isConsistent(Connection replica);
+    boolean isConsistent(Supplier<Connection> replica);
 }
