@@ -101,13 +101,12 @@ public class ReplicaConnectionProvider implements AutoCloseable {
         return this.isClosed;
     }
 
-    public Boolean getReadOnly() {
-        return isReadOnly;
+    public boolean getReadOnly() {
+        return isReadOnly != null && isReadOnly;
     }
 
-    public void setReadOnly(Boolean readOnly) throws SQLException {
+    public void setReadOnly(boolean readOnly) throws SQLException {
         isReadOnly = readOnly;
-
         if (readOnly) {
             getReadConnection().setReadOnly(isReadOnly);
         } else {

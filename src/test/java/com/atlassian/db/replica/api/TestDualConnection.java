@@ -617,6 +617,14 @@ public class TestDualConnection {
     }
 
     @Test
+    public void shouldNotBeReadOnlyByDefault() throws SQLException {
+        final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
+        final Connection connection = DualConnection.builder(connectionProvider, new PermanentConsistency()).build();
+
+        assertThat(connection.isReadOnly()).isFalse();
+    }
+
+    @Test
     public void shouldSetCatalog() throws SQLException {
         final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
         final Connection connection = DualConnection.builder(connectionProvider, new PermanentConsistency()).build();
