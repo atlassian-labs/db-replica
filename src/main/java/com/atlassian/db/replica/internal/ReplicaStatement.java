@@ -558,7 +558,7 @@ public class ReplicaStatement implements Statement {
     }
 
     public boolean isReadOnly() {
-        return !(writeStatement.isInitialized() && getCurrentStatement().equals(writeStatement.get()));
+        return !connectionProvider.hasWriteConnection();
     }
 
     private Collection<Statement> allStatements() {

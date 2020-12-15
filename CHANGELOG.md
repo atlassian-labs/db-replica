@@ -7,6 +7,9 @@ This project **DOES NOT** adhere to [Semantic Versioning](http://semver.org/spec
 ## [Unreleased]
 [Unreleased]: https://bitbucket.org/atlassian/db-replica/branches/compare/master%0Drelease-0.1.15
 
+### Fixed
+- `DualCall` calls main when the replica is not consistent.
+
 ## [0.1.15] - 2020-12-07
 [0.1.15]: https://bitbucket.org/atlassian/db-replica/branches/compare/release-0.1.15%0Drelease-0.1.14
 

@@ -144,7 +144,10 @@ public class TestDualConnection {
     @Test
     public void shouldAvoidFetchingReadConnectionWhenNotNecessary() throws SQLException {
         final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
-        final Connection connection = DualConnection.builder(connectionProvider, new PermanentInconsistency(false)).build();
+        final Connection connection = DualConnection.builder(
+            connectionProvider,
+            new PermanentInconsistency(false)
+        ).build();
 
         connection.prepareStatement(SIMPLE_QUERY).executeQuery();
 
@@ -531,6 +534,23 @@ public class TestDualConnection {
             .containsOnly(REPLICA);
         verify(dualCall).callReplica(any());
         verify(dualCall, never()).callMain(any());
+    }
+
+    @Test
+    public void shouldExecuteOnMainWhenNotConsistent() throws SQLException {
+        final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
+        final DualCall dualCall = mock(DualCall.class);
+        final Connection connection = DualConnection
+            .builder(connectionProvider, new PermanentInconsistency())
+            .dualCall(dualCall)
+            .build();
+
+        connection.prepareStatement(SIMPLE_QUERY).executeQuery();
+
+        assertThat(connectionProvider.getProvidedConnectionTypes())
+            .containsOnly(REPLICA, MAIN);
+        verify(dualCall).callMain(any());
+        verify(dualCall, never()).callReplica(any());
     }
 
     @Test
