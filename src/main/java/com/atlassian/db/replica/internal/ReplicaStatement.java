@@ -12,8 +12,11 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static java.lang.Math.min;
 
 public class ReplicaStatement implements Statement {
     private final ReplicaConnectionProvider connectionProvider;
@@ -27,6 +30,7 @@ public class ReplicaStatement implements Statement {
     private final List<StatementOperation<Statement>> batches = new ArrayList<>();
     private final ReplicaConsistency consistency;
     private final DualCall dualCall;
+    final String methodBracketStart = Pattern.quote("(");
     private final LazyReference<Statement> readStatement = new LazyReference<Statement>() {
         @Override
         protected Statement create() throws Exception {
@@ -532,13 +536,22 @@ public class ReplicaStatement implements Statement {
         if (sql == null) {
             return false;
         }
-        String queryStart;
-        if (sql.length() > 80) {
-            queryStart = sql.substring(0, 80);
-        } else {
-            queryStart = sql;
+        final String mayContainFunction = skipIrrelevantSqlParts(sql);
+        final boolean mayBeFunction = mayContainFunction.contains("(");
+        if (!mayBeFunction) {
+            return false;
         }
-        return queryStart.contains("(");
+        final String potentialMethodName = mayContainFunction.split(methodBracketStart)[0];
+        final boolean hasSpaceInPotentialMethodName = potentialMethodName.contains(" ");
+        return !hasSpaceInPotentialMethodName;
+    }
+
+    /**
+     * Skips `SELECT ` at the beginning of the query. Postgres identifiers are limited to
+     * 63 characters, so we should be safe to interpret first 80 characters.
+     */
+    private String skipIrrelevantSqlParts(String sql) {
+        return sql.substring(7, min(sql.length(), 80));
     }
 
     protected Statement getWriteStatement() {
