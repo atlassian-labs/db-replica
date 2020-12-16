@@ -873,7 +873,7 @@ public class TestDualConnection {
     }
 
     @Test
-    public void shouldFailUnwrapInteger() {
+    public void shouldFailUnwrapInteger() throws SQLException {
         final Connection dualConnection = DualConnection.builder(
             new NoOpConnectionProvider(),
             new PermanentConsistency()

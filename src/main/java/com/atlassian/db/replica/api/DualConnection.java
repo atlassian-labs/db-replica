@@ -476,7 +476,7 @@ public class DualConnection implements Connection {
             return this;
         }
 
-        public Connection build() {
+        public Connection build() throws SQLException {
             if (circuitBreaker == null) {
                 return new DualConnection(
                     connectionProvider,

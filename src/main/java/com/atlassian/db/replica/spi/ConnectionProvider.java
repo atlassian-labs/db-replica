@@ -2,6 +2,7 @@ package com.atlassian.db.replica.spi;
 
 
 import java.sql.Connection;
+import java.sql.SQLException;
 
 public interface ConnectionProvider {
 
@@ -12,13 +13,13 @@ public interface ConnectionProvider {
      *
      * @return
      */
-    Connection getMainConnection();
+    Connection getMainConnection() throws SQLException;
 
     /**
      * Provides a connection to a replica databse.
      *
      * @return
      */
-    Connection getReplicaConnection();
+    Connection getReplicaConnection() throws SQLException;
 
 }

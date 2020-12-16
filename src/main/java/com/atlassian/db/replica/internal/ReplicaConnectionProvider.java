@@ -26,7 +26,7 @@ public class ReplicaConnectionProvider implements AutoCloseable {
     private volatile Boolean isClosed = false;
     private final LazyReference<Connection> readConnection = new LazyReference<Connection>() {
         @Override
-        protected Connection create() {
+        protected Connection create() throws SQLException {
             if (connectionProvider.isReplicaAvailable()) {
                 return connectionProvider.getReplicaConnection();
             } else {
@@ -37,7 +37,7 @@ public class ReplicaConnectionProvider implements AutoCloseable {
 
     private final LazyReference<Connection> writeConnection = new LazyReference<Connection>() {
         @Override
-        protected Connection create() {
+        protected Connection create() throws SQLException {
             return connectionProvider.getMainConnection();
         }
     };

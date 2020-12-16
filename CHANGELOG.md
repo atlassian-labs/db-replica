@@ -7,6 +7,10 @@ This project **DOES NOT** adhere to [Semantic Versioning](http://semver.org/spec
 ## [Unreleased]
 [Unreleased]: https://bitbucket.org/atlassian/db-replica/branches/compare/master%0Drelease-0.1.16
 
+### Changed
+- `spi.ConnectionProvider#getMainConnection()` throws `SQLException`
+- `spi.ConnectionProvider#getReplicaConnection()` throws `SQLException`
+
 ### Fixed
 - Complex queries wrongly run on the main database
 
