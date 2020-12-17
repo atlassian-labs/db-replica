@@ -4,6 +4,7 @@ import com.atlassian.db.replica.spi.*;
 
 import java.sql.*;
 import java.time.*;
+import java.util.Optional;
 import java.util.function.Supplier;
 
 /**
@@ -45,9 +46,18 @@ public class PessimisticPropagationConsistency implements ReplicaConsistency {
      * If {@code lastWrite} is unknown, assume the write just happened, e.g. it didn't propagate yet.
      * This assumption errs on the side of caution: more true inconsistencies at the cost of fewer true consistencies.
      *
+     * Propagates write assumption to the cache. This prevents from assuming write just happened until the next write.
      * @return known or assumed time of last write
      */
     private Instant assumeLastWrite() {
-        return lastWrite.get().orElse(clock.instant());
+        return lastWrite
+            .get()
+            .orElseGet(this::assumeWriteJustHappened);
+    }
+
+    private Instant assumeWriteJustHappened() {
+        final Instant now = clock.instant();
+        lastWrite.put(now);
+        return now;
     }
 }

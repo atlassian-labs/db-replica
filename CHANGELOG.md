@@ -5,7 +5,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 This project **DOES NOT** adhere to [Semantic Versioning](http://semver.org/spec/v2.0.0.html) yet.
 
 ## [Unreleased]
-[Unreleased]: https://bitbucket.org/atlassian/db-replica/branches/compare/master%0Drelease-0.1.16
+[Unreleased]: https://bitbucket.org/atlassian/db-replica/branches/compare/master%0Drelease-0.1.17
+
+### Fixed
+- Don't assume inconsistency forever, when no writes happen.
+
+## [0.1.17] - 2020-12-16
+[0.1.17]: https://bitbucket.org/atlassian/db-replica/branches/compare/release-0.1.17%0Drelease-0.1.16
 
 ### Changed
 - `spi.ConnectionProvider#getMainConnection()` throws `SQLException`

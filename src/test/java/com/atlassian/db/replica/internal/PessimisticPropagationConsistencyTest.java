@@ -59,4 +59,18 @@ public class PessimisticPropagationConsistencyTest {
 
         assertThat(consistent).isFalse();
     }
+
+    @Test
+    public void shouldNotAssumeInconsistentForeverWhenUnknown() {
+        Duration maxPropagation = Duration.ofMillis(200);
+        ReplicaConsistency consistency = new PessimisticPropagationConsistency(clock, maxPropagation, lastWrite);
+
+        clock.add(Duration.ofMillis(700));
+        boolean isConsistent = consistency.isConsistent(new ConnectionSupplier(replica));
+        clock.add(Duration.ofMillis(700));
+        boolean isConsistentLater = consistency.isConsistent(new ConnectionSupplier(replica));
+
+        assertThat(isConsistent).isFalse();
+        assertThat(isConsistentLater).isTrue();
+    }
 }
