@@ -2,7 +2,23 @@
 All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
-This project **DOES NOT** adhere to [Semantic Versioning](http://semver.org/spec/v2.0.0.html) yet.
+This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
+
+## API
+The API consists of all public Java types from `com.atlassian.db.replica.api`, `com.atlassian.db.replica.spi` and their subpackages:
+
+  * [source compatibility]
+  * [binary compatibility]
+  * [behavioral compatibility] with behavioral contracts expressed via Javadoc
+
+[source compatibility]: http://cr.openjdk.java.net/~darcy/OpenJdkDevGuide/OpenJdkDevelopersGuide.v0.777.html#source_compatibility
+[binary compatibility]: http://cr.openjdk.java.net/~darcy/OpenJdkDevGuide/OpenJdkDevelopersGuide.v0.777.html#binary_compatibility
+[behavioral compatibility]: http://cr.openjdk.java.net/~darcy/OpenJdkDevGuide/OpenJdkDevelopersGuide.v0.777.html#behavioral_compatibility
+
+### POM
+Changing the license is breaking a contract.
+Adding a requirement of a major version of a dependency is breaking a contract.
+Dropping a requirement of a major version of a dependency is a new contract.
 
 ## [Unreleased]
 [Unreleased]: https://github.com/atlassian-labs/db-replica/compare/release-0.1.20...master
