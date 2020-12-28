@@ -8,18 +8,6 @@ tasks.wrapper {
     distributionType = Wrapper.DistributionType.BIN
 }
 
-configurations.all {
-    resolutionStrategy {
-        activateDependencyLocking()
-        failOnVersionConflict()
-        eachDependency {
-            when (requested.module.toString()) {
-                "org.slf4j:slf4j-api" -> useVersion("1.7.30")
-            }
-        }
-    }
-}
-
 dependencies {
     testImplementation("org.postgresql:postgresql:42.2.18")
     testImplementation("junit:junit:4.12")
@@ -28,6 +16,29 @@ dependencies {
     testImplementation("org.threeten:threeten-extra:1.5.0")
     testImplementation("com.github.docker-java:docker-java-core:3.2.6")
     testImplementation("com.github.docker-java:docker-java-transport-httpclient5:3.2.6")
+}
+
+configurations.all {
+    resolutionStrategy {
+        activateDependencyLocking()
+        failOnVersionConflict()
+        eachDependency {
+            resolveBogusConflicts()
+        }
+    }
+}
+
+/**
+ * Third-party libraries often declare specific versions of their dependencies.
+ * But they're de facto compatible with a wider range of versions.
+ * This leads [ResolutionStrategy.failOnVersionConflict] to detect bogus conflicts.
+ * Preferably, the lib authors would relax their version requirement.
+ * Otherwise we have to find a compatible version and force it here.
+ */
+fun DependencyResolveDetails.resolveBogusConflicts() {
+    when (requested.module.toString()) {
+        "org.slf4j:slf4j-api" -> useVersion("1.7.30")
+    }
 }
 
 tasks.compileJava {
