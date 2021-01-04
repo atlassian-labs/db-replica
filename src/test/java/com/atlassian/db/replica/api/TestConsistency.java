@@ -133,4 +133,20 @@ public class TestConsistency {
 
         verify(consistency, never()).write(any());
     }
+
+    @Test
+    public void shouldNotRefreshAfterReadOnMain() throws SQLException {
+        final ConnectionProviderMock provider = new ConnectionProviderMock(true);
+        final ReplicaConsistency consistency = mock(ReplicaConsistency.class);
+        when(consistency.isConsistent(any())).thenReturn(false);
+        final Connection dualConnection = DualConnection.builder(
+            provider,
+            consistency
+        ).build();
+
+        dualConnection.prepareStatement(SIMPLE_QUERY).executeQuery();
+
+        verify(consistency, never()).write(any());
+    }
+
 }

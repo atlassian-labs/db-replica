@@ -31,6 +31,7 @@ public class ReplicaStatement implements Statement {
     private final ReplicaConsistency consistency;
     private final DualCall dualCall;
     final String methodBracketStart = Pattern.quote("(");
+    private boolean isWriteOperation = true;
     private final LazyReference<Statement> readStatement = new LazyReference<Statement>() {
         @Override
         protected Statement create() throws Exception {
@@ -459,7 +460,9 @@ public class ReplicaStatement implements Statement {
             return dualCall.callReplica(call);
         } else {
             final T result = dualCall.callMain(call);
-            recordWriteAfterQueryExecution();
+            if (isWriteOperation) {
+                recordWriteAfterQueryExecution();
+            }
             return result;
         }
     }
@@ -509,10 +512,10 @@ public class ReplicaStatement implements Statement {
     }
 
     public Statement getReadStatement(String sql) {
+        isWriteOperation = isFunctionCall(sql) || isUpdate(sql) || isDelete(sql);
         // if write connection is already initialized, but the current statement is null
         // we should use a write statement, regardless of the fact that readStatement has been called.
-        if (connectionProvider.hasWriteConnection() || isSelectForUpdate(sql) || isFunctionCall(sql) || isUpdate(sql) || isDelete(
-            sql)) {
+        if (connectionProvider.hasWriteConnection() || isWriteOperation || isSelectForUpdate(sql)) {
             return getWriteStatement();
         }
         setCurrentStatement(getCurrentStatement() != null ? getCurrentStatement() : readStatement.get());
