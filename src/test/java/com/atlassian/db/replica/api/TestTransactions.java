@@ -1,8 +1,6 @@
 package com.atlassian.db.replica.api;
 
 import com.atlassian.db.replica.api.mocks.ConnectionProviderMock;
-import com.atlassian.db.replica.api.mocks.PermanentConsistency;
-import com.atlassian.db.replica.api.mocks.PermanentInconsistency;
 import org.junit.Test;
 import org.mockito.Mockito;
 
@@ -11,6 +9,8 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
 import static com.atlassian.db.replica.api.Queries.SIMPLE_QUERY;
+import static com.atlassian.db.replica.api.mocks.CircularConsistency.permanentConsistency;
+import static com.atlassian.db.replica.api.mocks.CircularConsistency.permanentInconsistency;
 import static com.atlassian.db.replica.api.mocks.ConnectionProviderMock.ConnectionType.MAIN;
 import static com.atlassian.db.replica.api.mocks.ConnectionProviderMock.ConnectionType.REPLICA;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -22,7 +22,10 @@ public class TestTransactions {
     @Test
     public void shouldUseReadConnectionsForExecuteQueryInTransaction() throws SQLException {
         final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
-        final Connection connection = DualConnection.builder(connectionProvider, new PermanentConsistency()).build();
+        final Connection connection = DualConnection.builder(
+            connectionProvider,
+            permanentConsistency().build()
+        ).build();
 
         startTransaction(connection);
         connection.prepareStatement(SIMPLE_QUERY).executeQuery();
@@ -37,7 +40,10 @@ public class TestTransactions {
     @Test
     public void shouldUseTransactionForBothReadAndWriteConnections() throws SQLException {
         final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
-        final Connection connection = DualConnection.builder(connectionProvider, new PermanentConsistency()).build();
+        final Connection connection = DualConnection.builder(
+            connectionProvider,
+            permanentConsistency().build()
+        ).build();
 
         startTransaction(connection);
         connection.prepareStatement(SIMPLE_QUERY).executeQuery();
@@ -54,7 +60,10 @@ public class TestTransactions {
     @Test
     public void shouldUseTransactionForWriteConnection() throws SQLException {
         final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
-        final Connection connection = DualConnection.builder(connectionProvider, new PermanentConsistency()).build();
+        final Connection connection = DualConnection.builder(
+            connectionProvider,
+            permanentConsistency().build()
+        ).build();
 
         connection.prepareStatement(SIMPLE_QUERY).executeQuery();
         startTransaction(connection);
@@ -71,7 +80,10 @@ public class TestTransactions {
     @Test
     public void shouldNotStartTransactionIfNeverUsed() throws SQLException {
         final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
-        final Connection connection = DualConnection.builder(connectionProvider, new PermanentConsistency()).build();
+        final Connection connection = DualConnection.builder(
+            connectionProvider,
+            permanentConsistency().build()
+        ).build();
 
         connection.prepareStatement(SIMPLE_QUERY).executeQuery();
         connection.prepareStatement(SIMPLE_QUERY).execute();
@@ -88,7 +100,10 @@ public class TestTransactions {
     @Test
     public void shouldShouldUseTransactionForTheSameStatement() throws SQLException {
         final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
-        final Connection connection = DualConnection.builder(connectionProvider, new PermanentConsistency()).build();
+        final Connection connection = DualConnection.builder(
+            connectionProvider,
+            permanentConsistency().build()
+        ).build();
 
         final PreparedStatement preparedStatement = connection.prepareStatement(SIMPLE_QUERY);
         preparedStatement.executeQuery();
@@ -107,7 +122,10 @@ public class TestTransactions {
     @Test
     public void shouldRollbackMain() throws SQLException {
         final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
-        final Connection connection = DualConnection.builder(connectionProvider, new PermanentConsistency()).build();
+        final Connection connection = DualConnection.builder(
+            connectionProvider,
+            permanentConsistency().build()
+        ).build();
 
         final PreparedStatement preparedStatement = connection.prepareStatement(SIMPLE_QUERY);
         startTransaction(connection);
@@ -121,7 +139,10 @@ public class TestTransactions {
     @Test
     public void shouldRollbackReplica() throws SQLException {
         final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
-        final Connection connection = DualConnection.builder(connectionProvider, new PermanentConsistency()).build();
+        final Connection connection = DualConnection.builder(
+            connectionProvider,
+            permanentConsistency().build()
+        ).build();
 
         final PreparedStatement preparedStatement = connection.prepareStatement(SIMPLE_QUERY);
         startTransaction(connection);
@@ -135,7 +156,10 @@ public class TestTransactions {
     @Test
     public void shouldCommitTransactions() throws SQLException {
         final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
-        final Connection connection = DualConnection.builder(connectionProvider, new PermanentConsistency()).build();
+        final Connection connection = DualConnection.builder(
+            connectionProvider,
+            permanentConsistency().build()
+        ).build();
 
         final PreparedStatement preparedStatement = connection.prepareStatement(SIMPLE_QUERY);
         startTransaction(connection);
@@ -153,7 +177,10 @@ public class TestTransactions {
     @Test
     public void shouldUseMainForRepeatableReadTransactionIsolationLevel() throws SQLException {
         final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
-        final Connection connection = DualConnection.builder(connectionProvider, new PermanentInconsistency()).build();
+        final Connection connection = DualConnection.builder(
+            connectionProvider,
+            permanentInconsistency().build()
+        ).build();
         connection.setTransactionIsolation(Connection.TRANSACTION_REPEATABLE_READ);
         connection.prepareStatement(SIMPLE_QUERY).executeQuery();
 
@@ -164,7 +191,10 @@ public class TestTransactions {
     @Test
     public void shouldUseMainForSerializableTransactionIsolationLevel() throws SQLException {
         final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
-        final Connection connection = DualConnection.builder(connectionProvider, new PermanentInconsistency()).build();
+        final Connection connection = DualConnection.builder(
+            connectionProvider,
+            permanentInconsistency().build()
+        ).build();
         connection.setTransactionIsolation(Connection.TRANSACTION_SERIALIZABLE);
         connection.prepareStatement(SIMPLE_QUERY).executeQuery();
 

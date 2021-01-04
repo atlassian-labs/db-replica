@@ -1,7 +1,6 @@
 package com.atlassian.db.replica.api;
 
 import com.atlassian.db.replica.api.mocks.ConnectionProviderMock;
-import com.atlassian.db.replica.api.mocks.PermanentConsistency;
 import org.junit.Test;
 import org.mockito.Mockito;
 
@@ -10,6 +9,7 @@ import java.sql.SQLException;
 import java.sql.SQLWarning;
 
 import static com.atlassian.db.replica.api.Queries.SIMPLE_QUERY;
+import static com.atlassian.db.replica.api.mocks.CircularConsistency.permanentConsistency;
 import static com.atlassian.db.replica.api.mocks.ConnectionProviderMock.ConnectionType.MAIN;
 import static com.atlassian.db.replica.api.mocks.ConnectionProviderMock.ConnectionType.REPLICA;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -19,7 +19,10 @@ public class TestConnectionWarnings {
     @Test
     public void shouldHaveNoWarningsByDefault() throws SQLException {
         final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
-        final Connection connection = DualConnection.builder(connectionProvider, new PermanentConsistency()).build();
+        final Connection connection = DualConnection.builder(
+            connectionProvider,
+            permanentConsistency().build()
+        ).build();
 
         assertThat((Throwable) connection.getWarnings()).isNull();
     }
@@ -33,7 +36,10 @@ public class TestConnectionWarnings {
             mainWarning,
             replicaWarning
         );
-        final Connection connection = DualConnection.builder(connectionProvider, new PermanentConsistency()).build();
+        final Connection connection = DualConnection.builder(
+            connectionProvider,
+            permanentConsistency().build()
+        ).build();
 
         connection.prepareStatement(SIMPLE_QUERY).executeUpdate();
 
@@ -52,7 +58,10 @@ public class TestConnectionWarnings {
             mainWarning,
             replicaWarning
         );
-        final Connection connection = DualConnection.builder(connectionProvider, new PermanentConsistency()).build();
+        final Connection connection = DualConnection.builder(
+            connectionProvider,
+            permanentConsistency().build()
+        ).build();
 
         connection.prepareStatement(SIMPLE_QUERY).executeQuery();
 
@@ -71,7 +80,10 @@ public class TestConnectionWarnings {
             mainWarning,
             replicaWarning
         );
-        final Connection connection = DualConnection.builder(connectionProvider, new PermanentConsistency()).build();
+        final Connection connection = DualConnection.builder(
+            connectionProvider,
+            permanentConsistency().build()
+        ).build();
 
         connection.prepareStatement(SIMPLE_QUERY).executeQuery();
         connection.prepareStatement(SIMPLE_QUERY).executeUpdate();
@@ -93,7 +105,10 @@ public class TestConnectionWarnings {
             mainWarning,
             replicaWarning
         );
-        final Connection connection = DualConnection.builder(connectionProvider, new PermanentConsistency()).build();
+        final Connection connection = DualConnection.builder(
+            connectionProvider,
+            permanentConsistency().build()
+        ).build();
         connection.prepareStatement(SIMPLE_QUERY).executeUpdate();
 
         connection.clearWarnings();
@@ -114,7 +129,10 @@ public class TestConnectionWarnings {
             mainWarning,
             replicaWarning
         );
-        final Connection connection = DualConnection.builder(connectionProvider, new PermanentConsistency()).build();
+        final Connection connection = DualConnection.builder(
+            connectionProvider,
+            permanentConsistency().build()
+        ).build();
         connection.prepareStatement(SIMPLE_QUERY).executeQuery();
 
         connection.clearWarnings();
@@ -135,7 +153,10 @@ public class TestConnectionWarnings {
             mainWarning,
             replicaWarning
         );
-        final Connection connection = DualConnection.builder(connectionProvider, new PermanentConsistency()).build();
+        final Connection connection = DualConnection.builder(
+            connectionProvider,
+            permanentConsistency().build()
+        ).build();
 
         connection.prepareStatement(SIMPLE_QUERY).executeUpdate();
 
@@ -157,7 +178,10 @@ public class TestConnectionWarnings {
             mainWarning,
             replicaWarning
         );
-        final Connection connection = DualConnection.builder(connectionProvider, new PermanentConsistency()).build();
+        final Connection connection = DualConnection.builder(
+            connectionProvider,
+            permanentConsistency().build()
+        ).build();
 
         connection.prepareStatement(SIMPLE_QUERY).executeQuery();
         connection.prepareStatement(SIMPLE_QUERY).executeUpdate();

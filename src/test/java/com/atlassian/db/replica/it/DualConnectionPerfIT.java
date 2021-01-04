@@ -2,7 +2,6 @@ package com.atlassian.db.replica.it;
 
 import com.atlassian.db.replica.api.DualConnection;
 import com.atlassian.db.replica.api.mocks.NoOpConnectionProvider;
-import com.atlassian.db.replica.api.mocks.PermanentConsistency;
 import org.junit.Test;
 
 import java.sql.Connection;
@@ -11,6 +10,7 @@ import java.time.Duration;
 import java.time.Instant;
 
 import static com.atlassian.db.replica.api.Queries.LARGE_SQL_QUERY;
+import static com.atlassian.db.replica.api.mocks.CircularConsistency.permanentConsistency;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class DualConnectionPerfIT {
@@ -20,7 +20,7 @@ public class DualConnectionPerfIT {
         final Connection connection = DualConnection
             .builder(
                 new NoOpConnectionProvider(),
-                new PermanentConsistency()
+                permanentConsistency().build()
             ).build();
         final int times = 100000000;
 
