@@ -5,7 +5,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 This project **DOES NOT** adhere to [Semantic Versioning](http://semver.org/spec/v2.0.0.html) yet.
 
 ## [Unreleased]
-[Unreleased]: https://bitbucket.org/atlassian/db-replica/branches/compare/master%0Drelease-0.1.18
+[Unreleased]: https://bitbucket.org/atlassian/db-replica/branches/compare/master%0Drelease-0.1.19
+
+### Fixed
+- Propagate `Consistency#write` when the same statement used first with `executeQuery` and then with `executeUpdate`.
+
+## [0.1.19] - 2021-01-05
+[0.1.19]: https://bitbucket.org/atlassian/db-replica/branches/compare/release-0.1.19%0Drelease-0.1.18
 
 ### Fixed
 - Avoid unnecessary consistency writes.

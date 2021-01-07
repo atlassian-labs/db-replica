@@ -5,14 +5,12 @@ import com.atlassian.db.replica.spi.ReplicaConsistency;
 import org.junit.Test;
 
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
 import static com.atlassian.db.replica.api.Queries.SIMPLE_QUERY;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 public class TestConsistency {
 
@@ -149,4 +147,17 @@ public class TestConsistency {
         verify(consistency, never()).write(any());
     }
 
+    @Test
+    public void shouldRefreshUpdateAfterQueryOnTheSameStatement() throws SQLException {
+        final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
+        final ReplicaConsistency consistency = mock(ReplicaConsistency.class);
+        when(consistency.isConsistent(any())).thenReturn(false);
+        final Connection connection = DualConnection.builder(connectionProvider, consistency).build();
+        final PreparedStatement preparedStatement = connection.prepareStatement(SIMPLE_QUERY);
+
+        preparedStatement.executeQuery();
+        preparedStatement.executeUpdate();
+
+        verify(consistency).write(any());
+    }
 }

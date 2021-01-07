@@ -516,7 +516,7 @@ public class ReplicaStatement implements Statement {
         // if write connection is already initialized, but the current statement is null
         // we should use a write statement, regardless of the fact that readStatement has been called.
         if (connectionProvider.hasWriteConnection() || isWriteOperation || isSelectForUpdate(sql)) {
-            return getWriteStatement();
+            return prepareWriteStatement();
         }
         setCurrentStatement(getCurrentStatement() != null ? getCurrentStatement() : readStatement.get());
         performOperations();
@@ -558,6 +558,11 @@ public class ReplicaStatement implements Statement {
     }
 
     protected Statement getWriteStatement() {
+        isWriteOperation = true;
+        return prepareWriteStatement();
+    }
+
+    private Statement prepareWriteStatement() {
         setCurrentStatement(writeStatement.get());
         performOperations();
         return getCurrentStatement();

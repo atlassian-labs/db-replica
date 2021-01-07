@@ -1,6 +1,12 @@
 package com.atlassian.db.replica.api;
 
 public class Queries {
+    public static final String SELECT_FOR_UPDATE = "select O_S_PROPERTY_ENTRY.id, O_S_PROPERTY_ENTRY.propertytype\n" +
+        "from public.propertyentry O_S_PROPERTY_ENTRY\n" +
+        "where O_S_PROPERTY_ENTRY.entity_name = ? and O_S_PROPERTY_ENTRY.entity_id = ? and O_S_PROPERTY_ENTRY.property_key = ?\n" +
+        "order by O_S_PROPERTY_ENTRY.id desc\n" +
+        "for update";
+
     @SuppressWarnings({"SqlDialectInspection", "SqlNoDataSourceInspection"})
     public static final String SIMPLE_QUERY = "SELECT 1;";
 

@@ -19,8 +19,7 @@ import java.sql.Statement;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.atlassian.db.replica.api.Queries.LARGE_SQL_QUERY;
-import static com.atlassian.db.replica.api.Queries.SIMPLE_QUERY;
+import static com.atlassian.db.replica.api.Queries.*;
 import static com.atlassian.db.replica.api.mocks.CircularConsistency.permanentConsistency;
 import static com.atlassian.db.replica.api.mocks.CircularConsistency.permanentInconsistency;
 import static com.atlassian.db.replica.api.mocks.ConnectionProviderMock.ConnectionType.MAIN;
@@ -206,11 +205,7 @@ public class TestDualConnection {
             permanentConsistency().build()
         ).build();
 
-        connection.prepareStatement("select O_S_PROPERTY_ENTRY.id, O_S_PROPERTY_ENTRY.propertytype\n" +
-            "from public.propertyentry O_S_PROPERTY_ENTRY\n" +
-            "where O_S_PROPERTY_ENTRY.entity_name = ? and O_S_PROPERTY_ENTRY.entity_id = ? and O_S_PROPERTY_ENTRY.property_key = ?\n" +
-            "order by O_S_PROPERTY_ENTRY.id desc\n" +
-            "for update").executeQuery();
+        connection.prepareStatement(SELECT_FOR_UPDATE).executeQuery();
 
         assertThat(connectionProvider.getProvidedConnectionTypes())
             .containsOnly(MAIN);
