@@ -1,9 +1,7 @@
 # db-replica
-
-[![license][license img]](LICENSE) [![PRs Welcome][contrib img]](CONTRIBUTING.md)
-
-[license img]: https://img.shields.io/badge/license-Apache%202.0-blue.svg?style=flat-square
-[contrib img]: https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square
+![CI](https://github.com/atlassian-labs/db-replica/workflows/CI/badge.svg)
+[![license](https://img.shields.io/badge/license-Apache%202.0-blue.svg?style=flat-square)](LICENSE)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](CONTRIBUTING.md)
 
 Using database replicas unlocks horizontal scalability. Some replica designs force replicas to be read-only.
 Read-only queries can be sent to the replica, while others have to go to the main DB.
