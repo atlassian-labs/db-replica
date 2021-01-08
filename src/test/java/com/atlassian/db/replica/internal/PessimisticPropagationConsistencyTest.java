@@ -1,34 +1,39 @@
 package com.atlassian.db.replica.internal;
 
+import com.atlassian.db.replica.api.PessimisticPropagationConsistency;
 import com.atlassian.db.replica.internal.util.ConnectionSupplier;
-import com.atlassian.db.replica.spi.*;
-import org.junit.*;
-import org.threeten.extra.*;
+import com.atlassian.db.replica.spi.ReplicaConsistency;
+import org.junit.Before;
+import org.junit.Test;
+import org.threeten.extra.MutableClock;
 
-import java.sql.*;
-import java.time.*;
+import java.sql.Connection;
+import java.time.Duration;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class PessimisticPropagationConsistencyTest {
 
+    private PessimisticPropagationConsistency.Builder consistencyBuilder;
     private MutableClock clock;
-    private Cache<Instant> lastWrite;
     private Connection main;
     private Connection replica;
 
     @Before
     public void resetState() {
         clock = MutableClock.epochUTC();
-        lastWrite = new VolatileCache<>();
+        consistencyBuilder = new PessimisticPropagationConsistency.Builder()
+            .measureTime(clock)
+            .cacheLastWrite(new VolatileCache<>());
         main = null;
         replica = null;
     }
 
     @Test
     public void shouldBeConsistentAfterPropagation() {
-        Duration maxPropagation = Duration.ofMillis(200);
-        ReplicaConsistency consistency = new PessimisticPropagationConsistency(clock, maxPropagation, lastWrite);
+        ReplicaConsistency consistency = consistencyBuilder
+            .assumeMaxPropagation(Duration.ofMillis(200))
+            .build();
 
         consistency.write(main);
         clock.add(Duration.ofMillis(300));
@@ -39,8 +44,9 @@ public class PessimisticPropagationConsistencyTest {
 
     @Test
     public void shouldBeInconsistentBeforePropagation() {
-        Duration maxPropagation = Duration.ofMillis(200);
-        ReplicaConsistency consistency = new PessimisticPropagationConsistency(clock, maxPropagation, lastWrite);
+        ReplicaConsistency consistency = consistencyBuilder
+            .assumeMaxPropagation(Duration.ofMillis(200))
+            .build();
 
         consistency.write(main);
         clock.add(Duration.ofMillis(50));
@@ -51,8 +57,9 @@ public class PessimisticPropagationConsistencyTest {
 
     @Test
     public void shouldAssumeInconsistencyWhenUnknown() {
-        Duration maxPropagation = Duration.ofMillis(200);
-        ReplicaConsistency consistency = new PessimisticPropagationConsistency(clock, maxPropagation, lastWrite);
+        ReplicaConsistency consistency = consistencyBuilder
+            .assumeMaxPropagation(Duration.ofMillis(200))
+            .build();
 
         clock.add(Duration.ofMillis(700));
         boolean consistent = consistency.isConsistent(new ConnectionSupplier(replica));
@@ -62,8 +69,9 @@ public class PessimisticPropagationConsistencyTest {
 
     @Test
     public void shouldNotAssumeInconsistentForeverWhenUnknown() {
-        Duration maxPropagation = Duration.ofMillis(200);
-        ReplicaConsistency consistency = new PessimisticPropagationConsistency(clock, maxPropagation, lastWrite);
+        ReplicaConsistency consistency = consistencyBuilder
+            .assumeMaxPropagation(Duration.ofMillis(200))
+            .build();
 
         clock.add(Duration.ofMillis(700));
         boolean isConsistent = consistency.isConsistent(new ConnectionSupplier(replica));

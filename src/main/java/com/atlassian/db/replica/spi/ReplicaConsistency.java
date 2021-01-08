@@ -1,10 +1,8 @@
 package com.atlassian.db.replica.spi;
 
-import com.atlassian.db.replica.internal.*;
-import com.atlassian.db.replica.internal.util.*;
+import com.atlassian.db.replica.internal.util.ThreadSafe;
 
-import java.sql.*;
-import java.time.*;
+import java.sql.Connection;
 import java.util.function.Supplier;
 
 /**
@@ -12,16 +10,6 @@ import java.util.function.Supplier;
  */
 @ThreadSafe
 public interface ReplicaConsistency {
-
-    /**
-     * @param maxPropagation how long do writes propagate from main to replica
-     * @param clock          measures flow of time
-     * @param lastWrite      remembers last write
-     * @return consistency checker assuming consistency after {@code maxPropagation} since {@code lastWrite} (if known)
-     */
-    static ReplicaConsistency assumePropagationDelay(Duration maxPropagation, Clock clock, Cache<Instant> lastWrite) {
-        return new PessimisticPropagationConsistency(clock, maxPropagation, lastWrite);
-    }
 
     /**
      * Informs that {@code main} received an UPDATE, INSERT or DELETE.
