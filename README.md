@@ -47,8 +47,8 @@ Maven:
 
 ## Documentation
 
-TODO: make Javadocs great
-TODO: add UML
+See Javadoc of classes in the `api` and `spi` packages.
+See [DualConnection states UML](docs/dual-connection-states.md).
 
 ## Tests
 

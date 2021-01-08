@@ -17,8 +17,9 @@ import java.util.Properties;
 import java.util.concurrent.Executor;
 
 /**
- * Uses main database connections for UPDATE, INSERT and delete queries.
- * Uses replica connection for SELECT queries if the replica is in sync with the main database.
+ * Tries to connect to a replica if the query doesn't write to the database.
+ * Avoids replicas, which are inconsistent with the main database.
+ * Falls back to the main database if it cannot use a replica.
  */
 public class DualConnection implements Connection {
     private final ReplicaConnectionProvider connectionProvider;
