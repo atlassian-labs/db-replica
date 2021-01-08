@@ -5,7 +5,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 This project **DOES NOT** adhere to [Semantic Versioning](http://semver.org/spec/v2.0.0.html) yet.
 
 ## [Unreleased]
-[Unreleased]: https://github.com/atlassian-labs/db-replica/compare/release-0.1.19...master
+[Unreleased]: https://github.com/atlassian-labs/db-replica/compare/release-0.1.20...master
+
+## [0.1.20] - 2021-01-08
+[0.1.20]: https://github.com/atlassian-labs/db-replica/compare/release-0.1.19...release-0.1.20
 
 ### Fixed
 - Propagate `Consistency#write` when the same statement used first with `executeQuery` and then with `executeUpdate`.
