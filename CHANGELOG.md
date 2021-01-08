@@ -5,25 +5,25 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 This project **DOES NOT** adhere to [Semantic Versioning](http://semver.org/spec/v2.0.0.html) yet.
 
 ## [Unreleased]
-[Unreleased]: https://bitbucket.org/atlassian/db-replica/branches/compare/master%0Drelease-0.1.19
+[Unreleased]: https://github.com/atlassian-labs/db-replica/compare/release-0.1.19...master
 
 ### Fixed
 - Propagate `Consistency#write` when the same statement used first with `executeQuery` and then with `executeUpdate`.
 
 ## [0.1.19] - 2021-01-05
-[0.1.19]: https://bitbucket.org/atlassian/db-replica/branches/compare/release-0.1.19%0Drelease-0.1.18
+[0.1.19]: https://github.com/atlassian-labs/db-replica/compare/release-0.1.18...release-0.1.19
 
 ### Fixed
 - Avoid unnecessary consistency writes.
 
 ## [0.1.18] - 2020-12-17
-[0.1.18]: https://bitbucket.org/atlassian/db-replica/branches/compare/release-0.1.18%0Drelease-0.1.17
+[0.1.18]: https://github.com/atlassian-labs/db-replica/compare/release-0.1.17...release-0.1.18
 
 ### Fixed
 - Don't assume inconsistency forever, when no writes happen.
 
 ## [0.1.17] - 2020-12-16
-[0.1.17]: https://bitbucket.org/atlassian/db-replica/branches/compare/release-0.1.17%0Drelease-0.1.16
+[0.1.17]: https://github.com/atlassian-labs/db-replica/compare/release-0.1.16...release-0.1.17
 
 ### Changed
 - `spi.ConnectionProvider#getMainConnection()` throws `SQLException`
@@ -33,19 +33,19 @@ This project **DOES NOT** adhere to [Semantic Versioning](http://semver.org/spec
 - Complex queries wrongly run on the main database
 
 ## [0.1.16] - 2020-12-16
-[0.1.16]: https://bitbucket.org/atlassian/db-replica/branches/compare/release-0.1.16%0Drelease-0.1.15
+[0.1.16]: https://github.com/atlassian-labs/db-replica/compare/release-0.1.15...release-0.1.16
 
 ### Fixed
 - `DualCall` calls main when the replica is not consistent.
 
 ## [0.1.15] - 2020-12-07
-[0.1.15]: https://bitbucket.org/atlassian/db-replica/branches/compare/release-0.1.15%0Drelease-0.1.14
+[0.1.15]: https://github.com/atlassian-labs/db-replica/compare/release-0.1.14...release-0.1.15
 
 ### Fixed
 - NPE when calling `DualConnection#isReadOnly`
 
 ## [0.1.14] - 2020-12-07
-[0.1.14]: https://bitbucket.org/atlassian/db-replica/branches/compare/release-0.1.14%0Drelease-0.1.13
+[0.1.14]: https://github.com/atlassian-labs/db-replica/compare/release-0.1.13...release-0.1.14
 
 ### Changed
 - `spi.ReplicaConsistency#isConsistent(Connection replica)` to `spi.ReplicaConsistency#isConsistent(Supplier<Connection> replica)`
@@ -54,7 +54,7 @@ This project **DOES NOT** adhere to [Semantic Versioning](http://semver.org/spec
 - Avoid fetching replica connections when not needed.
 
 ## [0.1.13] - 2020-12-02
-[0.1.13]: https://bitbucket.org/atlassian/db-replica/branches/compare/release-0.1.13%0Drelease-0.1.12
+[0.1.13]: https://github.com/atlassian-labs/db-replica/compare/release-0.1.12...release-0.1.13
 
 ### Fixed
 - Release connection's reference on close
@@ -65,7 +65,7 @@ This project **DOES NOT** adhere to [Semantic Versioning](http://semver.org/spec
 - Keep `close` related contract in `PreparedStatement` API
 
 ## [0.1.12] - 2020-11-27
-[0.1.12]: https://bitbucket.org/atlassian/db-replica/branches/compare/release-0.1.12%0Drelease-0.1.11
+[0.1.12]: https://github.com/atlassian-labs/db-replica/compare/release-0.1.11...release-0.1.12
 
 ### Added
 - Inject `Cache` to allow multiple ways of holding the "last write to main".
@@ -73,7 +73,7 @@ This project **DOES NOT** adhere to [Semantic Versioning](http://semver.org/spec
 - Add `Cache.assumePropagationDelay.cacheMonotonicValuesInMemory`.
 
 ## [0.1.11] - 2020-11-27
-[0.1.11]: https://bitbucket.org/atlassian/db-replica/branches/compare/release-0.1.11%0Drelease-0.1.10
+[0.1.11]: https://github.com/atlassian-labs/db-replica/compare/release-0.1.10...release-0.1.11
 
 ### Fixed
 - implementation of `Connection#setSavepoint`
@@ -81,13 +81,13 @@ This project **DOES NOT** adhere to [Semantic Versioning](http://semver.org/spec
 - implementation of `Connection#releaseSavepoint(Savepoint savepoint)`
 
 ## [0.1.10] - 2020-11-26
-[0.1.10]: https://bitbucket.org/atlassian/db-replica/branches/compare/release-0.1.10%0Drelease-0.1.9
+[0.1.10]: https://github.com/atlassian-labs/db-replica/compare/release-0.1.9...release-0.1.10
 
 ### Fixed
 - Handle multiple calls for `setReadOnly`
 
 ## [0.1.9] - 2020-11-25
-[0.1.9]: https://bitbucket.org/atlassian/db-replica/branches/compare/release-0.1.9%0Drelease-0.1.8
+[0.1.9]: https://github.com/atlassian-labs/db-replica/compare/release-0.1.8...release-0.1.9
 
 ### Fixed
 - Assign deletes to the main connection for `executeQuery` calls
@@ -101,14 +101,14 @@ This project **DOES NOT** adhere to [Semantic Versioning](http://semver.org/spec
 - throw original exception instead of `DualConnectionException`
 
 ## [0.1.8] - 2020-11-25
-[0.1.8]: https://bitbucket.org/atlassian/db-replica/branches/compare/release-0.1.8%0Drelease-0.1.7
+[0.1.8]: https://github.com/atlassian-labs/db-replica/compare/release-0.1.7...release-0.1.8
 
 ### Fixed
 - Hiding `Connection#close` failure
 - Assign updates to the main connection for `executeQuery` calls
 
 ## [0.1.7] - 2020-11-25
-[0.1.7]: https://bitbucket.org/atlassian/db-replica/branches/compare/release-0.1.7%0Drelease-0.1.6
+[0.1.7]: https://github.com/atlassian-labs/db-replica/compare/release-0.1.6...release-0.1.7
 
 ### Fixed
 - implementation of `Statement#setEscapeProcessing`
@@ -126,25 +126,25 @@ This project **DOES NOT** adhere to [Semantic Versioning](http://semver.org/spec
 - `impl.LsnReplicaConsistency`
 
 ## [0.1.6] - 2020-11-23
-[0.1.6]: https://bitbucket.org/atlassian/db-replica/branches/compare/release-0.1.6%0Drelease-0.1.5
+[0.1.6]: https://github.com/atlassian-labs/db-replica/compare/release-0.1.5...release-0.1.6
 
 ### Added
 - Add `spi.circuitbreaker.CircuitBreaker`
 
 ## [0.1.5] - 2020-11-23
-[0.1.5]: https://bitbucket.org/atlassian/db-replica/branches/compare/release-0.1.5%0Drelease-0.1.4
+[0.1.5]: https://github.com/atlassian-labs/db-replica/compare/release-0.1.4...release-0.1.5
 
 ### Added
 - Support for single connection provider
 
 ## [0.1.4] - 2020-11-20
-[0.1.4]: https://bitbucket.org/atlassian/db-replica/branches/compare/release-0.1.4%0Drelease-0.1.3
+[0.1.4]: https://github.com/atlassian-labs/db-replica/compare/release-0.1.3...release-0.1.4
 
 ### Changed
 - Use `net.jcip:jcip-annotations:1.0` instead of `com.github.stephenc`
 
 ## [0.1.3] - 2020-11-20
-[0.1.3]: https://bitbucket.org/atlassian/db-replica/branches/compare/release-0.1.3%0Drelease-0.1.2
+[0.1.3]: https://github.com/atlassian-labs/db-replica/compare/release-0.1.2...release-0.1.3
 
 ### Fixed
 - implementation of `Connection#isWrapperFor`
@@ -174,7 +174,7 @@ This project **DOES NOT** adhere to [Semantic Versioning](http://semver.org/spec
 - NPE in `ReplicaStatement#isClosed`
 
 ## [0.1.2] - 2020-11-18
-[0.1.2]: https://bitbucket.org/atlassian/db-replica/branches/compare/release-0.1.2%0Drelease-0.1.1
+[0.1.2]: https://github.com/atlassian-labs/db-replica/compare/release-0.1.1...release-0.1.2
 
 ### Changed
 - Renamed:
@@ -184,7 +184,7 @@ This project **DOES NOT** adhere to [Semantic Versioning](http://semver.org/spec
     - `impl.PrintfDualConnectionOperation` to `impl.TimeRatioPrinter`
 
 ## [0.1.0] - 2020-11-18
-[0.1.0]: https://bitbucket.org/atlassian/db-replica/branches/compare/release-0.1.0%0Dinitial-commit
+[0.1.0]: https://github.com/atlassian-labs/db-replica/compare/initial-commit...release-0.1.0
 
 ### Added
 - Add `api.DualConnection`, `api.SqlConnection`
