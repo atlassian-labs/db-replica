@@ -1,6 +1,6 @@
 plugins {
     `java-library`
-    id("com.atlassian.performance.tools.gradle-release").version("0.7.1")
+    id("com.atlassian.performance.tools.gradle-release").version("0.7.3")
 }
 
 tasks.wrapper {
