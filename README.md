@@ -39,7 +39,7 @@ Maven:
 <dependency>
     <groupId>com.atlassian.db.replica</groupId>
     <artifactId>db-replica</artifactId>
-    <version>0.1.20</version>
+    <version>0.1.21</version>
 </dependency>
 ```
 
@@ -47,6 +47,7 @@ Maven:
 
 See Javadoc of classes in the `api` and `spi` packages.
 See [DualConnection states UML](docs/dual-connection-states.md).
+See [how to release the library](docs/release/releasing.md).
 
 ## Tests
 
