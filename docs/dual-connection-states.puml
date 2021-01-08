@@ -1,0 +1,19 @@
+@startuml
+state isWriteContext <<choice>>
+state isWriteQuery <<choice>>
+state isReplicaConsistent <<choice>>
+
+
+NoConnection   ---> isWriteContext : **Initial query**\n\nis write context?
+isWriteContext ---> MainConnection   : Yes
+
+isWriteContext --> isWriteQuery : No\n\nis write query?
+isWriteQuery ---> MainConnection : Yes
+isWriteQuery ---> isReplicaConsistent: No\n\nis replica consistent?
+
+isReplicaConsistent ---> ReplicaConnection : Yes
+isReplicaConsistent ---> MainConnection : No
+
+MainConnection ---> MainConnection : **Next query**
+ReplicaConnection ---> isWriteContext : **Next query**\n\nis write context?
+@enduml
