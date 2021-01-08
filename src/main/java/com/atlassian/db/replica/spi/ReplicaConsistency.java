@@ -7,6 +7,9 @@ import java.sql.*;
 import java.time.*;
 import java.util.function.Supplier;
 
+/**
+ * Tracks data consistency between replica and main databases.
+ */
 @ThreadSafe
 public interface ReplicaConsistency {
 
