@@ -1,7 +1,13 @@
 package com.atlassian.db.replica.api;
 
 import com.atlassian.db.replica.api.circuitbreaker.BreakerState;
-import com.atlassian.db.replica.internal.*;
+import com.atlassian.db.replica.api.state.NoOpStateListener;
+import com.atlassian.db.replica.internal.ForwardCall;
+import com.atlassian.db.replica.internal.ReadReplicaUnsupportedOperationException;
+import com.atlassian.db.replica.internal.ReplicaCallableStatement;
+import com.atlassian.db.replica.internal.ReplicaConnectionProvider;
+import com.atlassian.db.replica.internal.ReplicaPreparedStatement;
+import com.atlassian.db.replica.internal.ReplicaStatement;
 import com.atlassian.db.replica.internal.circuitbreaker.BreakOnNotSupportedOperations;
 import com.atlassian.db.replica.internal.circuitbreaker.BreakerConnection;
 import com.atlassian.db.replica.internal.circuitbreaker.BreakerHandler;
@@ -9,8 +15,24 @@ import com.atlassian.db.replica.spi.ConnectionProvider;
 import com.atlassian.db.replica.spi.DualCall;
 import com.atlassian.db.replica.spi.ReplicaConsistency;
 import com.atlassian.db.replica.spi.circuitbreaker.CircuitBreaker;
+import com.atlassian.db.replica.spi.state.StateListener;
 
-import java.sql.*;
+import java.sql.Array;
+import java.sql.Blob;
+import java.sql.CallableStatement;
+import java.sql.ClientInfoStatus;
+import java.sql.Clob;
+import java.sql.Connection;
+import java.sql.DatabaseMetaData;
+import java.sql.NClob;
+import java.sql.PreparedStatement;
+import java.sql.SQLClientInfoException;
+import java.sql.SQLException;
+import java.sql.SQLWarning;
+import java.sql.SQLXML;
+import java.sql.Savepoint;
+import java.sql.Statement;
+import java.sql.Struct;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -21,7 +43,8 @@ import java.util.concurrent.Executor;
  * Avoids replicas, which are inconsistent with the main database.
  * Falls back to the main database if it cannot use a replica.
  */
-public class DualConnection implements Connection {
+public final class DualConnection implements Connection {
+    public static final String CONNECTION_CLOSED_MESSAGE = "This connection has been closed.";
     private final ReplicaConnectionProvider connectionProvider;
     private final ReplicaConsistency consistency;
     private final DualCall dualCall;
@@ -29,9 +52,10 @@ public class DualConnection implements Connection {
     private DualConnection(
         ConnectionProvider connectionProvider,
         ReplicaConsistency consistency,
-        DualCall dualCall
+        DualCall dualCall,
+        StateListener stateListener
     ) {
-        this.connectionProvider = new ReplicaConnectionProvider(connectionProvider, consistency);
+        this.connectionProvider = new ReplicaConnectionProvider(connectionProvider, consistency, stateListener);
         this.consistency = consistency;
         this.dualCall = dualCall;
     }
@@ -358,7 +382,7 @@ public class DualConnection implements Connection {
         } catch (final SQLException cause) {
             final Map<String, ClientInfoStatus> failures = new HashMap<>();
             failures.put(name, ClientInfoStatus.REASON_UNKNOWN);
-            throw new SQLClientInfoException("This connection has been closed.", failures, cause);
+            throw new SQLClientInfoException(CONNECTION_CLOSED_MESSAGE, failures, cause);
         }
         throw new ReadReplicaUnsupportedOperationException();
     }
@@ -372,7 +396,7 @@ public class DualConnection implements Connection {
             for (Map.Entry<Object, Object> e : properties.entrySet()) {
                 failures.put((String) e.getKey(), ClientInfoStatus.REASON_UNKNOWN);
             }
-            throw new SQLClientInfoException("This connection has been closed.", failures, cause);
+            throw new SQLClientInfoException(CONNECTION_CLOSED_MESSAGE, failures, cause);
         }
         throw new ReadReplicaUnsupportedOperationException();
     }
@@ -458,6 +482,7 @@ public class DualConnection implements Connection {
         private final ReplicaConsistency consistency;
         private DualCall dualCall = new ForwardCall();
         private CircuitBreaker circuitBreaker = new BreakOnNotSupportedOperations();
+        private StateListener stateListener = new NoOpStateListener();
 
         private Builder(
             ConnectionProvider connectionProvider,
@@ -477,12 +502,18 @@ public class DualConnection implements Connection {
             return this;
         }
 
+        public DualConnection.Builder stateListener(StateListener stateListener) {
+            this.stateListener = stateListener;
+            return this;
+        }
+
         public Connection build() throws SQLException {
             if (circuitBreaker == null) {
                 return new DualConnection(
                     connectionProvider,
                     consistency,
-                    dualCall
+                    dualCall,
+                    stateListener
                 );
             }
             if (circuitBreaker.getState().equals(BreakerState.OPEN)) {
@@ -492,7 +523,8 @@ public class DualConnection implements Connection {
             final DualConnection dualConnection = new DualConnection(
                 connectionProvider,
                 consistency,
-                dualCall
+                dualCall,
+                stateListener
             );
             return new BreakerConnection(dualConnection, breakerHandler);
         }
@@ -500,7 +532,7 @@ public class DualConnection implements Connection {
 
     private void checkClosed() throws SQLException {
         if (isClosed()) {
-            throw new SQLException("This connection has been closed.");
+            throw new SQLException(CONNECTION_CLOSED_MESSAGE);
         }
     }
 }

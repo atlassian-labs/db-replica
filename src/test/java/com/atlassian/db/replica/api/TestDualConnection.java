@@ -19,7 +19,9 @@ import java.sql.Statement;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.atlassian.db.replica.api.Queries.*;
+import static com.atlassian.db.replica.api.Queries.LARGE_SQL_QUERY;
+import static com.atlassian.db.replica.api.Queries.SELECT_FOR_UPDATE;
+import static com.atlassian.db.replica.api.Queries.SIMPLE_QUERY;
 import static com.atlassian.db.replica.api.mocks.CircularConsistency.permanentConsistency;
 import static com.atlassian.db.replica.api.mocks.CircularConsistency.permanentInconsistency;
 import static com.atlassian.db.replica.api.mocks.ConnectionProviderMock.ConnectionType.MAIN;
@@ -386,7 +388,7 @@ public class TestDualConnection {
 
         Throwable thrown = catchThrowable(dualConnection::close);
 
-        assertThat(thrown.getCause()).hasMessageContaining("Connection already closed");
+        assertThat(thrown).hasMessageContaining("Connection already closed");
         assertThat(connectionProvider.getProvidedConnectionTypes())
             .containsExactly(REPLICA, MAIN);
         connectionProvider.getProvidedConnections().forEach(connection -> {
@@ -1119,13 +1121,12 @@ public class TestDualConnection {
 
         Throwable thrown = catchThrowable(connection::close);
 
-        assertThat(thrown.getCause()).isInstanceOf(SQLException.class);
+        assertThat(thrown).isInstanceOf(SQLException.class);
     }
 
     @Test
     public void shouldPersistReadOnly() throws SQLException {
         final ReadOnlyAwareConnection readOnlyAwareConnection = mock(ReadOnlyAwareConnection.class);
-        //noinspection ResultOfMethodCallIgnored
         doCallRealMethod().when(readOnlyAwareConnection).isReadOnly();
         doCallRealMethod().when(readOnlyAwareConnection).setReadOnly(anyBoolean());
 

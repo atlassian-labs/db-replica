@@ -16,4 +16,9 @@ isReplicaConsistent ---> MainConnection : No
 
 MainConnection ---> MainConnection : **Next query**
 ReplicaConnection ---> isWriteContext : **Next query**\n\nis write context?
+
+NoConnection ---> ClosedConnection
+MainConnection ---> ClosedConnection
+ReplicaConnection ---> ClosedConnection
+
 @enduml

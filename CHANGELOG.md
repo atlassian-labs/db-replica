@@ -25,6 +25,7 @@ Dropping a requirement of a major version of a dependency is a new contract.
 
 ### Added
 - Add `PessimisticPropagationConsistency.Builder`.
+- Add `StateListener`.
 
 ### Removed
 - Remove `ReplicaConsistency.assumePropagationDelay`. Use `PessimisticPropagationConsistency.Builder` instead.
