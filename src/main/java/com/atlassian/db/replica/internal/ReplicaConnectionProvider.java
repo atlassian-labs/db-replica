@@ -1,104 +1,75 @@
 package com.atlassian.db.replica.internal;
 
+import com.atlassian.db.replica.internal.state.ConnectionState;
 import com.atlassian.db.replica.spi.ConnectionProvider;
 import com.atlassian.db.replica.spi.ReplicaConsistency;
+import com.atlassian.db.replica.spi.state.StateListener;
 
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.SQLWarning;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
+import java.util.Optional;
+
+import static com.atlassian.db.replica.api.state.State.CLOSED;
+import static com.atlassian.db.replica.api.state.State.MAIN;
 
 public class ReplicaConnectionProvider implements AutoCloseable {
     private final ReplicaConsistency consistency;
-    private final ConnectionProvider connectionProvider;
-    private final Set<Connection> initializedConnections = new HashSet<>();
-    private Boolean isAutoCommit;
-    private Integer transactionIsolation;
+    private final ConnectionState state;
+    private final ConnectionParameters parameters;
     private Boolean isReadOnly;
-    private String catalog;
-    private SQLWarning warning;
-    private Map<String, Class<?>> typeMap;
-    private Integer holdability;
-    private volatile Boolean isClosed = false;
-    private final LazyReference<Connection> readConnection = new LazyReference<Connection>() {
-        @Override
-        protected Connection create() throws SQLException {
-            if (connectionProvider.isReplicaAvailable()) {
-                return connectionProvider.getReplicaConnection();
-            } else {
-                return writeConnection.get();
-            }
-        }
-    };
-
-    private final LazyReference<Connection> writeConnection = new LazyReference<Connection>() {
-        @Override
-        protected Connection create() throws SQLException {
-            return connectionProvider.getMainConnection();
-        }
-    };
+    private final Warnings warnings;
 
     public ReplicaConnectionProvider(
         ConnectionProvider connectionProvider,
-        ReplicaConsistency consistency
+        ReplicaConsistency consistency,
+        StateListener stateListener
     ) {
-        this.connectionProvider = connectionProvider;
+        this.parameters = new ConnectionParameters();
+        this.warnings = new Warnings();
+        this.state = new ConnectionState(connectionProvider, consistency, parameters, warnings, stateListener);
         this.consistency = consistency;
     }
 
-    private void initialize(Connection connection) throws SQLException {
-        if (!initializedConnections.contains(connection)) {
-            if (isAutoCommit != null) {
-                connection.setAutoCommit(isAutoCommit);
-            }
-            if (transactionIsolation != null) {
-                connection.setTransactionIsolation(transactionIsolation);
-            }
-            if (catalog != null) {
-                connection.setCatalog(catalog);
-            }
-            if (typeMap != null) {
-                connection.setTypeMap(typeMap);
-            }
-            if (holdability != null) {
-                connection.setHoldability(holdability);
-            }
-            initializedConnections.add(connection);
-        }
+    public Connection getWriteConnection() throws SQLException {
+        return state.getWriteConnection();
+    }
+
+    public Connection getReadConnection() throws SQLException {
+        return state.getReadConnection();
     }
 
     public void setTransactionIsolation(Integer transactionIsolation) {
-        this.transactionIsolation = transactionIsolation;
-        initializedConnections.clear();
+        parameters.setTransactionIsolation(transactionIsolation);
     }
 
     public int getTransactionIsolation() throws SQLException {
-        if (this.transactionIsolation != null) {
-            return this.transactionIsolation;
+        if (parameters.getTransactionIsolation() != null) {
+            return parameters.getTransactionIsolation();
         } else {
-            return getWriteConnection().getTransactionIsolation();
+            return state.getWriteConnection().getTransactionIsolation();
         }
     }
 
-    public void setAutoCommit(Boolean autoCommit) {
-        final Boolean autoCommitBefore = getAutoCommit();
-        this.isAutoCommit = autoCommit;
-        initializedConnections.clear();
-        if (!autoCommitBefore.equals(getAutoCommit())) {
+    public void setAutoCommit(Boolean autoCommit) throws SQLException {
+        final boolean autoCommitBefore = getAutoCommit();
+        parameters.setAutoCommit(autoCommit);
+        final Optional<Connection> connection = state.getConnection();
+        if (connection.isPresent()) {
+            connection.get().setAutoCommit(autoCommit);
+        }
+        if (autoCommitBefore != getAutoCommit()) {
             recordCommit(autoCommitBefore);
         }
     }
 
     public boolean getAutoCommit() {
-        return isAutoCommit == null || isAutoCommit;
+        return parameters.isAutoCommit();
     }
 
     public Boolean isClosed() {
-        return this.isClosed;
+        return state.getState().equals(CLOSED);
     }
 
     public boolean getReadOnly() {
@@ -108,80 +79,66 @@ public class ReplicaConnectionProvider implements AutoCloseable {
     public void setReadOnly(boolean readOnly) throws SQLException {
         isReadOnly = readOnly;
         if (readOnly) {
-            getReadConnection().setReadOnly(isReadOnly);
+            state.getReadConnection().setReadOnly(isReadOnly);
         } else {
-            getWriteConnection().setReadOnly(isReadOnly);
+            state.getWriteConnection().setReadOnly(isReadOnly);
         }
     }
 
     public String getCatalog() {
-        return catalog;
+        return parameters.getCatalog();
     }
 
-    public void setCatalog(String catalog) {
-        this.catalog = catalog;
+    public void setCatalog(String catalog) throws SQLException {
+        parameters.setCatalog(catalog);
+        final Optional<Connection> connection = state.getConnection();
+        if (connection.isPresent()) {
+            connection.get().setCatalog(catalog);
+        }
     }
 
     public Map<String, Class<?>> getTypeMap() {
-        return typeMap == null ? Collections.emptyMap() : new HashMap<>(typeMap);
+        return parameters.getTypeMap();
     }
 
-    public void setTypeMap(Map<String, Class<?>> typeMap) {
-        this.typeMap = typeMap;
+    public void setTypeMap(Map<String, Class<?>> typeMap) throws SQLException {
+        parameters.setTypeMap(typeMap);
+        final Optional<Connection> connection = state.getConnection();
+        if (connection.isPresent()) {
+            connection.get().setTypeMap(typeMap);
+        }
     }
 
     public Integer getHoldability() throws SQLException {
-        return holdability == null ? getWriteConnection().getHoldability() : holdability;
+        return parameters.getHoldability() == null ? state.getWriteConnection().getHoldability() : parameters.getHoldability();
     }
 
-    public void setHoldability(Integer holdability) {
-        this.holdability = holdability;
+    public void setHoldability(Integer holdability) throws SQLException {
+        parameters.setHoldability(holdability);
+        final Optional<Connection> connection = state.getConnection();
+        if (connection.isPresent()) {
+            connection.get().setHoldability(holdability);
+        }
     }
 
     public SQLWarning getWarning() throws SQLException {
-        if (this.writeConnection.isInitialized()) {
-            final Connection writeConnection = this.writeConnection.get();
-            saveWarning(writeConnection.getWarnings());
-
+        final Optional<Connection> connection = state.getConnection();
+        if (connection.isPresent()) {
+            warnings.saveWarning(connection.get().getWarnings());
         }
-        if (this.readConnection.isInitialized()) {
-            final Connection readConnection = this.readConnection.get();
-            saveWarning(readConnection.getWarnings());
-        }
-        return warning;
+        return warnings.getWarning();
     }
 
     public void clearWarnings() throws SQLException {
-        if (writeConnection.isInitialized()) {
-            writeConnection.get().clearWarnings();
-
+        final Optional<Connection> connection = state.getConnection();
+        if (connection.isPresent()) {
+            connection.get().clearWarnings();
         }
-        if (readConnection.isInitialized()) {
-            readConnection.get().clearWarnings();
-        }
-        warning = null;
-    }
-
-    /**
-     * Provides a connection that will be used for reading operation. Will use read-replica if possible.
-     */
-    public Connection getReadConnection() throws SQLException {
-        if (transactionIsolation != null && transactionIsolation > Connection.TRANSACTION_READ_COMMITTED) {
-            return getWriteConnection();
-        }
-        if (writeConnection.isInitialized()) {
-            return writeConnection.get();
-        }
-        if (consistency.isConsistent(readConnection)) {
-            initialize(readConnection.get());
-            return readConnection.get();
-        } else {
-            return getWriteConnection();
-        }
+        warnings.clear();
     }
 
     public <T> T unwrap(Class<T> iface) throws SQLException {
-        final Connection currentConnection = readConnection.isInitialized() ? readConnection.get() : writeConnection.get();
+        final Connection currentConnection = state.getReadConnection();
         if (iface.isAssignableFrom(currentConnection.getClass())) {
             return iface.cast(currentConnection);
         } else {
@@ -190,7 +147,7 @@ public class ReplicaConnectionProvider implements AutoCloseable {
     }
 
     public boolean isWrapperFor(Class<?> iface) throws SQLException {
-        final Connection currentConnection = readConnection.isInitialized() ? readConnection.get() : writeConnection.get();
+        final Connection currentConnection = state.getReadConnection();
         if (iface.isAssignableFrom(currentConnection.getClass())) {
             return true;
         } else {
@@ -198,122 +155,33 @@ public class ReplicaConnectionProvider implements AutoCloseable {
         }
     }
 
-    /**
-     * Provides a connection that will be used for writing operation. It will always return a connection to the
-     * main database.
-     */
-    public Connection getWriteConnection() throws SQLException {
-        final Connection connection = writeConnection.get();
-        if (readConnection.isInitialized() && !readConnection.get().equals(writeConnection.get())) {
-            closeConnection(readConnection);
-        }
-        initialize(connection);
-        return connection;
-    }
-
     public boolean hasWriteConnection() {
-        return writeConnection.isInitialized();
+        return state.getState().equals(MAIN);
     }
 
     public void rollback() throws SQLException {
-        if (writeConnection.isInitialized()) {
-            writeConnection.get().rollback();
-        }
-        if (readConnection.isInitialized()) {
-            if (writeConnection.isInitialized() && readConnection.get().equals(writeConnection.get())) {
-                return;
-            }
-            readConnection.get().rollback();
+        final Optional<Connection> connection = state.getConnection();
+        if (connection.isPresent()) {
+            connection.get().rollback();
         }
     }
 
     public void commit() throws SQLException {
-        if (writeConnection.isInitialized()) {
-            writeConnection.get().commit();
-            recordCommit(isAutoCommit);
-        }
-        if (readConnection.isInitialized()) {
-            if (writeConnection.isInitialized() && readConnection.get().equals(writeConnection.get())) {
-                return;
-            }
-            readConnection.get().commit();
+        final Optional<Connection> connection = state.getConnection();
+        if (connection.isPresent()) {
+            connection.get().commit();
+            recordCommit(parameters.isAutoCommit());
         }
     }
 
-    private void recordCommit(Boolean autoCommit) {
-        if (writeConnection.isInitialized() && autoCommit != null && !autoCommit) {
-            consistency.write(writeConnection.get());
+    private void recordCommit(boolean autoCommit) throws SQLException {
+        if (state.getState().equals(MAIN) && !autoCommit) {
+            consistency.write(state.getWriteConnection());
         }
     }
 
     @Override
     public void close() throws SQLException {
-        Exception lastException = null;
-        isClosed = true;
-        if (readConnection.isInitialized()) {
-            final boolean isWriteAndReadTheSameConnection = writeConnection.isInitialized() && readConnection.get().equals(
-                writeConnection.get());
-            try {
-                closeConnection(readConnection);
-            } catch (Exception e) {
-                lastException = e;
-            }
-            if (isWriteAndReadTheSameConnection) {
-                writeConnection.reset();
-                if (lastException != null) {
-                    throw new SQLException(lastException);
-                }
-                return;
-            }
-        }
-        if (writeConnection.isInitialized()) {
-            try {
-                closeConnection(writeConnection);
-            } catch (Exception e) {
-                lastException = e;
-            }
-        }
-        if (lastException != null) {
-            throw new SQLException(lastException);
-        }
-    }
-
-    private void closeConnection(LazyReference<Connection> connectionReference) throws SQLException {
-        try {
-            final Connection connection = connectionReference.get();
-            try {
-                saveWarning(connection.getWarnings());
-            } catch (Exception e) {
-                saveWarning(new SQLWarning(e));
-            }
-            connection.close();
-        } finally {
-            connectionReference.reset();
-        }
-    }
-
-    private void saveWarning(SQLWarning warning) {
-        if (warning == null || isLastWarning(warning)) {
-            return;
-        }
-        if (this.warning == null) {
-            this.warning = warning;
-        } else {
-            this.warning.setNextWarning(warning);
-        }
-    }
-
-    private boolean isLastWarning(SQLWarning warning) {
-        if (this.warning == null) {
-            return false;
-        }
-        SQLWarning lastWarning = this.warning;
-        for (int i = 0; i < 100; i++) {
-            if (lastWarning.getNextWarning() == null) {
-                return lastWarning.equals(warning);
-            } else
-                lastWarning = lastWarning.getNextWarning();
-        }
-        return true;
+        state.close();
     }
 }

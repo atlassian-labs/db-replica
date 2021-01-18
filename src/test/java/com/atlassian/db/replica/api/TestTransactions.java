@@ -73,12 +73,12 @@ public class TestTransactions {
             .containsExactly(REPLICA, MAIN);
         final Connection replica = connectionProvider.getProvidedConnections().get(0);
         final Connection main = connectionProvider.getProvidedConnections().get(1);
-        Mockito.verify(replica, never()).setAutoCommit(false);
+        Mockito.verify(replica).setAutoCommit(false);
         Mockito.verify(main).setAutoCommit(false);
     }
 
     @Test
-    public void shouldNotStartTransactionIfNeverUsed() throws SQLException {
+    public void shouldSetAutoCommitOnCurrentConnection() throws SQLException {
         final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
         final Connection connection = DualConnection.builder(
             connectionProvider,
@@ -94,7 +94,7 @@ public class TestTransactions {
         final Connection replica = connectionProvider.getProvidedConnections().get(0);
         final Connection main = connectionProvider.getProvidedConnections().get(1);
         Mockito.verify(replica, never()).setAutoCommit(anyBoolean());
-        Mockito.verify(main, never()).setAutoCommit(anyBoolean());
+        Mockito.verify(main).setAutoCommit(anyBoolean());
     }
 
     @Test
@@ -115,7 +115,7 @@ public class TestTransactions {
             .containsExactly(REPLICA, MAIN);
         final Connection replica = connectionProvider.getProvidedConnections().get(0);
         final Connection main = connectionProvider.getProvidedConnections().get(1);
-        Mockito.verify(replica, never()).setAutoCommit(false);
+        Mockito.verify(replica).setAutoCommit(false);
         Mockito.verify(main).setAutoCommit(false);
     }
 
