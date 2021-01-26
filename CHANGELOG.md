@@ -23,6 +23,15 @@ Dropping a requirement of a major version of a dependency is a new contract.
 ## [Unreleased]
 [Unreleased]: https://github.com/atlassian-labs/db-replica/compare/release-0.1.27...master
 
+### Changed
+- `CircuitBreaker` SPI doesn't enumerate states anymore.
+
+  It only asks if it can be called and how to handle calls.
+  This lets you track any state and wire in advanced CircuitBreaker libs.
+
+### Removed
+- Remove `BreakerState`.
+
 ## [0.1.27] - 2021-02-23
 [0.1.27]: https://github.com/atlassian-labs/db-replica/compare/release-0.1.26...release-0.1.27
 

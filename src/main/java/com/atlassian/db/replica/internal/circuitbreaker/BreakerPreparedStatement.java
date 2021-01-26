@@ -1,6 +1,7 @@
 package com.atlassian.db.replica.internal.circuitbreaker;
 
 import com.atlassian.db.replica.api.SqlCall;
+import com.atlassian.db.replica.spi.circuitbreaker.CircuitBreaker;
 
 import java.io.InputStream;
 import java.io.Reader;
@@ -26,288 +27,288 @@ import java.util.Calendar;
 
 public class BreakerPreparedStatement extends BreakerStatement implements PreparedStatement {
     private final PreparedStatement delegate;
-    private final BreakerHandler breakerHandler;
+    private final CircuitBreaker breaker;
 
-    public BreakerPreparedStatement(PreparedStatement delegate, BreakerHandler breakerHandler) {
-        super(delegate, breakerHandler);
+    public BreakerPreparedStatement(PreparedStatement delegate, CircuitBreaker breaker) {
+        super(delegate, breaker);
         this.delegate = delegate;
-        this.breakerHandler = breakerHandler;
+        this.breaker = breaker;
     }
 
     @Override
     public ResultSet executeQuery() throws SQLException {
-        return breakerHandler.handle((SqlCall<ResultSet>) delegate::executeQuery);
+        return breaker.handle((SqlCall<ResultSet>) delegate::executeQuery);
     }
 
     @Override
     public int executeUpdate() throws SQLException {
-        return breakerHandler.handle((SqlCall<Integer>) delegate::executeUpdate);
+        return breaker.handle((SqlCall<Integer>) delegate::executeUpdate);
     }
 
     @Override
     public void setNull(int parameterIndex, int sqlType) throws SQLException {
-        breakerHandler.handle(() -> delegate.setNull(parameterIndex, sqlType));
+        breaker.handle(() -> delegate.setNull(parameterIndex, sqlType));
     }
 
     @Override
     public void setBoolean(int parameterIndex, boolean x) throws SQLException {
-        breakerHandler.handle(() -> delegate.setBoolean(parameterIndex, x));
+        breaker.handle(() -> delegate.setBoolean(parameterIndex, x));
     }
 
     @Override
     public void setByte(int parameterIndex, byte x) throws SQLException {
-        breakerHandler.handle(() -> delegate.setByte(parameterIndex, x));
+        breaker.handle(() -> delegate.setByte(parameterIndex, x));
     }
 
     @Override
     public void setShort(int parameterIndex, short x) throws SQLException {
-        breakerHandler.handle(() -> delegate.setShort(parameterIndex, x));
+        breaker.handle(() -> delegate.setShort(parameterIndex, x));
     }
 
     @Override
     public void setInt(int parameterIndex, int x) throws SQLException {
-        breakerHandler.handle(() -> delegate.setInt(parameterIndex, x));
+        breaker.handle(() -> delegate.setInt(parameterIndex, x));
     }
 
     @Override
     public void setLong(int parameterIndex, long x) throws SQLException {
-        breakerHandler.handle(() -> delegate.setLong(parameterIndex, x));
+        breaker.handle(() -> delegate.setLong(parameterIndex, x));
     }
 
     @Override
     public void setFloat(int parameterIndex, float x) throws SQLException {
-        breakerHandler.handle(() -> delegate.setFloat(parameterIndex, x));
+        breaker.handle(() -> delegate.setFloat(parameterIndex, x));
     }
 
     @Override
     public void setDouble(int parameterIndex, double x) throws SQLException {
-        breakerHandler.handle(() -> delegate.setDouble(parameterIndex, x));
+        breaker.handle(() -> delegate.setDouble(parameterIndex, x));
     }
 
     @Override
     public void setBigDecimal(int parameterIndex, BigDecimal x) throws SQLException {
-        breakerHandler.handle(() -> delegate.setBigDecimal(parameterIndex, x));
+        breaker.handle(() -> delegate.setBigDecimal(parameterIndex, x));
     }
 
     @Override
     public void setString(int parameterIndex, String x) throws SQLException {
-        breakerHandler.handle(() -> delegate.setString(parameterIndex, x));
+        breaker.handle(() -> delegate.setString(parameterIndex, x));
     }
 
     @Override
     public void setBytes(int parameterIndex, byte[] x) throws SQLException {
-        breakerHandler.handle(() -> delegate.setBytes(parameterIndex, x));
+        breaker.handle(() -> delegate.setBytes(parameterIndex, x));
     }
 
     @Override
     public void setDate(int parameterIndex, Date x) throws SQLException {
-        breakerHandler.handle(() -> delegate.setDate(parameterIndex, x));
+        breaker.handle(() -> delegate.setDate(parameterIndex, x));
     }
 
     @Override
     public void setTime(int parameterIndex, Time x) throws SQLException {
-        breakerHandler.handle(() -> delegate.setTime(parameterIndex, x));
+        breaker.handle(() -> delegate.setTime(parameterIndex, x));
     }
 
     @Override
     public void setTimestamp(int parameterIndex, Timestamp x) throws SQLException {
-        breakerHandler.handle(() -> delegate.setTimestamp(parameterIndex, x));
+        breaker.handle(() -> delegate.setTimestamp(parameterIndex, x));
     }
 
     @Override
     public void setAsciiStream(int parameterIndex, InputStream x, int length) throws SQLException {
-        breakerHandler.handle(() -> delegate.setAsciiStream(parameterIndex, x, length));
+        breaker.handle(() -> delegate.setAsciiStream(parameterIndex, x, length));
     }
 
     @Override
     public void setUnicodeStream(int parameterIndex, InputStream x, int length) throws SQLException {
         //noinspection deprecation
-        breakerHandler.handle(() -> delegate.setUnicodeStream(parameterIndex, x, length));
+        breaker.handle(() -> delegate.setUnicodeStream(parameterIndex, x, length));
     }
 
     @Override
     public void setBinaryStream(int parameterIndex, InputStream x, int length) throws SQLException {
-        breakerHandler.handle(() -> delegate.setBinaryStream(parameterIndex, x, length));
+        breaker.handle(() -> delegate.setBinaryStream(parameterIndex, x, length));
     }
 
     @Override
     public void clearParameters() throws SQLException {
-        breakerHandler.handle(delegate::clearParameters);
+        breaker.handle(delegate::clearParameters);
     }
 
     @Override
     public void setObject(int parameterIndex, Object x, int targetSqlType) throws SQLException {
-        breakerHandler.handle(() -> delegate.setObject(parameterIndex, x, targetSqlType));
+        breaker.handle(() -> delegate.setObject(parameterIndex, x, targetSqlType));
     }
 
     @Override
     public void setObject(int parameterIndex, Object x) throws SQLException {
-        breakerHandler.handle(() -> delegate.setObject(parameterIndex, x));
+        breaker.handle(() -> delegate.setObject(parameterIndex, x));
     }
 
     @Override
     public boolean execute() throws SQLException {
-        return breakerHandler.handle((SqlCall<Boolean>) delegate::execute);
+        return breaker.handle((SqlCall<Boolean>) delegate::execute);
     }
 
     @Override
     public void addBatch() throws SQLException {
-        breakerHandler.handle((BreakerHandler.SqlRunnable) delegate::addBatch);
+        breaker.handle((CircuitBreaker.SqlRunnable) delegate::addBatch);
     }
 
     @Override
     public void setCharacterStream(int parameterIndex, Reader reader, int length) throws SQLException {
-        breakerHandler.handle(() -> delegate.setCharacterStream(parameterIndex, reader, length));
+        breaker.handle(() -> delegate.setCharacterStream(parameterIndex, reader, length));
     }
 
     @Override
     public void setRef(int parameterIndex, Ref x) throws SQLException {
-        breakerHandler.handle(() -> delegate.setRef(parameterIndex, x));
+        breaker.handle(() -> delegate.setRef(parameterIndex, x));
     }
 
     @Override
     public void setBlob(int parameterIndex, Blob x) throws SQLException {
-        breakerHandler.handle(() -> delegate.setBlob(parameterIndex, x));
+        breaker.handle(() -> delegate.setBlob(parameterIndex, x));
     }
 
     @Override
     public void setClob(int parameterIndex, Clob x) throws SQLException {
-        breakerHandler.handle(() -> delegate.setClob(parameterIndex, x));
+        breaker.handle(() -> delegate.setClob(parameterIndex, x));
     }
 
     @Override
     public void setArray(int parameterIndex, Array x) throws SQLException {
-        breakerHandler.handle(() -> delegate.setArray(parameterIndex, x));
+        breaker.handle(() -> delegate.setArray(parameterIndex, x));
     }
 
     @Override
     public ResultSetMetaData getMetaData() throws SQLException {
-        return breakerHandler.handle(delegate::getMetaData);
+        return breaker.handle(delegate::getMetaData);
     }
 
     @Override
     public void setDate(int parameterIndex, Date x, Calendar cal) throws SQLException {
-        breakerHandler.handle(() -> delegate.setDate(parameterIndex, x, cal));
+        breaker.handle(() -> delegate.setDate(parameterIndex, x, cal));
     }
 
     @Override
     public void setTime(int parameterIndex, Time x, Calendar cal) throws SQLException {
-        breakerHandler.handle(() -> delegate.setTime(parameterIndex, x, cal));
+        breaker.handle(() -> delegate.setTime(parameterIndex, x, cal));
     }
 
     @Override
     public void setTimestamp(int parameterIndex, Timestamp x, Calendar cal) throws SQLException {
-        breakerHandler.handle(() -> delegate.setTimestamp(parameterIndex, x, cal));
+        breaker.handle(() -> delegate.setTimestamp(parameterIndex, x, cal));
     }
 
     @Override
     public void setNull(int parameterIndex, int sqlType, String typeName) throws SQLException {
-        breakerHandler.handle(() -> delegate.setNull(parameterIndex, sqlType, typeName));
+        breaker.handle(() -> delegate.setNull(parameterIndex, sqlType, typeName));
     }
 
     @Override
     public void setURL(int parameterIndex, URL x) throws SQLException {
-        breakerHandler.handle(() -> delegate.setURL(parameterIndex, x));
+        breaker.handle(() -> delegate.setURL(parameterIndex, x));
     }
 
     @Override
     public ParameterMetaData getParameterMetaData() throws SQLException {
-        return breakerHandler.handle(delegate::getParameterMetaData);
+        return breaker.handle(delegate::getParameterMetaData);
     }
 
     @Override
     public void setRowId(int parameterIndex, RowId x) throws SQLException {
-        breakerHandler.handle(() -> delegate.setRowId(parameterIndex, x));
+        breaker.handle(() -> delegate.setRowId(parameterIndex, x));
     }
 
     @Override
     public void setNString(int parameterIndex, String value) throws SQLException {
-        breakerHandler.handle(() -> delegate.setNString(parameterIndex, value));
+        breaker.handle(() -> delegate.setNString(parameterIndex, value));
     }
 
     @Override
     public void setNCharacterStream(int parameterIndex, Reader value, long length) throws SQLException {
-        breakerHandler.handle(() -> delegate.setNCharacterStream(parameterIndex, value, length));
+        breaker.handle(() -> delegate.setNCharacterStream(parameterIndex, value, length));
     }
 
     @Override
     public void setNClob(int parameterIndex, NClob value) throws SQLException {
-        breakerHandler.handle(() -> delegate.setNClob(parameterIndex, value));
+        breaker.handle(() -> delegate.setNClob(parameterIndex, value));
     }
 
     @Override
     public void setClob(int parameterIndex, Reader reader, long length) throws SQLException {
-        breakerHandler.handle(() -> delegate.setClob(parameterIndex, reader, length));
+        breaker.handle(() -> delegate.setClob(parameterIndex, reader, length));
     }
 
     @Override
     public void setBlob(int parameterIndex, InputStream inputStream, long length) throws SQLException {
-        breakerHandler.handle(() -> delegate.setBlob(parameterIndex, inputStream, length));
+        breaker.handle(() -> delegate.setBlob(parameterIndex, inputStream, length));
     }
 
     @Override
     public void setNClob(int parameterIndex, Reader reader, long length) throws SQLException {
-        breakerHandler.handle(() -> delegate.setNClob(parameterIndex, reader, length));
+        breaker.handle(() -> delegate.setNClob(parameterIndex, reader, length));
     }
 
     @Override
     public void setSQLXML(int parameterIndex, SQLXML xmlObject) throws SQLException {
-        breakerHandler.handle(() -> delegate.setSQLXML(parameterIndex, xmlObject));
+        breaker.handle(() -> delegate.setSQLXML(parameterIndex, xmlObject));
     }
 
     @Override
     public void setObject(int parameterIndex, Object x, int targetSqlType, int scaleOrLength) throws SQLException {
-        breakerHandler.handle(() -> delegate.setObject(parameterIndex, x, targetSqlType, scaleOrLength));
+        breaker.handle(() -> delegate.setObject(parameterIndex, x, targetSqlType, scaleOrLength));
     }
 
     @Override
     public void setAsciiStream(int parameterIndex, InputStream x, long length) throws SQLException {
-        breakerHandler.handle(() -> delegate.setAsciiStream(parameterIndex, x, length));
+        breaker.handle(() -> delegate.setAsciiStream(parameterIndex, x, length));
     }
 
     @Override
     public void setBinaryStream(int parameterIndex, InputStream x, long length) throws SQLException {
-        breakerHandler.handle(() -> delegate.setBinaryStream(parameterIndex, x, length));
+        breaker.handle(() -> delegate.setBinaryStream(parameterIndex, x, length));
     }
 
     @Override
     public void setCharacterStream(int parameterIndex, Reader reader, long length) throws SQLException {
-        breakerHandler.handle(() -> delegate.setCharacterStream(parameterIndex, reader, length));
+        breaker.handle(() -> delegate.setCharacterStream(parameterIndex, reader, length));
     }
 
     @Override
     public void setAsciiStream(int parameterIndex, InputStream x) throws SQLException {
-        breakerHandler.handle(() -> delegate.setAsciiStream(parameterIndex, x));
+        breaker.handle(() -> delegate.setAsciiStream(parameterIndex, x));
     }
 
     @Override
     public void setBinaryStream(int parameterIndex, InputStream x) throws SQLException {
-        breakerHandler.handle(() -> delegate.setBinaryStream(parameterIndex, x));
+        breaker.handle(() -> delegate.setBinaryStream(parameterIndex, x));
     }
 
     @Override
     public void setCharacterStream(int parameterIndex, Reader reader) throws SQLException {
-        breakerHandler.handle(() -> delegate.setCharacterStream(parameterIndex, reader));
+        breaker.handle(() -> delegate.setCharacterStream(parameterIndex, reader));
     }
 
     @Override
     public void setNCharacterStream(int parameterIndex, Reader value) throws SQLException {
-        breakerHandler.handle(() -> delegate.setNCharacterStream(parameterIndex, value));
+        breaker.handle(() -> delegate.setNCharacterStream(parameterIndex, value));
     }
 
     @Override
     public void setClob(int parameterIndex, Reader reader) throws SQLException {
-        breakerHandler.handle(() -> delegate.setClob(parameterIndex, reader));
+        breaker.handle(() -> delegate.setClob(parameterIndex, reader));
     }
 
     @Override
     public void setBlob(int parameterIndex, InputStream inputStream) throws SQLException {
-        breakerHandler.handle(() -> delegate.setBlob(parameterIndex, inputStream));
+        breaker.handle(() -> delegate.setBlob(parameterIndex, inputStream));
     }
 
     @Override
     public void setNClob(int parameterIndex, Reader reader) throws SQLException {
-        breakerHandler.handle(() -> delegate.setNClob(parameterIndex, reader));
+        breaker.handle(() -> delegate.setNClob(parameterIndex, reader));
     }
 
     @Override
@@ -315,17 +316,17 @@ public class BreakerPreparedStatement extends BreakerStatement implements Prepar
         int parameterIndex, Object x, SQLType targetSqlType,
         int scaleOrLength
     ) throws SQLException {
-        breakerHandler.handle(() -> delegate.setObject(parameterIndex, x, targetSqlType, scaleOrLength));
+        breaker.handle(() -> delegate.setObject(parameterIndex, x, targetSqlType, scaleOrLength));
 
     }
 
     @Override
     public void setObject(int parameterIndex, Object x, SQLType targetSqlType) throws SQLException {
-        breakerHandler.handle(() -> delegate.setObject(parameterIndex, x, targetSqlType));
+        breaker.handle(() -> delegate.setObject(parameterIndex, x, targetSqlType));
     }
 
     @Override
     public long executeLargeUpdate() throws SQLException {
-        return breakerHandler.handle((SqlCall<Long>) delegate::executeLargeUpdate);
+        return breaker.handle((SqlCall<Long>) delegate::executeLargeUpdate);
     }
 }

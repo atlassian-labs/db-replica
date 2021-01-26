@@ -1,30 +1,42 @@
 package com.atlassian.db.replica.internal.circuitbreaker;
 
-import com.atlassian.db.replica.api.circuitbreaker.BreakerState;
-import com.atlassian.db.replica.spi.circuitbreaker.CircuitBreaker;
+import com.atlassian.db.replica.api.SqlCall;
 import com.atlassian.db.replica.internal.ReadReplicaUnsupportedOperationException;
+import com.atlassian.db.replica.spi.circuitbreaker.CircuitBreaker;
 
+import java.sql.SQLException;
 import java.sql.SQLFeatureNotSupportedException;
 
-import static com.atlassian.db.replica.api.circuitbreaker.BreakerState.CLOSED;
-import static com.atlassian.db.replica.api.circuitbreaker.BreakerState.OPEN;
-
 public class BreakOnNotSupportedOperations implements CircuitBreaker {
-    private static volatile BreakerState state = CLOSED;
+
+    private static volatile boolean LACK_OF_SUPPORT_DETECTED = false;
 
     @Override
-    public BreakerState getState() {
-        return state;
+    public boolean canCall() {
+        return !LACK_OF_SUPPORT_DETECTED;
     }
 
     @Override
-    public void handle(Throwable throwable) {
-        if (throwable instanceof ReadReplicaUnsupportedOperationException || throwable instanceof SQLFeatureNotSupportedException) {
-            state = OPEN;
+    public <T> T handle(SqlCall<T> call) throws SQLException {
+        try {
+            return call.call();
+        } catch (ReadReplicaUnsupportedOperationException | SQLFeatureNotSupportedException e) {
+            LACK_OF_SUPPORT_DETECTED = true;
+            throw e;
+        }
+    }
+
+    @Override
+    public void handle(SqlRunnable runnable) throws SQLException {
+        try {
+            runnable.run();
+        } catch (ReadReplicaUnsupportedOperationException | SQLFeatureNotSupportedException e) {
+            LACK_OF_SUPPORT_DETECTED = true;
+            throw e;
         }
     }
 
     public static void reset() {
-        state = CLOSED;
+        LACK_OF_SUPPORT_DETECTED = false;
     }
 }

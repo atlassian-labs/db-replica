@@ -1,9 +1,18 @@
 package com.atlassian.db.replica.spi.circuitbreaker;
 
-import com.atlassian.db.replica.api.circuitbreaker.BreakerState;
+import com.atlassian.db.replica.api.SqlCall;
+
+import java.sql.SQLException;
 
 public interface CircuitBreaker {
-    BreakerState getState();
 
-    void handle(Throwable throwable);
+    boolean canCall();
+
+    <T> T handle(SqlCall<T> call) throws SQLException;
+
+    void handle(SqlRunnable runnable) throws SQLException;
+
+    interface SqlRunnable {
+        void run() throws SQLException;
+    }
 }

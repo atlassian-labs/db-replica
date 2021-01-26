@@ -1,12 +1,10 @@
 package com.atlassian.db.replica.api;
 
-import com.atlassian.db.replica.api.circuitbreaker.BreakerState;
 import com.atlassian.db.replica.api.reason.Reason;
 import com.atlassian.db.replica.api.state.NoOpStateListener;
 import com.atlassian.db.replica.internal.*;
 import com.atlassian.db.replica.internal.circuitbreaker.BreakOnNotSupportedOperations;
 import com.atlassian.db.replica.internal.circuitbreaker.BreakerConnection;
-import com.atlassian.db.replica.internal.circuitbreaker.BreakerHandler;
 import com.atlassian.db.replica.spi.ConnectionProvider;
 import com.atlassian.db.replica.spi.DatabaseCall;
 import com.atlassian.db.replica.spi.ReplicaConsistency;
@@ -530,10 +528,9 @@ public final class DualConnection implements Connection {
                     readOnlyFunctions
                 );
             }
-            if (circuitBreaker.getState().equals(BreakerState.OPEN)) {
+            if (!circuitBreaker.canCall()) {
                 return connectionProvider.getMainConnection();
             }
-            final BreakerHandler breakerHandler = new BreakerHandler(circuitBreaker);
             final DualConnection dualConnection = new DualConnection(
                 connectionProvider,
                 consistency,
@@ -541,7 +538,7 @@ public final class DualConnection implements Connection {
                 stateListener,
                 readOnlyFunctions
             );
-            return new BreakerConnection(dualConnection, breakerHandler);
+            return new BreakerConnection(dualConnection, circuitBreaker);
         }
     }
 
