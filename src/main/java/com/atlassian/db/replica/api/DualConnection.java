@@ -44,7 +44,7 @@ import java.util.concurrent.Executor;
  * Falls back to the main database if it cannot use a replica.
  */
 public final class DualConnection implements Connection {
-    public static final String CONNECTION_CLOSED_MESSAGE = "This connection has been closed.";
+    private static final String CONNECTION_CLOSED_MESSAGE = "This connection has been closed.";
     private final ReplicaConnectionProvider connectionProvider;
     private final ReplicaConsistency consistency;
     private final DualCall dualCall;
