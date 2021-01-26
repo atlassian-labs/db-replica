@@ -9,11 +9,11 @@ import java.sql.SQLFeatureNotSupportedException;
 
 public class BreakOnNotSupportedOperations implements CircuitBreaker {
 
-    private static volatile boolean LACK_OF_SUPPORT_DETECTED = false;
+    private static volatile boolean ALL_CALLS_SUPPORTED_SO_FAR = true;
 
     @Override
     public boolean canCall() {
-        return !LACK_OF_SUPPORT_DETECTED;
+        return ALL_CALLS_SUPPORTED_SO_FAR;
     }
 
     @Override
@@ -21,7 +21,7 @@ public class BreakOnNotSupportedOperations implements CircuitBreaker {
         try {
             return call.call();
         } catch (ReadReplicaUnsupportedOperationException | SQLFeatureNotSupportedException e) {
-            LACK_OF_SUPPORT_DETECTED = true;
+            ALL_CALLS_SUPPORTED_SO_FAR = false;
             throw e;
         }
     }
@@ -31,12 +31,12 @@ public class BreakOnNotSupportedOperations implements CircuitBreaker {
         try {
             runnable.run();
         } catch (ReadReplicaUnsupportedOperationException | SQLFeatureNotSupportedException e) {
-            LACK_OF_SUPPORT_DETECTED = true;
+            ALL_CALLS_SUPPORTED_SO_FAR = false;
             throw e;
         }
     }
 
     public static void reset() {
-        LACK_OF_SUPPORT_DETECTED = false;
+        ALL_CALLS_SUPPORTED_SO_FAR = true;
     }
 }
