@@ -8,6 +8,14 @@ Read-only queries can be sent to the replica, while others have to go to the mai
 The `db-replica` API automatically routes the queries to the correct node.
 It integrates at the `java.sql.Connection` level, so you don't have to hunt down hundreds of queries manually.
 
+## Features
+
+- [Automatic switching between main and replica databases](src/main/java/com/atlassian/db/replica/api/DualConnection.java).
+- [Configurable consistency model](src/main/java/com/atlassian/db/replica/spi/ReplicaConsistency.java).
+- [Configurable circuit breaker](src/main/java/com/atlassian/db/replica/spi/circuitbreaker/CircuitBreaker.java).
+- [Configurable main/replica split instrumentation](src/main/java/com/atlassian/db/replica/spi/DualCall.java).
+- [Connection state change listener](src/main/java/com/atlassian/db/replica/spi/state/StateListener.java).
+
 ## Usage
 
 ```java
