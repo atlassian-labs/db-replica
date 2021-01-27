@@ -26,7 +26,7 @@ Dropping a requirement of a major version of a dependency is a new contract.
 ### Changed
 - `CircuitBreaker` SPI doesn't enumerate states anymore.
 
-  It only asks if it can be called and how to handle calls.
+  It only wraps usages of and decides the safety of new `DualConnection`s.
   This lets you track any state and wire in advanced CircuitBreaker libs.
 - Move `CircuitBreaker` from `spi.circuitbreaker` to `spi`.
 
@@ -35,6 +35,7 @@ Dropping a requirement of a major version of a dependency is a new contract.
 
 ### Added
 - Add `SqlRun` required by `CircuitBreaker`.
+- Add behavioral contracts to `CircuitBreaker`.
 
 ## [0.1.27] - 2021-02-23
 [0.1.27]: https://github.com/atlassian-labs/db-replica/compare/release-0.1.26...release-0.1.27

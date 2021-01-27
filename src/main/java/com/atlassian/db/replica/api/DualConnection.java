@@ -528,7 +528,7 @@ public final class DualConnection implements Connection {
                     readOnlyFunctions
                 );
             }
-            if (!circuitBreaker.canCall()) {
+            if (!circuitBreaker.canCreateDualConnection()) {
                 return connectionProvider.getMainConnection();
             }
             final DualConnection dualConnection = new DualConnection(

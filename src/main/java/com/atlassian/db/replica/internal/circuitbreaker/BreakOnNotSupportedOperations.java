@@ -13,7 +13,7 @@ public class BreakOnNotSupportedOperations implements CircuitBreaker {
     private static volatile boolean ALL_CALLS_SUPPORTED_SO_FAR = true;
 
     @Override
-    public boolean canCall() {
+    public boolean canCreateDualConnection() {
         return ALL_CALLS_SUPPORTED_SO_FAR;
     }
 

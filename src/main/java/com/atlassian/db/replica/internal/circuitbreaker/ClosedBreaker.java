@@ -9,7 +9,7 @@ import java.sql.SQLException;
 public class ClosedBreaker implements CircuitBreaker {
 
     @Override
-    public boolean canCall() {
+    public boolean canCreateDualConnection() {
         return true;
     }
 
