@@ -2,7 +2,8 @@ package com.atlassian.db.replica.internal.circuitbreaker;
 
 import com.atlassian.db.replica.api.SqlCall;
 import com.atlassian.db.replica.internal.ReadReplicaUnsupportedOperationException;
-import com.atlassian.db.replica.spi.circuitbreaker.CircuitBreaker;
+import com.atlassian.db.replica.spi.CircuitBreaker;
+import com.atlassian.db.replica.api.SqlRun;
 
 import java.sql.SQLException;
 import java.sql.SQLFeatureNotSupportedException;
@@ -27,9 +28,9 @@ public class BreakOnNotSupportedOperations implements CircuitBreaker {
     }
 
     @Override
-    public void handle(SqlRunnable runnable) throws SQLException {
+    public void handle(SqlRun run) throws SQLException {
         try {
-            runnable.run();
+            run.run();
         } catch (ReadReplicaUnsupportedOperationException | SQLFeatureNotSupportedException e) {
             ALL_CALLS_SUPPORTED_SO_FAR = false;
             throw e;

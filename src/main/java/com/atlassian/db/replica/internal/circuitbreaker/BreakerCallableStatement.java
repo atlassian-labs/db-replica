@@ -1,6 +1,6 @@
 package com.atlassian.db.replica.internal.circuitbreaker;
 
-import com.atlassian.db.replica.spi.circuitbreaker.CircuitBreaker;
+import com.atlassian.db.replica.spi.CircuitBreaker;
 
 import java.io.InputStream;
 import java.io.Reader;
