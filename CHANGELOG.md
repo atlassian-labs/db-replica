@@ -36,6 +36,7 @@ Dropping a requirement of a major version of a dependency is a new contract.
 ### Added
 - Add `SqlRun` required by `CircuitBreaker`.
 - Add behavioral contracts to `CircuitBreaker`.
+- Add `MissingCoverageBreaker` with injectable `Cache`.
 
 ## [0.1.27] - 2021-02-23
 [0.1.27]: https://github.com/atlassian-labs/db-replica/compare/release-0.1.26...release-0.1.27

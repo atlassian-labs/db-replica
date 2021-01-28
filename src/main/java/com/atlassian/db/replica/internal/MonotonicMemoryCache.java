@@ -10,7 +10,7 @@ import static com.atlassian.db.replica.internal.util.Comparables.*;
 /**
  * Holds values that grow over time, unless reset. Holds a value in JVM memory.
  *
- * @param <T>
+ * @param <T> type of the cached value
  */
 public class MonotonicMemoryCache<T extends Comparable<T>> implements Cache<T> {
 
