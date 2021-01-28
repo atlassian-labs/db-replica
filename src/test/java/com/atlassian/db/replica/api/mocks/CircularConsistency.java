@@ -28,7 +28,7 @@ public class CircularConsistency implements ReplicaConsistency {
         if (!this.ignoreSupplier) {
             replica.get();
         }
-        return consistency.get(counter.incrementAndGet() % consistency.size());
+        return consistency.get(counter.getAndIncrement() % consistency.size());
     }
 
     public static Builder permanentConsistency() {

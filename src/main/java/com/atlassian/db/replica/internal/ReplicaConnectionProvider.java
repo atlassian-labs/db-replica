@@ -1,5 +1,6 @@
 package com.atlassian.db.replica.internal;
 
+import com.atlassian.db.replica.api.state.State;
 import com.atlassian.db.replica.internal.state.ConnectionState;
 import com.atlassian.db.replica.spi.ConnectionProvider;
 import com.atlassian.db.replica.spi.ReplicaConsistency;
@@ -156,7 +157,11 @@ public class ReplicaConnectionProvider implements AutoCloseable {
     }
 
     public boolean hasWriteConnection() {
-        return state.getState().equals(MAIN);
+        return this.state.hasWriteConnection();
+    }
+
+    public State getState() {
+        return this.state.getState();
     }
 
     public void rollback() throws SQLException {
