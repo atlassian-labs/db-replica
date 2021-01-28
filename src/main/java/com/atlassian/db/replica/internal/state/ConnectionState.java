@@ -13,7 +13,11 @@ import java.sql.SQLException;
 import java.sql.SQLWarning;
 import java.util.Optional;
 
-import static com.atlassian.db.replica.api.state.State.*;
+import static com.atlassian.db.replica.api.state.State.CLOSED;
+import static com.atlassian.db.replica.api.state.State.MAIN;
+import static com.atlassian.db.replica.api.state.State.NOT_INITIALISED;
+import static com.atlassian.db.replica.api.state.State.COMMITED_MAIN;
+import static com.atlassian.db.replica.api.state.State.REPLICA;
 
 public final class ConnectionState {
     private final ConnectionProvider connectionProvider;
@@ -22,6 +26,7 @@ public final class ConnectionState {
     private final ConnectionParameters parameters;
     private final Warnings warnings;
     private final StateListener stateListener;
+    private volatile boolean replicaConsistent = true;
 
     private final LazyReference<Connection> readConnection = new LazyReference<Connection>() {
         @Override
@@ -63,6 +68,8 @@ public final class ConnectionState {
             final boolean writeReady = writeConnection.isInitialized();
             if (!readReady && !writeReady) {
                 return NOT_INITIALISED;
+            } else if (!replicaConsistent && writeReady) {
+                return COMMITED_MAIN;
             } else if (writeReady) {
                 return MAIN;
             } else {
@@ -75,7 +82,7 @@ public final class ConnectionState {
         final State state = getState();
         if (state.equals(REPLICA)) {
             return Optional.of(this.readConnection.get());
-        } else if (state.equals(MAIN)) {
+        } else if (hasWriteConnection()) {
             return Optional.of(this.writeConnection.get());
         } else {
             return Optional.empty();
@@ -101,6 +108,7 @@ public final class ConnectionState {
      */
     public Connection getWriteConnection() throws SQLException {
         final State stateBefore = getState();
+        replicaConsistent = true;
         final Connection connection = prepareMainConnection();
         final State stateAfter = getState();
         if (!stateAfter.equals(stateBefore)) {
@@ -110,7 +118,7 @@ public final class ConnectionState {
     }
 
     private Connection prepareMainConnection() throws SQLException {
-        if (getState().equals(MAIN)) {
+        if (hasWriteConnection()) {
             return writeConnection.get();
         }
 
@@ -125,10 +133,16 @@ public final class ConnectionState {
         return writeConnection.get();
     }
 
+    public boolean hasWriteConnection() {
+        final State state = getState();
+        return state.equals(MAIN) || state.equals(COMMITED_MAIN);
+    }
+
     public void close() throws SQLException {
         final State state = getState();
+        final boolean haWriteConnection = hasWriteConnection();
         isClosed = true;
-        if (state.equals(MAIN)) {
+        if (haWriteConnection) {
             closeConnection(writeConnection);
         } else if (state.equals(REPLICA)) {
             closeConnection(readConnection);
@@ -144,19 +158,24 @@ public final class ConnectionState {
      */
     private Connection prepareReadConnection() throws SQLException {
         if (parameters.getTransactionIsolation() != null && parameters.getTransactionIsolation() > Connection.TRANSACTION_READ_COMMITTED) {
-            return getWriteConnection();
+            return prepareMainConnection();
         }
         if (getState().equals(MAIN)) {
             return writeConnection.get();
         }
         final boolean isNotInitialised = getState().equals(NOT_INITIALISED);
         if (consistency.isConsistent(readConnection)) {
+            if (getState().equals(COMMITED_MAIN)) {
+                closeConnection(writeConnection);
+            }
             if (isNotInitialised) {
                 parameters.initialize(readConnection.get());
             }
+            replicaConsistent = true;
             return readConnection.get();
         } else {
-            return getWriteConnection();
+            replicaConsistent = false;
+            return prepareMainConnection();
         }
     }
 

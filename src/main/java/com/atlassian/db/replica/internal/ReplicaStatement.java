@@ -1,6 +1,7 @@
 package com.atlassian.db.replica.internal;
 
 import com.atlassian.db.replica.api.SqlCall;
+import com.atlassian.db.replica.api.state.State;
 import com.atlassian.db.replica.spi.DualCall;
 import com.atlassian.db.replica.spi.ReplicaConsistency;
 
@@ -16,6 +17,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static com.atlassian.db.replica.api.state.State.MAIN;
 import static java.lang.Math.min;
 
 public class ReplicaStatement implements Statement {
@@ -513,9 +515,10 @@ public class ReplicaStatement implements Statement {
 
     public Statement getReadStatement(String sql) {
         isWriteOperation = isFunctionCall(sql) || isUpdate(sql) || isDelete(sql);
+
         // if write connection is already initialized, but the current statement is null
         // we should use a write statement, regardless of the fact that readStatement has been called.
-        if (connectionProvider.hasWriteConnection() || isWriteOperation || isSelectForUpdate(sql)) {
+        if (connectionProvider.getState().equals(MAIN) || isWriteOperation || isSelectForUpdate(sql)) {
             return prepareWriteStatement();
         }
         setCurrentStatement(getCurrentStatement() != null ? getCurrentStatement() : readStatement.get());

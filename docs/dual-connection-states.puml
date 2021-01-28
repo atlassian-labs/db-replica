@@ -12,7 +12,8 @@ isWriteQuery ---> MainConnection : Yes
 isWriteQuery ---> isReplicaConsistent: No\n\nis replica consistent?
 
 isReplicaConsistent ---> ReplicaConnection : Yes
-isReplicaConsistent ---> MainConnection : No
+isReplicaConsistent ---> CommitedMain : No
+CommitedMain ---> isWriteContext : **Next query**\n\nis write context?
 
 MainConnection ---> MainConnection : **Next query**
 ReplicaConnection ---> isWriteContext : **Next query**\n\nis write context?

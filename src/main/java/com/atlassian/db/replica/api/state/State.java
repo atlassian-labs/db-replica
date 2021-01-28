@@ -14,6 +14,7 @@ public final class State {
     public static final State MAIN = new State("MAIN");
     public static final State REPLICA = new State("REPLICA");
     public static final State CLOSED = new State("CLOSED");
+    public static final State COMMITED_MAIN = new State("COMMITED_MAIN");
 
     public String getName() {
         return name;
