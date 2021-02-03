@@ -1,0 +1,42 @@
+@startuml
+class "DualConnection#Builder" as builder
+builder :  Connection build()
+
+class DualConnection
+interface ReplicaConsistency
+interface ConnectionProvider
+interface DualCall
+interface StateListener
+interface CircuitBreaker
+class ConnectionState
+class State
+
+interface Statement
+interface PreparedStatement
+interface CallableStatement
+interface Connection
+
+
+builder::build --> DualConnection : create
+
+
+DualConnection --|> Connection
+PreparedStatement --|> Statement
+CallableStatement --|> Statement
+
+
+ConnectionState *-- ReplicaConsistency
+ConnectionState *-- ConnectionProvider
+ConnectionState *-- StateListener
+ConnectionState *-- Connection
+ConnectionState *-- State
+
+DualConnection *-- DualCall
+DualConnection *-- Statement
+builder *-- CircuitBreaker
+DualConnection *-- ConnectionState
+
+
+
+
+@enduml

@@ -1,0 +1,20 @@
+@startuml
+
+@startuml
+
+class DualConnection
+
+interface DualCall{
+  <T> T callReplica(final SqlCall<T> call)
+  <T> T callMain(final SqlCall<T> call)
+}
+
+DualConnection *-- DualCall
+DualConnection --> DualCall::callReplica : db operation in ReplicaConnection state
+DualConnection --> DualCall::callMain : db operatin in MainConnection state
+
+
+@enduml
+
+
+@enduml

@@ -1,0 +1,21 @@
+@startuml
+
+@startuml
+
+class DualConnection
+
+interface ReplicaConsistency{
+    void write(Connection main)
+    boolean isConsistent(Supplier<Connection> replica)
+}
+
+DualConnection *-- ReplicaConsistency
+DualConnection --> ReplicaConsistency::write : db write operation
+
+DualConnection --> ReplicaConsistency::isConsistent : validate consistency for db read operation
+
+
+@enduml
+
+
+@enduml
