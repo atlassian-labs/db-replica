@@ -15,6 +15,10 @@ public final class State {
     public static final State REPLICA = new State("REPLICA");
     public static final State CLOSED = new State("CLOSED");
 
+    public String getName() {
+        return name;
+    }
+
     @Override
     public String toString() {
         return "State{" +
