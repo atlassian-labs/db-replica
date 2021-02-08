@@ -4,7 +4,7 @@
 which connection to use:
 
 1. A [connection's state](dual-connection-states.md).
-2. A replica's [consistency](../src/main/java/com/atlassian/db/replica/spi/ReplicaConsistency.java).
+2. A replica's [consistency](consistency.md).
 3. Context of `java.sql.Connection`/`java.sql.Statement` API usage.
 
 Some of the methods are intended to write into the database. For example every call to `java.sq.PreparedStatement#executeUpdate`
