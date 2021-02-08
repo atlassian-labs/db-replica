@@ -4,10 +4,11 @@ This diagram is intended to help understand how the library works internally. It
 
 ![Classes diagram](classes-overview.png)
 
-`DualConnection#Builder` creates [DualConnection](../src/main/java/com/atlassian/db/replica/api/DualConnection.java).
-[CircuitBreaker](../src/main/java/com/atlassian/db/replica/spi/circuitbreaker/CircuitBreaker.java)
-if [DualConnection](../src/main/java/com/atlassian/db/replica/api/DualConnection.java) can be created.
-Every call that goes to the database directly through the connection or through
+`DualConnection#Builder` creates [DualConnection](../src/main/java/com/atlassian/db/replica/api/DualConnection.java) when
+[CircuitBreaker](../src/main/java/com/atlassian/db/replica/spi/circuitbreaker/CircuitBreaker.java) is closed.
+The builder returns a connection to the main database when [CircuitBreaker](../src/main/java/com/atlassian/db/replica/spi/circuitbreaker/CircuitBreaker.java)
+is open.
+Every call that goes to the database directly through the connection or
 one of the `java.sql.Statement` implementations can be intercepted with
 [DualCall](../src/main/java/com/atlassian/db/replica/spi/DualCall.java).
 
