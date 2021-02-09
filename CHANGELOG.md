@@ -21,7 +21,10 @@ Adding a requirement of a major version of a dependency is breaking a contract.
 Dropping a requirement of a major version of a dependency is a new contract.
 
 ## [Unreleased]
-[Unreleased]: https://github.com/atlassian-labs/db-replica/compare/release-0.1.22...master
+[Unreleased]: https://github.com/atlassian-labs/db-replica/compare/release-0.1.23...master
+
+## [0.1.23] - 2021-02-09
+[0.1.23]: https://github.com/atlassian-labs/db-replica/compare/release-0.1.22...release-0.1.23
 
 ### Added
 - Add `State#getName` method.
