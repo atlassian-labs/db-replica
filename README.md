@@ -18,6 +18,9 @@ It integrates at the `java.sql.Connection` level, so you don't have to hunt down
 
 ## Usage
 
+The library is [not available via Maven Central Repository](https://github.com/atlassian-labs/db-replica/issues/18) yet. It can be accessed via
+[Atlassian Maven proxy](https://developer.atlassian.com/server/framework/atlassian-sdk/atlassian-maven-repositories-2818705/#atlassian-maven-proxy-).
+
 ```java
 import com.atlassian.db.replica.api.*;
 import java.sql.*;
