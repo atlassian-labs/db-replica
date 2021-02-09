@@ -10,7 +10,7 @@ The builder returns a connection to the main database when [CircuitBreaker](../s
 is open.
 Every call that goes to the database directly through the connection or
 one of the `java.sql.Statement` implementations can be intercepted with
-[DualCall](../src/main/java/com/atlassian/db/replica/spi/DualCall.java).
+[DatabaseCall](../src/main/java/com/atlassian/db/replica/spi/DatabaseCall.java).
 
 [ConnectionState](../src/main/java/com/atlassian/db/replica/internal/state/ConnectionState.java) is an internal class
 that is the source of truth to the current [State](../src/main/java/com/atlassian/db/replica/api/state/State.java).

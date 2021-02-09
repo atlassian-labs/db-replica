@@ -1,6 +1,6 @@
 package com.atlassian.db.replica.internal;
 
-import com.atlassian.db.replica.spi.DualCall;
+import com.atlassian.db.replica.spi.DatabaseCall;
 import com.atlassian.db.replica.spi.ReplicaConsistency;
 
 import java.io.InputStream;
@@ -32,7 +32,7 @@ public class ReplicaCallableStatement extends ReplicaPreparedStatement implement
     public ReplicaCallableStatement(
         ReplicaConnectionProvider connectionProvider,
         ReplicaConsistency consistency,
-        DualCall dualCall,
+        DatabaseCall databaseCall,
         String sql,
         Integer resultSetType,
         Integer resultSetConcurrency,
@@ -41,7 +41,7 @@ public class ReplicaCallableStatement extends ReplicaPreparedStatement implement
         super(
             connectionProvider,
             consistency,
-            dualCall,
+            databaseCall,
             sql,
             resultSetType,
             resultSetConcurrency,
@@ -631,7 +631,7 @@ public class ReplicaCallableStatement extends ReplicaPreparedStatement implement
     public static class Builder {
         private final ReplicaConnectionProvider connectionProvider;
         private final ReplicaConsistency consistency;
-        private final DualCall dualCall;
+        private final DatabaseCall databaseCall;
         private final String sql;
         private Integer resultSetType;
         private Integer resultSetConcurrency;
@@ -640,12 +640,12 @@ public class ReplicaCallableStatement extends ReplicaPreparedStatement implement
         public Builder(
             ReplicaConnectionProvider connectionProvider,
             ReplicaConsistency consistency,
-            DualCall dualCall,
+            DatabaseCall databaseCall,
             String sql
         ) {
             this.connectionProvider = connectionProvider;
             this.consistency = consistency;
-            this.dualCall = dualCall;
+            this.databaseCall = databaseCall;
             this.sql = sql;
         }
 
@@ -668,7 +668,7 @@ public class ReplicaCallableStatement extends ReplicaPreparedStatement implement
             return new ReplicaCallableStatement(
                 connectionProvider,
                 consistency,
-                dualCall,
+                databaseCall,
                 sql,
                 resultSetType,
                 resultSetConcurrency,
