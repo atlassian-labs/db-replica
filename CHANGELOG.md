@@ -25,6 +25,13 @@ Dropping a requirement of a major version of a dependency is a new contract.
 
 ### Added
 - Add `COMMITED_MAIN` state
+- Add `DualConnection#Builder.databaseCall`
+- Add `spi.DatabaseCall`
+- Add `RouteDecision` and `Reason` for per query visibility
+
+### Removed
+- `spi.DualCall`
+- `DualConnection#Builder.dualCall`
 
 ## [0.1.23] - 2021-02-09
 [0.1.23]: https://github.com/atlassian-labs/db-replica/compare/release-0.1.22...release-0.1.23

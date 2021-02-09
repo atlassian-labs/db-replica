@@ -1,6 +1,7 @@
 package com.atlassian.db.replica.internal;
 
-import com.atlassian.db.replica.spi.DualCall;
+import com.atlassian.db.replica.api.context.Reason;
+import com.atlassian.db.replica.spi.DatabaseCall;
 import com.atlassian.db.replica.spi.ReplicaConsistency;
 
 import java.io.InputStream;
@@ -25,6 +26,8 @@ import java.sql.Time;
 import java.sql.Timestamp;
 import java.util.Calendar;
 
+import static com.atlassian.db.replica.api.context.Reason.RW_API_CALL;
+
 public class ReplicaPreparedStatement extends ReplicaStatement implements PreparedStatement {
     private final String sql;
     private final Integer resultSetType;
@@ -37,7 +40,7 @@ public class ReplicaPreparedStatement extends ReplicaStatement implements Prepar
     protected ReplicaPreparedStatement(
         ReplicaConnectionProvider connectionProvider,
         ReplicaConsistency consistency,
-        DualCall dualCall,
+        DatabaseCall databaseCall,
         String sql,
         Integer resultSetType,
         Integer resultSetConcurrency,
@@ -46,7 +49,7 @@ public class ReplicaPreparedStatement extends ReplicaStatement implements Prepar
         String[] columnNames,
         int[] columnIndexes
     ) {
-        super(consistency, connectionProvider, dualCall, resultSetType, resultSetConcurrency, resultSetHoldability);
+        super(consistency, connectionProvider, databaseCall, resultSetType, resultSetConcurrency, resultSetHoldability);
         this.sql = sql;
         this.resultSetType = resultSetType;
         this.resultSetConcurrency = resultSetConcurrency;
@@ -59,13 +62,13 @@ public class ReplicaPreparedStatement extends ReplicaStatement implements Prepar
     protected ReplicaPreparedStatement(
         ReplicaConnectionProvider connectionProvider,
         ReplicaConsistency consistency,
-        DualCall dualCall,
+        DatabaseCall databaseCall,
         String sql,
         Integer resultSetType,
         Integer resultSetConcurrency,
         Integer resultSetHoldability
     ) {
-        super(consistency, connectionProvider, dualCall, resultSetType, resultSetConcurrency, resultSetHoldability);
+        super(consistency, connectionProvider, databaseCall, resultSetType, resultSetConcurrency, resultSetHoldability);
         this.sql = sql;
         this.resultSetType = resultSetType;
         this.resultSetConcurrency = resultSetConcurrency;
@@ -78,22 +81,25 @@ public class ReplicaPreparedStatement extends ReplicaStatement implements Prepar
     @Override
     public ResultSet executeQuery() throws SQLException {
         checkClosed();
-        final PreparedStatement statement = getReadStatement(sql);
-        return execute(statement::executeQuery);
+        final RouteDecisionBuilder decisionBuilder = new RouteDecisionBuilder(Reason.READ_OPERATION).sql(sql);
+        final PreparedStatement statement = getReadStatement(decisionBuilder);
+        return execute(statement::executeQuery, decisionBuilder.build());
     }
 
     @Override
     public int executeUpdate() throws SQLException {
         checkClosed();
-        final PreparedStatement statement = getWriteStatement();
-        return execute(statement::executeUpdate);
+        final RouteDecisionBuilder decisionBuilder = new RouteDecisionBuilder(RW_API_CALL).sql(this.sql);
+        final PreparedStatement statement = getWriteStatement(decisionBuilder);
+        return execute(statement::executeUpdate, decisionBuilder.build());
     }
 
     @Override
     public long executeLargeUpdate() throws SQLException {
         checkClosed();
-        final PreparedStatement statement = getWriteStatement();
-        return execute(statement::executeLargeUpdate);
+        final RouteDecisionBuilder decisionBuilder = new RouteDecisionBuilder(RW_API_CALL).sql(this.sql);
+        final PreparedStatement statement = getWriteStatement(decisionBuilder);
+        return execute(statement::executeLargeUpdate, decisionBuilder.build());
     }
 
     @Override
@@ -260,8 +266,9 @@ public class ReplicaPreparedStatement extends ReplicaStatement implements Prepar
     @Override
     public boolean execute() throws SQLException {
         checkClosed();
-        final PreparedStatement statement = getWriteStatement();
-        return execute(statement::execute);
+        final RouteDecisionBuilder decisionBuilder = new RouteDecisionBuilder(RW_API_CALL).sql(this.sql);
+        final PreparedStatement statement = getWriteStatement(decisionBuilder);
+        return execute(statement::execute, decisionBuilder.build());
     }
 
     @Override
@@ -369,7 +376,7 @@ public class ReplicaPreparedStatement extends ReplicaStatement implements Prepar
         if (currentStatement != null) {
             return currentStatement.getParameterMetaData();
         } else {
-            return getWriteStatement().getParameterMetaData();
+            return getWriteStatement(new RouteDecisionBuilder(RW_API_CALL)).getParameterMetaData();
         }
     }
 
@@ -539,13 +546,13 @@ public class ReplicaPreparedStatement extends ReplicaStatement implements Prepar
     }
 
     @Override
-    public PreparedStatement getWriteStatement() {
-        return (PreparedStatement) super.getWriteStatement();
+    public PreparedStatement getWriteStatement(RouteDecisionBuilder decisionBuilder) {
+        return (PreparedStatement) super.getWriteStatement(decisionBuilder);
     }
 
     @Override
-    public PreparedStatement getReadStatement(String sql) {
-        return (PreparedStatement) super.getReadStatement(sql);
+    public PreparedStatement getReadStatement(RouteDecisionBuilder decisionBuilder) {
+        return (PreparedStatement) super.getReadStatement(decisionBuilder);
     }
 
     @Override
@@ -572,7 +579,7 @@ public class ReplicaPreparedStatement extends ReplicaStatement implements Prepar
     public static class Builder {
         private final ReplicaConnectionProvider connectionProvider;
         private final ReplicaConsistency consistency;
-        private final DualCall dualCall;
+        private final DatabaseCall databaseCall;
         private final String sql;
         private Integer resultSetType;
         private Integer resultSetConcurrency;
@@ -584,12 +591,12 @@ public class ReplicaPreparedStatement extends ReplicaStatement implements Prepar
         public Builder(
             ReplicaConnectionProvider connectionProvider,
             ReplicaConsistency consistency,
-            DualCall dualCall,
+            DatabaseCall databaseCall,
             String sql
         ) {
             this.connectionProvider = connectionProvider;
             this.consistency = consistency;
-            this.dualCall = dualCall;
+            this.databaseCall = databaseCall;
             this.sql = sql;
         }
 
@@ -627,7 +634,7 @@ public class ReplicaPreparedStatement extends ReplicaStatement implements Prepar
             return new ReplicaPreparedStatement(
                 connectionProvider,
                 consistency,
-                dualCall,
+                databaseCall,
                 sql,
                 resultSetType,
                 resultSetConcurrency,

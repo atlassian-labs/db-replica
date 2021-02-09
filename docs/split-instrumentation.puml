@@ -4,14 +4,12 @@
 
 class DualConnection
 
-interface DualCall{
-  <T> T callReplica(final SqlCall<T> call)
-  <T> T callMain(final SqlCall<T> call)
+interface DatabaseCall{
+  <T> T call( SqlCall<T> call, RouteDecision routeDecision)
 }
 
-DualConnection *-- DualCall
-DualConnection --> DualCall::callReplica : db operation in ReplicaConnection state
-DualConnection --> DualCall::callMain : db operatin in MainConnection state
+DualConnection *-- DatabaseCall
+DualConnection --> DatabaseCall::call : db operation
 
 
 @enduml

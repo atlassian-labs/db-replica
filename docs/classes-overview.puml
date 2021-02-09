@@ -5,7 +5,7 @@ builder :  Connection build()
 class DualConnection
 interface ReplicaConsistency
 interface ConnectionProvider
-interface DualCall
+interface DatabaseCall
 interface StateListener
 interface CircuitBreaker
 class ConnectionState
@@ -31,7 +31,7 @@ ConnectionState *-- StateListener
 ConnectionState *-- Connection
 ConnectionState *-- State
 
-DualConnection *-- DualCall
+DualConnection *-- DatabaseCall
 DualConnection *-- Statement
 builder *-- CircuitBreaker
 DualConnection *-- ConnectionState

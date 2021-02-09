@@ -1,6 +1,7 @@
 package com.atlassian.db.replica.api;
 
 import com.atlassian.db.replica.api.circuitbreaker.BreakerState;
+import com.atlassian.db.replica.api.context.Reason;
 import com.atlassian.db.replica.api.state.NoOpStateListener;
 import com.atlassian.db.replica.internal.ForwardCall;
 import com.atlassian.db.replica.internal.ReadReplicaUnsupportedOperationException;
@@ -8,11 +9,12 @@ import com.atlassian.db.replica.internal.ReplicaCallableStatement;
 import com.atlassian.db.replica.internal.ReplicaConnectionProvider;
 import com.atlassian.db.replica.internal.ReplicaPreparedStatement;
 import com.atlassian.db.replica.internal.ReplicaStatement;
+import com.atlassian.db.replica.internal.RouteDecisionBuilder;
 import com.atlassian.db.replica.internal.circuitbreaker.BreakOnNotSupportedOperations;
 import com.atlassian.db.replica.internal.circuitbreaker.BreakerConnection;
 import com.atlassian.db.replica.internal.circuitbreaker.BreakerHandler;
 import com.atlassian.db.replica.spi.ConnectionProvider;
-import com.atlassian.db.replica.spi.DualCall;
+import com.atlassian.db.replica.spi.DatabaseCall;
 import com.atlassian.db.replica.spi.ReplicaConsistency;
 import com.atlassian.db.replica.spi.circuitbreaker.CircuitBreaker;
 import com.atlassian.db.replica.spi.state.StateListener;
@@ -47,41 +49,42 @@ public final class DualConnection implements Connection {
     private static final String CONNECTION_CLOSED_MESSAGE = "This connection has been closed.";
     private final ReplicaConnectionProvider connectionProvider;
     private final ReplicaConsistency consistency;
-    private final DualCall dualCall;
+    private final DatabaseCall databaseCall;
 
     private DualConnection(
         ConnectionProvider connectionProvider,
         ReplicaConsistency consistency,
-        DualCall dualCall,
+        DatabaseCall databaseCall,
         StateListener stateListener
     ) {
         this.connectionProvider = new ReplicaConnectionProvider(connectionProvider, consistency, stateListener);
         this.consistency = consistency;
-        this.dualCall = dualCall;
+        this.databaseCall = databaseCall;
     }
 
     @Override
     public Statement createStatement() throws SQLException {
         checkClosed();
-        return ReplicaStatement.builder(connectionProvider, consistency, dualCall).build();
+        return ReplicaStatement.builder(connectionProvider, consistency, databaseCall).build();
     }
 
     @Override
     public PreparedStatement prepareStatement(String sql) throws SQLException {
         checkClosed();
-        return new ReplicaPreparedStatement.Builder(connectionProvider, consistency, dualCall, sql).build();
+        return new ReplicaPreparedStatement.Builder(connectionProvider, consistency, databaseCall, sql).build();
     }
 
     @Override
     public CallableStatement prepareCall(String sql) throws SQLException {
         checkClosed();
-        return new ReplicaCallableStatement.Builder(connectionProvider, consistency, dualCall, sql).build();
+        return new ReplicaCallableStatement.Builder(connectionProvider, consistency, databaseCall, sql).build();
     }
 
     @Override
     public String nativeSQL(String sql) throws SQLException {
         checkClosed();
-        return connectionProvider.getWriteConnection().nativeSQL(sql);
+        return connectionProvider.getWriteConnection(new RouteDecisionBuilder(Reason.RW_API_CALL).sql(sql)).nativeSQL(
+            sql);
     }
 
     @Override
@@ -121,7 +124,7 @@ public final class DualConnection implements Connection {
     @Override
     public DatabaseMetaData getMetaData() throws SQLException {
         checkClosed();
-        return connectionProvider.getWriteConnection().getMetaData();
+        return connectionProvider.getWriteConnection(new RouteDecisionBuilder(Reason.RW_API_CALL)).getMetaData();
     }
 
     @Override
@@ -177,7 +180,7 @@ public final class DualConnection implements Connection {
     public Statement createStatement(int resultSetType, int resultSetConcurrency) throws SQLException {
         checkClosed();
         return ReplicaStatement
-            .builder(connectionProvider, consistency, dualCall)
+            .builder(connectionProvider, consistency, databaseCall)
             .resultSetType(resultSetType)
             .resultSetConcurrency(resultSetConcurrency)
             .build();
@@ -193,7 +196,7 @@ public final class DualConnection implements Connection {
         return new ReplicaPreparedStatement.Builder(
             connectionProvider,
             consistency,
-            dualCall,
+            databaseCall,
             sql
         ).resultSetType(resultSetType)
             .resultSetConcurrency(resultSetConcurrency)
@@ -204,7 +207,7 @@ public final class DualConnection implements Connection {
     public CallableStatement prepareCall(String sql, int resultSetType, int resultSetConcurrency) throws SQLException {
         checkClosed();
         return new ReplicaCallableStatement
-            .Builder(connectionProvider, consistency, dualCall, sql)
+            .Builder(connectionProvider, consistency, databaseCall, sql)
             .resultSetType(resultSetType)
             .resultSetConcurrency(resultSetConcurrency)
             .build();
@@ -237,25 +240,25 @@ public final class DualConnection implements Connection {
     @Override
     public Savepoint setSavepoint() throws SQLException {
         checkClosed();
-        return connectionProvider.getWriteConnection().setSavepoint();
+        return connectionProvider.getWriteConnection(new RouteDecisionBuilder(Reason.RW_API_CALL)).setSavepoint();
     }
 
     @Override
     public Savepoint setSavepoint(String name) throws SQLException {
         checkClosed();
-        return connectionProvider.getWriteConnection().setSavepoint(name);
+        return connectionProvider.getWriteConnection(new RouteDecisionBuilder(Reason.RW_API_CALL)).setSavepoint(name);
     }
 
     @Override
     public void rollback(Savepoint savepoint) throws SQLException {
         checkClosed();
-        connectionProvider.getWriteConnection().rollback(savepoint);
+        connectionProvider.getWriteConnection(new RouteDecisionBuilder(Reason.RW_API_CALL)).rollback(savepoint);
     }
 
     @Override
     public void releaseSavepoint(Savepoint savepoint) throws SQLException {
         checkClosed();
-        connectionProvider.getWriteConnection().releaseSavepoint(savepoint);
+        connectionProvider.getWriteConnection(new RouteDecisionBuilder(Reason.RW_API_CALL)).releaseSavepoint(savepoint);
     }
 
     @Override
@@ -265,7 +268,7 @@ public final class DualConnection implements Connection {
         int resultSetHoldability
     ) throws SQLException {
         checkClosed();
-        return ReplicaStatement.builder(connectionProvider, consistency, dualCall)
+        return ReplicaStatement.builder(connectionProvider, consistency, databaseCall)
             .resultSetType(resultSetType)
             .resultSetConcurrency(resultSetConcurrency)
             .resultSetHoldability(resultSetHoldability)
@@ -283,7 +286,7 @@ public final class DualConnection implements Connection {
         return new ReplicaPreparedStatement.Builder(
             connectionProvider,
             consistency,
-            dualCall,
+            databaseCall,
             sql
         ).resultSetType(resultSetType)
             .resultSetConcurrency(resultSetConcurrency)
@@ -300,7 +303,7 @@ public final class DualConnection implements Connection {
     ) throws SQLException {
         checkClosed();
         return new ReplicaCallableStatement
-            .Builder(connectionProvider, consistency, dualCall, sql)
+            .Builder(connectionProvider, consistency, databaseCall, sql)
             .resultSetType(resultSetType)
             .resultSetConcurrency(resultSetConcurrency)
             .resultSetHoldability(resultSetHoldability)
@@ -313,7 +316,7 @@ public final class DualConnection implements Connection {
         return new ReplicaPreparedStatement.Builder(
             connectionProvider,
             consistency,
-            dualCall,
+            databaseCall,
             sql
         ).autoGeneratedKeys(autoGeneratedKeys)
             .build();
@@ -325,7 +328,7 @@ public final class DualConnection implements Connection {
         return new ReplicaPreparedStatement.Builder(
             connectionProvider,
             consistency,
-            dualCall,
+            databaseCall,
             sql
         ).columnIndexes(columnIndexes)
             .build();
@@ -337,7 +340,7 @@ public final class DualConnection implements Connection {
         return new ReplicaPreparedStatement.Builder(
             connectionProvider,
             consistency,
-            dualCall,
+            databaseCall,
             sql
         ).columnNames(columnNames)
             .build();
@@ -372,7 +375,7 @@ public final class DualConnection implements Connection {
         if (isClosed()) {
             return false;
         }
-        return connectionProvider.getReadConnection().isValid(timeout);
+        return connectionProvider.getReadConnection(new RouteDecisionBuilder(Reason.RO_API_CALL)).isValid(timeout);
     }
 
     @Override
@@ -416,7 +419,9 @@ public final class DualConnection implements Connection {
     @Override
     public Array createArrayOf(String typeName, Object[] elements) throws SQLException {
         checkClosed();
-        return connectionProvider.getWriteConnection().createArrayOf(typeName, elements);
+        return connectionProvider
+            .getWriteConnection(new RouteDecisionBuilder(Reason.RW_API_CALL))
+            .createArrayOf(typeName, elements);
     }
 
     @Override
@@ -434,7 +439,7 @@ public final class DualConnection implements Connection {
     @Override
     public String getSchema() throws SQLException {
         checkClosed();
-        return connectionProvider.getReadConnection().getSchema();
+        return connectionProvider.getReadConnection(new RouteDecisionBuilder(Reason.RO_API_CALL)).getSchema();
     }
 
     @Override
@@ -480,7 +485,7 @@ public final class DualConnection implements Connection {
     public static class Builder {
         private final ConnectionProvider connectionProvider;
         private final ReplicaConsistency consistency;
-        private DualCall dualCall = new ForwardCall();
+        private DatabaseCall databaseCall = new ForwardCall();
         private CircuitBreaker circuitBreaker = new BreakOnNotSupportedOperations();
         private StateListener stateListener = new NoOpStateListener();
 
@@ -492,8 +497,8 @@ public final class DualConnection implements Connection {
             this.consistency = consistency;
         }
 
-        public DualConnection.Builder dualCall(DualCall dualCall) {
-            this.dualCall = dualCall;
+        public DualConnection.Builder databaseCall(DatabaseCall databaseCall) {
+            this.databaseCall = databaseCall;
             return this;
         }
 
@@ -512,7 +517,7 @@ public final class DualConnection implements Connection {
                 return new DualConnection(
                     connectionProvider,
                     consistency,
-                    dualCall,
+                    databaseCall,
                     stateListener
                 );
             }
@@ -523,7 +528,7 @@ public final class DualConnection implements Connection {
             final DualConnection dualConnection = new DualConnection(
                 connectionProvider,
                 consistency,
-                dualCall,
+                databaseCall,
                 stateListener
             );
             return new BreakerConnection(dualConnection, breakerHandler);
