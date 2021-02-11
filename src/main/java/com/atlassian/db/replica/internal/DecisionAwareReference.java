@@ -2,25 +2,19 @@ package com.atlassian.db.replica.internal;
 
 import java.util.concurrent.atomic.AtomicReference;
 
-public abstract class DecisionAwareReference<T> {
-    private final LazyReference<T> lazyReference = new InnerLazyReference<>(this);
+public abstract class DecisionAwareReference<T> extends LazyReference<T> {
     private final AtomicReference<RouteDecisionBuilder> decisionBuilder = new AtomicReference<>();
-
-    public abstract T create() throws Exception;
-
-    public boolean isInitialized() {
-        return lazyReference.isInitialized();
-    }
 
     public T get(RouteDecisionBuilder decisionBuilder) {
         if (!isInitialized()) {
             this.decisionBuilder.compareAndSet(null, decisionBuilder);
         }
-        return lazyReference.get();
+        return super.get();
     }
 
+    @Override
     public void reset() {
-        this.lazyReference.reset();
+        super.reset();
         this.decisionBuilder.set(null);
     }
 
@@ -29,19 +23,5 @@ public abstract class DecisionAwareReference<T> {
             throw new IllegalStateException("The decision builder is not initialized");
         }
         return decisionBuilder.get();
-    }
-
-    private static final class InnerLazyReference<T> extends LazyReference<T> {
-
-        private final DecisionAwareReference<T> decisionAwareReference;
-
-        private InnerLazyReference(DecisionAwareReference<T> decisionAwareReference) {
-            this.decisionAwareReference = decisionAwareReference;
-        }
-
-        @Override
-        protected T create() throws Exception {
-            return decisionAwareReference.create();
-        }
     }
 }
