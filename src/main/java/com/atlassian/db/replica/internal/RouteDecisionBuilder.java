@@ -6,9 +6,9 @@ import com.atlassian.db.replica.api.context.RouteDecision;
 import java.util.Objects;
 
 public final class RouteDecisionBuilder {
-    private String sql;
+    private String sql = null;
     private Reason reason;
-    private RouteDecision cause;
+    private RouteDecision cause = null;
 
     public RouteDecisionBuilder(Reason reason) {
         this.reason = reason;
@@ -42,10 +42,9 @@ public final class RouteDecisionBuilder {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         RouteDecisionBuilder that = (RouteDecisionBuilder) o;
-        return Objects.equals(sql, that.sql) && Objects.equals(
-            reason,
-            that.reason
-        ) && Objects.equals(cause, that.cause);
+        return Objects.equals(sql, that.sql)
+            && Objects.equals(reason, that.reason)
+            && Objects.equals(cause, that.cause);
     }
 
     @Override

@@ -1,6 +1,5 @@
 package com.atlassian.db.replica.api.context;
 
-
 import java.util.Objects;
 import java.util.Optional;
 
@@ -26,18 +25,17 @@ public final class RouteDecision {
     }
 
     /**
-     * @return An SQL corresponding to the current route. It can be `null`.
+     * @return An SQL corresponding to the current route, if any.
      */
     public Optional<String> getSql() {
         return Optional.ofNullable(sql);
     }
 
     /**
-     * @return If the decision was affected by the current connection state,
-     * it returns the initial decision to change the state. Otherwise, it returns `null`.
+     * @return The initial decision to change the state, if any.
      */
-    public RouteDecision getCause() {
-        return cause;
+    public Optional<RouteDecision> getCause() {
+        return Optional.ofNullable(cause);
     }
 
     @Override
