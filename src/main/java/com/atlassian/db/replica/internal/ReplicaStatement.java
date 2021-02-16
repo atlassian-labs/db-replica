@@ -6,24 +6,11 @@ import com.atlassian.db.replica.api.reason.RouteDecision;
 import com.atlassian.db.replica.spi.DatabaseCall;
 import com.atlassian.db.replica.spi.ReplicaConsistency;
 
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.SQLWarning;
-import java.sql.Statement;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.regex.Pattern;
+import java.sql.*;
+import java.util.*;
 
-import static com.atlassian.db.replica.api.reason.Reason.LOCK;
-import static com.atlassian.db.replica.api.reason.Reason.MAIN_CONNECTION_REUSE;
-import static com.atlassian.db.replica.api.reason.Reason.READ_OPERATION;
-import static com.atlassian.db.replica.api.reason.Reason.RO_API_CALL;
-import static com.atlassian.db.replica.api.reason.Reason.RW_API_CALL;
-import static com.atlassian.db.replica.api.reason.Reason.WRITE_OPERATION;
+import static com.atlassian.db.replica.api.reason.Reason.*;
 import static com.atlassian.db.replica.api.state.State.MAIN;
-import static java.lang.Math.min;
 
 public class ReplicaStatement implements Statement {
     private final ReplicaConnectionProvider connectionProvider;
@@ -37,8 +24,8 @@ public class ReplicaStatement implements Statement {
     private final List<StatementOperation<Statement>> batches = new ArrayList<>();
     private final ReplicaConsistency consistency;
     private final DatabaseCall databaseCall;
-    final String methodBracketStart = Pattern.quote("(");
     private boolean isWriteOperation = true;
+    private final SqlFunction sqlFunction;
     private final DecisionAwareReference<Statement> readStatement = new DecisionAwareReference<Statement>() {
         @Override
         public Statement create() throws Exception {
@@ -58,7 +45,8 @@ public class ReplicaStatement implements Statement {
         DatabaseCall databaseCall,
         Integer resultSetType,
         Integer resultSetConcurrency,
-        Integer resultSetHoldability
+        Integer resultSetHoldability,
+        Set<String> readOnlyFunctions
     ) {
         this.consistency = consistency;
         this.connectionProvider = connectionProvider;
@@ -66,6 +54,7 @@ public class ReplicaStatement implements Statement {
         this.resultSetType = resultSetType;
         this.resultSetConcurrency = resultSetConcurrency;
         this.resultSetHoldability = resultSetHoldability;
+        this.sqlFunction = new SqlFunction(readOnlyFunctions);
     }
 
     @Override
@@ -550,9 +539,10 @@ public class ReplicaStatement implements Statement {
     public static Builder builder(
         ReplicaConnectionProvider connectionProvider,
         ReplicaConsistency consistency,
-        DatabaseCall databaseCall
+        DatabaseCall databaseCall,
+        Set<String> readOnlyFunctions
     ) {
-        return new Builder(connectionProvider, consistency, databaseCall);
+        return new Builder(connectionProvider, consistency, databaseCall, readOnlyFunctions);
     }
 
     void recordWriteAfterQueryExecution() throws SQLException {
@@ -569,7 +559,7 @@ public class ReplicaStatement implements Statement {
             return prepareWriteStatement(decisionBuilder);
         }
         final String sql = decisionBuilder.getSql();
-        isWriteOperation = isFunctionCall(sql) || isUpdate(sql) || isDelete(sql);
+        isWriteOperation = sqlFunction.isFunctionCall(sql) || isUpdate(sql) || isDelete(sql);
         if (isWriteOperation) {
             decisionBuilder.reason(WRITE_OPERATION);
             return prepareWriteStatement(decisionBuilder);
@@ -595,28 +585,6 @@ public class ReplicaStatement implements Statement {
 
     private boolean isDelete(String sql) {
         return sql != null && (sql.startsWith("delete") || sql.startsWith("DELETE"));
-    }
-
-    private boolean isFunctionCall(String sql) {
-        if (sql == null) {
-            return false;
-        }
-        final String mayContainFunction = skipIrrelevantSqlParts(sql);
-        final boolean mayBeFunction = mayContainFunction.contains("(");
-        if (!mayBeFunction) {
-            return false;
-        }
-        final String potentialMethodName = mayContainFunction.split(methodBracketStart)[0];
-        final boolean hasSpaceInPotentialMethodName = potentialMethodName.contains(" ");
-        return !hasSpaceInPotentialMethodName;
-    }
-
-    /**
-     * Skips `SELECT ` at the beginning of the query. Postgres identifiers are limited to
-     * 63 characters, so we should be safe to interpret first 80 characters.
-     */
-    private String skipIrrelevantSqlParts(String sql) {
-        return sql.substring(7, min(sql.length(), 80));
     }
 
     protected Statement getWriteStatement(RouteDecisionBuilder decisionBuilder) {
@@ -655,6 +623,7 @@ public class ReplicaStatement implements Statement {
         private final ReplicaConnectionProvider connectionProvider;
         private final ReplicaConsistency consistency;
         private final DatabaseCall databaseCall;
+        private final Set<String> readOnlyFunctions;
         private Integer resultSetType;
         private Integer resultSetConcurrency;
         private Integer resultSetHoldability;
@@ -662,11 +631,13 @@ public class ReplicaStatement implements Statement {
         private Builder(
             ReplicaConnectionProvider connectionProvider,
             ReplicaConsistency consistency,
-            DatabaseCall databaseCall
+            DatabaseCall databaseCall,
+            Set<String> readOnlyFunctions
         ) {
             this.connectionProvider = connectionProvider;
             this.consistency = consistency;
             this.databaseCall = databaseCall;
+            this.readOnlyFunctions = readOnlyFunctions;
         }
 
         public Builder resultSetType(int resultSetType) {
@@ -691,7 +662,8 @@ public class ReplicaStatement implements Statement {
                 databaseCall,
                 resultSetType,
                 resultSetConcurrency,
-                resultSetHoldability
+                resultSetHoldability,
+                readOnlyFunctions
             );
         }
     }

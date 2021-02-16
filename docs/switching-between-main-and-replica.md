@@ -15,5 +15,7 @@ will switch the connection's state to the main database.
     - `SELECT FOR UPDATE` statement.
     - `UPDATE` statement.
     - `DELETE` statement.
-    - an SQL function call.
     - All calls with transaction isolation level higher than `TRANSACTION_READ_COMMITTED`.
+
+6.  The query will use the main database in case it's an unknown function call. Known read-only functions are [standard
+SQL functions](https://www.postgresql.org/docs/9.4/functions.html) and user defined functions.

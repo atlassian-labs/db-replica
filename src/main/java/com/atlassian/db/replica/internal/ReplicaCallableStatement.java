@@ -22,6 +22,7 @@ import java.sql.Time;
 import java.sql.Timestamp;
 import java.util.Calendar;
 import java.util.Map;
+import java.util.Set;
 
 public class ReplicaCallableStatement extends ReplicaPreparedStatement implements CallableStatement {
     private final String sql;
@@ -36,7 +37,8 @@ public class ReplicaCallableStatement extends ReplicaPreparedStatement implement
         String sql,
         Integer resultSetType,
         Integer resultSetConcurrency,
-        Integer resultSetHoldability
+        Integer resultSetHoldability,
+        Set<String> readOnlyFunctions
     ) {
         super(
             connectionProvider,
@@ -45,7 +47,8 @@ public class ReplicaCallableStatement extends ReplicaPreparedStatement implement
             sql,
             resultSetType,
             resultSetConcurrency,
-            resultSetHoldability
+            resultSetHoldability,
+            readOnlyFunctions
         );
         this.sql = sql;
         this.resultSetType = resultSetType;
@@ -633,6 +636,7 @@ public class ReplicaCallableStatement extends ReplicaPreparedStatement implement
         private final ReplicaConsistency consistency;
         private final DatabaseCall databaseCall;
         private final String sql;
+        private final Set<String> readOnlyFunctions;
         private Integer resultSetType;
         private Integer resultSetConcurrency;
         private Integer resultSetHoldability;
@@ -641,12 +645,14 @@ public class ReplicaCallableStatement extends ReplicaPreparedStatement implement
             ReplicaConnectionProvider connectionProvider,
             ReplicaConsistency consistency,
             DatabaseCall databaseCall,
-            String sql
+            String sql,
+            Set<String> readOnlyFunctions
         ) {
             this.connectionProvider = connectionProvider;
             this.consistency = consistency;
             this.databaseCall = databaseCall;
             this.sql = sql;
+            this.readOnlyFunctions = readOnlyFunctions;
         }
 
         public ReplicaCallableStatement.Builder resultSetType(int resultSetType) {
@@ -672,7 +678,8 @@ public class ReplicaCallableStatement extends ReplicaPreparedStatement implement
                 sql,
                 resultSetType,
                 resultSetConcurrency,
-                resultSetHoldability
+                resultSetHoldability,
+                readOnlyFunctions
             );
         }
     }

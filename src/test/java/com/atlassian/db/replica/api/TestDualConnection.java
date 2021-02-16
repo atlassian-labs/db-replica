@@ -5,6 +5,7 @@ import com.atlassian.db.replica.api.reason.Reason;
 import com.atlassian.db.replica.internal.RouteDecisionBuilder;
 import com.atlassian.db.replica.spi.DatabaseCall;
 import com.atlassian.db.replica.spi.ReplicaConsistency;
+import com.google.common.collect.ImmutableSet;
 import org.junit.Test;
 import org.mockito.Mockito;
 
@@ -232,6 +233,39 @@ public class TestDualConnection {
 
         assertThat(connectionProvider.getProvidedConnectionTypes())
             .containsOnly(MAIN);
+    }
+
+    @Test
+    public void shouldUseReplicaForKnownReadOnlyFunctionCalls() throws SQLException {
+        final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
+        final Connection connection = DualConnection.builder(
+            connectionProvider,
+            permanentConsistency().build()
+        ).build();
+
+        connection.prepareStatement("SELECT count(*) FROM user").executeQuery();
+        connection.prepareStatement("SELECT COUNT(*) FROM user").executeQuery();
+        connection.prepareStatement("SELECT max(user.id) FROM user").executeQuery();
+        connection.prepareStatement("SELECT MAX(user.id) FROM user").executeQuery();
+        connection.prepareStatement("SELECT nextval('foo')").executeQuery();
+
+        assertThat(connectionProvider.getProvidedConnectionTypes())
+            .containsOnly(REPLICA);
+    }
+
+    @Test
+    public void shouldSupprtCustomReadOnlyFunctions() throws SQLException {
+        final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
+        final Connection connection = DualConnection.builder(
+            connectionProvider,
+            permanentConsistency().build()
+        ).readOnlyFunctions(ImmutableSet.of("myFunction"))
+            .build();
+
+        connection.prepareStatement("SELECT myFunction() FROM user").executeQuery();
+
+        assertThat(connectionProvider.getProvidedConnectionTypes())
+            .containsOnly(REPLICA);
     }
 
     @Test
