@@ -41,7 +41,7 @@ public final class ConnectionState {
             if (connectionProvider.isReplicaAvailable()) {
                 return connectionProvider.getReplicaConnection();
             } else {
-                return getWriteConnection(getDecisionBuilder());
+                return getWriteConnection(getFirstCause());
             }
         }
     };
@@ -141,7 +141,7 @@ public final class ConnectionState {
 
     public Optional<RouteDecision> getDecision() {
         if (getState().equals(MAIN)) {
-            return Optional.of(writeConnection.getDecisionBuilder().build());
+            return Optional.of(writeConnection.getFirstCause().build());
         } else {
             return Optional.empty();
         }
@@ -177,7 +177,7 @@ public final class ConnectionState {
         }
         if (getState().equals(MAIN)) {
             decisionBuilder.reason(MAIN_CONNECTION_REUSE);
-            decisionBuilder.cause(writeConnection.getDecisionBuilder().build());
+            decisionBuilder.cause(writeConnection.getFirstCause().build());
             return writeConnection.get(decisionBuilder);
         }
         final boolean isNotInitialised = getState().equals(NOT_INITIALISED);
