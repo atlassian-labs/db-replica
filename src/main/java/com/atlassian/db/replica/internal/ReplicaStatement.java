@@ -1,8 +1,8 @@
 package com.atlassian.db.replica.internal;
 
 import com.atlassian.db.replica.api.SqlCall;
-import com.atlassian.db.replica.api.context.Reason;
-import com.atlassian.db.replica.api.context.RouteDecision;
+import com.atlassian.db.replica.api.reason.Reason;
+import com.atlassian.db.replica.api.reason.RouteDecision;
 import com.atlassian.db.replica.spi.DatabaseCall;
 import com.atlassian.db.replica.spi.ReplicaConsistency;
 
@@ -16,12 +16,12 @@ import java.util.Collection;
 import java.util.List;
 import java.util.regex.Pattern;
 
-import static com.atlassian.db.replica.api.context.Reason.LOCK;
-import static com.atlassian.db.replica.api.context.Reason.MAIN_CONNECTION_REUSE;
-import static com.atlassian.db.replica.api.context.Reason.READ_OPERATION;
-import static com.atlassian.db.replica.api.context.Reason.RO_API_CALL;
-import static com.atlassian.db.replica.api.context.Reason.RW_API_CALL;
-import static com.atlassian.db.replica.api.context.Reason.WRITE_OPERATION;
+import static com.atlassian.db.replica.api.reason.Reason.LOCK;
+import static com.atlassian.db.replica.api.reason.Reason.MAIN_CONNECTION_REUSE;
+import static com.atlassian.db.replica.api.reason.Reason.READ_OPERATION;
+import static com.atlassian.db.replica.api.reason.Reason.RO_API_CALL;
+import static com.atlassian.db.replica.api.reason.Reason.RW_API_CALL;
+import static com.atlassian.db.replica.api.reason.Reason.WRITE_OPERATION;
 import static com.atlassian.db.replica.api.state.State.MAIN;
 import static java.lang.Math.min;
 

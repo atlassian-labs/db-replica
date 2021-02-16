@@ -1,6 +1,6 @@
 package com.atlassian.db.replica.internal.state;
 
-import com.atlassian.db.replica.api.context.RouteDecision;
+import com.atlassian.db.replica.api.reason.RouteDecision;
 import com.atlassian.db.replica.api.state.State;
 import com.atlassian.db.replica.internal.ConnectionParameters;
 import com.atlassian.db.replica.internal.DecisionAwareReference;
@@ -15,11 +15,11 @@ import java.sql.SQLException;
 import java.sql.SQLWarning;
 import java.util.Optional;
 
-import static com.atlassian.db.replica.api.context.Reason.HIGH_TRANSACTION_ISOLATION_LEVEL;
-import static com.atlassian.db.replica.api.context.Reason.MAIN_CONNECTION_REUSE;
-import static com.atlassian.db.replica.api.context.Reason.REPLICA_INCONSISTENT;
-import static com.atlassian.db.replica.api.context.Reason.RO_API_CALL;
-import static com.atlassian.db.replica.api.context.Reason.RW_API_CALL;
+import static com.atlassian.db.replica.api.reason.Reason.HIGH_TRANSACTION_ISOLATION_LEVEL;
+import static com.atlassian.db.replica.api.reason.Reason.MAIN_CONNECTION_REUSE;
+import static com.atlassian.db.replica.api.reason.Reason.REPLICA_INCONSISTENT;
+import static com.atlassian.db.replica.api.reason.Reason.RO_API_CALL;
+import static com.atlassian.db.replica.api.reason.Reason.RW_API_CALL;
 import static com.atlassian.db.replica.api.state.State.CLOSED;
 import static com.atlassian.db.replica.api.state.State.COMMITED_MAIN;
 import static com.atlassian.db.replica.api.state.State.MAIN;
@@ -99,9 +99,9 @@ public final class ConnectionState {
     /**
      * Provides a connection that will be used for reading operation. Will use read-replica if possible.
      */
-    public Connection getReadConnection(RouteDecisionBuilder contextBuilder) throws SQLException {
+    public Connection getReadConnection(RouteDecisionBuilder decisionBuilder) throws SQLException {
         final State stateBefore = getState();
-        final Connection connection = prepareReadConnection(contextBuilder);
+        final Connection connection = prepareReadConnection(decisionBuilder);
         final State stateAfter = getState();
         if (!stateAfter.equals(stateBefore)) {
             stateListener.transition(stateBefore, stateAfter);

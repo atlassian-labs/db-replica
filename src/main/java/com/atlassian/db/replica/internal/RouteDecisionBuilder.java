@@ -1,7 +1,7 @@
 package com.atlassian.db.replica.internal;
 
-import com.atlassian.db.replica.api.context.Reason;
-import com.atlassian.db.replica.api.context.RouteDecision;
+import com.atlassian.db.replica.api.reason.Reason;
+import com.atlassian.db.replica.api.reason.RouteDecision;
 
 import java.util.Objects;
 
