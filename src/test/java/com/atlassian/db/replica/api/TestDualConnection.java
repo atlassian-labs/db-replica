@@ -1,6 +1,6 @@
 package com.atlassian.db.replica.api;
 
-import com.atlassian.db.replica.api.context.Reason;
+import com.atlassian.db.replica.api.reason.Reason;
 import com.atlassian.db.replica.api.mocks.ConnectionMock;
 import com.atlassian.db.replica.api.mocks.ConnectionProviderMock;
 import com.atlassian.db.replica.api.mocks.NoOpConnection;

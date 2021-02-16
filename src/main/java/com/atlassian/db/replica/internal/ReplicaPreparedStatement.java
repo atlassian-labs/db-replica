@@ -1,6 +1,6 @@
 package com.atlassian.db.replica.internal;
 
-import com.atlassian.db.replica.api.context.Reason;
+import com.atlassian.db.replica.api.reason.Reason;
 import com.atlassian.db.replica.spi.DatabaseCall;
 import com.atlassian.db.replica.spi.ReplicaConsistency;
 
@@ -26,7 +26,7 @@ import java.sql.Time;
 import java.sql.Timestamp;
 import java.util.Calendar;
 
-import static com.atlassian.db.replica.api.context.Reason.RW_API_CALL;
+import static com.atlassian.db.replica.api.reason.Reason.RW_API_CALL;
 
 public class ReplicaPreparedStatement extends ReplicaStatement implements PreparedStatement {
     private final String sql;

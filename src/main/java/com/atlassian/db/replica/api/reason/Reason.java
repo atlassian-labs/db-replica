@@ -1,4 +1,4 @@
-package com.atlassian.db.replica.api.context;
+package com.atlassian.db.replica.api.reason;
 
 import java.util.Objects;
 

@@ -1,7 +1,7 @@
 package com.atlassian.db.replica.api;
 
 import com.atlassian.db.replica.api.circuitbreaker.BreakerState;
-import com.atlassian.db.replica.api.context.Reason;
+import com.atlassian.db.replica.api.reason.Reason;
 import com.atlassian.db.replica.api.state.NoOpStateListener;
 import com.atlassian.db.replica.internal.ForwardCall;
 import com.atlassian.db.replica.internal.ReadReplicaUnsupportedOperationException;
