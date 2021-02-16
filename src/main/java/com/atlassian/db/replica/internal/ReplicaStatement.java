@@ -42,13 +42,13 @@ public class ReplicaStatement implements Statement {
     private final DecisionAwareReference<Statement> readStatement = new DecisionAwareReference<Statement>() {
         @Override
         public Statement create() throws Exception {
-            return createStatement(connectionProvider.getReadConnection(getDecisionBuilder()));
+            return createStatement(connectionProvider.getReadConnection(getFirstCause()));
         }
     };
     private final DecisionAwareReference<Statement> writeStatement = new DecisionAwareReference<Statement>() {
         @Override
         public Statement create() throws Exception {
-            return createStatement(connectionProvider.getWriteConnection(getDecisionBuilder()));
+            return createStatement(connectionProvider.getWriteConnection(getFirstCause()));
         }
     };
 
