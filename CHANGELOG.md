@@ -23,6 +23,9 @@ Dropping a requirement of a major version of a dependency is a new contract.
 ## [Unreleased]
 [Unreleased]: https://github.com/atlassian-labs/db-replica/compare/release-0.1.24...master
 
+### Fixed
+- Avoid unnecessary switch to `MainConnection` while setting `read-only` mode
+
 ## [0.1.24] - 2021-02-16
 
 ### Added

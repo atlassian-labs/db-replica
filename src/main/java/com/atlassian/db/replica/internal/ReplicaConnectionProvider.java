@@ -81,12 +81,8 @@ public class ReplicaConnectionProvider implements AutoCloseable {
     }
 
     public void setReadOnly(boolean readOnly) throws SQLException {
-        isReadOnly = readOnly;
-        if (readOnly) {
-            state.getReadConnection(new RouteDecisionBuilder(RO_API_CALL)).setReadOnly(readOnly);
-        } else {
-            state.getWriteConnection(new RouteDecisionBuilder(Reason.RW_API_CALL)).setReadOnly(isReadOnly);
-        }
+        this.isReadOnly = readOnly;
+        state.getReadConnection(new RouteDecisionBuilder(RO_API_CALL)).setReadOnly(readOnly);
     }
 
     public String getCatalog() {
