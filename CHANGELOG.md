@@ -21,7 +21,10 @@ Adding a requirement of a major version of a dependency is breaking a contract.
 Dropping a requirement of a major version of a dependency is a new contract.
 
 ## [Unreleased]
-[Unreleased]: https://github.com/atlassian-labs/db-replica/compare/release-0.1.24...master
+[Unreleased]: https://github.com/atlassian-labs/db-replica/compare/release-0.1.25...master
+
+## [0.1.25] - 2021-02-18
+[0.1.25]: https://github.com/atlassian-labs/db-replica/compare/release-0.1.24...release-0.1.25
 
 ### Added
 - Add support for read-only functions
@@ -31,6 +34,7 @@ Dropping a requirement of a major version of a dependency is a new contract.
 - Statement Behavior changes don't affect DualConnection's state
 
 ## [0.1.24] - 2021-02-16
+[0.1.24]: https://github.com/atlassian-labs/db-replica/compare/release-0.1.23...release-0.1.24
 
 ### Added
 - Add `COMMITED_MAIN` state
@@ -43,7 +47,7 @@ Dropping a requirement of a major version of a dependency is a new contract.
 - `DualConnection#Builder.dualCall`
 
 ## [0.1.23] - 2021-02-09
-[0.1.23]: https://github.com/atlassian-labs/db-replica/compare/release-0.1.23...release-0.1.24
+[0.1.23]: https://github.com/atlassian-labs/db-replica/compare/release-0.1.22...release-0.1.23
 
 ### Added
 - Add `State#getName` method.
