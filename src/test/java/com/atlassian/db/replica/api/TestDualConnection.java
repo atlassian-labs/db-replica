@@ -783,9 +783,24 @@ public class TestDualConnection {
         connection.setReadOnly(false);
 
         assertThat(connectionProvider.getProvidedConnectionTypes())
-            .containsOnly(MAIN);
+            .containsOnly(REPLICA);
         verify(connectionProvider.singleProvidedConnection()).setReadOnly(false);
         assertThat(connection.isReadOnly()).isFalse();
+    }
+
+    @Test
+    public void shouldUtiliseReplicaEvenAfterDisablingReadOnly() throws SQLException {
+        final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
+        final Connection connection = DualConnection.builder(
+            connectionProvider,
+            permanentConsistency().build()
+        ).build();
+
+        connection.setReadOnly(false);
+        connection.prepareStatement(SIMPLE_QUERY).executeQuery();
+
+        assertThat(connectionProvider.getProvidedConnectionTypes())
+            .containsOnly(REPLICA);
     }
 
     @Test
@@ -796,12 +811,11 @@ public class TestDualConnection {
             permanentConsistency().build()
         ).build();
 
-        connection.setReadOnly(false);
-        connection.setReadOnly(true);
+        connection.prepareStatement(SIMPLE_QUERY).executeUpdate();
+        connection.prepareStatement(SIMPLE_QUERY).executeQuery();
 
         assertThat(connectionProvider.getProvidedConnectionTypes())
             .containsOnly(MAIN);
-        assertThat(connection.isReadOnly()).isTrue();
     }
 
     @Test
