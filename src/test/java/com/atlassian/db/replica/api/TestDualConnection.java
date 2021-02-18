@@ -1,29 +1,18 @@
 package com.atlassian.db.replica.api;
 
+import com.atlassian.db.replica.api.mocks.*;
 import com.atlassian.db.replica.api.reason.Reason;
-import com.atlassian.db.replica.api.mocks.ConnectionMock;
-import com.atlassian.db.replica.api.mocks.ConnectionProviderMock;
-import com.atlassian.db.replica.api.mocks.NoOpConnection;
-import com.atlassian.db.replica.api.mocks.NoOpConnectionProvider;
-import com.atlassian.db.replica.api.mocks.ReadOnlyAwareConnection;
-import com.atlassian.db.replica.api.mocks.SingleConnectionProvider;
 import com.atlassian.db.replica.internal.RouteDecisionBuilder;
 import com.atlassian.db.replica.spi.DatabaseCall;
 import com.atlassian.db.replica.spi.ReplicaConsistency;
 import org.junit.Test;
 import org.mockito.Mockito;
 
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Savepoint;
-import java.sql.Statement;
+import java.sql.*;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.atlassian.db.replica.api.Queries.LARGE_SQL_QUERY;
-import static com.atlassian.db.replica.api.Queries.SELECT_FOR_UPDATE;
-import static com.atlassian.db.replica.api.Queries.SIMPLE_QUERY;
+import static com.atlassian.db.replica.api.Queries.*;
 import static com.atlassian.db.replica.api.mocks.CircularConsistency.permanentConsistency;
 import static com.atlassian.db.replica.api.mocks.CircularConsistency.permanentInconsistency;
 import static com.atlassian.db.replica.api.mocks.ConnectionProviderMock.ConnectionType.MAIN;
@@ -33,13 +22,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.anyBoolean;
-import static org.mockito.Mockito.doCallRealMethod;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @SuppressWarnings({"SqlDialectInspection", "SqlNoDataSourceInspection"})
 public class TestDualConnection {
@@ -1347,5 +1330,23 @@ public class TestDualConnection {
         dualConnection.close();
 
         assertThat(dualConnection.isValid(1)).isFalse();
+    }
+
+    @Test
+    public void shouldKeepUsingReplicaAfterSettingTimeout() throws SQLException {
+        final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
+        final Connection connection = DualConnection.builder(
+            connectionProvider,
+            permanentConsistency().build()
+        ).build();
+
+        try (Statement statement = connection.createStatement()) {
+            statement.execute("set statement_timeout to 30000");
+        }
+
+        connection.prepareStatement(SIMPLE_QUERY).executeQuery();
+
+        assertThat(connectionProvider.getProvidedConnectionTypes())
+            .containsOnly(REPLICA);
     }
 }

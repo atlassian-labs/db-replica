@@ -185,8 +185,15 @@ public class ReplicaStatement implements Statement {
     @Override
     public boolean execute(String sql) throws SQLException {
         checkClosed();
-        final RouteDecisionBuilder decisionBuilder = new RouteDecisionBuilder(RW_API_CALL).sql(sql);
-        final Statement statement = getWriteStatement(decisionBuilder);
+        final RouteDecisionBuilder decisionBuilder;
+        final Statement statement;
+        if (sql.startsWith("set")) {
+            decisionBuilder = new RouteDecisionBuilder(READ_OPERATION).sql(sql);
+            statement = getReadStatement(decisionBuilder);
+        } else {
+            decisionBuilder = new RouteDecisionBuilder(RW_API_CALL).sql(sql);
+            statement = getWriteStatement(decisionBuilder);
+        }
         return execute(
             () -> statement.execute(sql),
             decisionBuilder.build()
