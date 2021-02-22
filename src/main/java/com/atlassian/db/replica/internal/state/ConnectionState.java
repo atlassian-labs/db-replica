@@ -180,16 +180,14 @@ public final class ConnectionState {
             decisionBuilder.cause(writeConnection.getFirstCause().build());
             return writeConnection.get(decisionBuilder);
         }
-        final boolean isNotInitialised = getState().equals(NOT_INITIALISED);
         if (consistency.isConsistent(() -> readConnection.get(decisionBuilder))) {
             if (getState().equals(COMMITED_MAIN)) {
                 closeConnection(writeConnection, decisionBuilder);
             }
-            if (isNotInitialised) {
-                parameters.initialize(readConnection.get(decisionBuilder));
-            }
+            final Connection connection = readConnection.get(decisionBuilder);
+            parameters.initialize(connection);
             replicaConsistent = true;
-            return readConnection.get(decisionBuilder);
+            return connection;
         } else {
             replicaConsistent = false;
             decisionBuilder.reason(REPLICA_INCONSISTENT);

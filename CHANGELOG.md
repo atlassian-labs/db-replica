@@ -23,6 +23,9 @@ Dropping a requirement of a major version of a dependency is a new contract.
 ## [Unreleased]
 [Unreleased]: https://github.com/atlassian-labs/db-replica/compare/release-0.1.25...master
 
+### Fixed
+- Set connection properties while switching to replica
+
 ## [0.1.25] - 2021-02-18
 [0.1.25]: https://github.com/atlassian-labs/db-replica/compare/release-0.1.24...release-0.1.25
 

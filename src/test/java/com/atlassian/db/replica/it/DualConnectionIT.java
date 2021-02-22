@@ -1,11 +1,15 @@
 package com.atlassian.db.replica.it;
 
-import com.atlassian.db.replica.api.*;
-import com.atlassian.db.replica.internal.*;
-import org.assertj.core.api.*;
-import org.junit.*;
+import com.atlassian.db.replica.api.DualConnection;
+import com.atlassian.db.replica.api.mocks.CircularConsistency;
+import com.atlassian.db.replica.internal.LsnReplicaConsistency;
+import com.google.common.collect.ImmutableList;
+import org.assertj.core.api.Assertions;
+import org.junit.Test;
 
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 
 public class DualConnectionIT {
 
@@ -20,4 +24,21 @@ public class DualConnectionIT {
             }
         }
     }
+
+
+    @Test
+    public void shouldPreserveAutoCommitModeWhileSwitchingFromReplicaToMain() throws SQLException {
+        try (PostgresConnectionProvider connectionProvider = new PostgresConnectionProvider()) {
+            final Connection connection = DualConnection.builder(
+                connectionProvider,
+                new CircularConsistency.Builder(ImmutableList.of(false, true)).build()
+            ).build();
+
+            connection.setAutoCommit(false);
+            connection.prepareStatement("SELECT 1;").executeQuery();
+            connection.prepareStatement("SELECT 1;").executeQuery();
+            connection.commit();
+        }
+    }
+
 }
