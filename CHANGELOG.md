@@ -25,6 +25,7 @@ Dropping a requirement of a major version of a dependency is a new contract.
 
 ### Fixed
 - Set connection properties while switching to replica
+- Exclude [Sequence Manipulation Functions](https://www.postgresql.org/docs/9.4/functions-sequence.html) from read-only functions
 
 ## [0.1.25] - 2021-02-18
 [0.1.25]: https://github.com/atlassian-labs/db-replica/compare/release-0.1.24...release-0.1.25

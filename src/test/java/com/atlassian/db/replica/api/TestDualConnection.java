@@ -247,7 +247,6 @@ public class TestDualConnection {
         connection.prepareStatement("SELECT COUNT(*) FROM user").executeQuery();
         connection.prepareStatement("SELECT max(user.id) FROM user").executeQuery();
         connection.prepareStatement("SELECT MAX(user.id) FROM user").executeQuery();
-        connection.prepareStatement("SELECT nextval('foo')").executeQuery();
 
         assertThat(connectionProvider.getProvidedConnectionTypes())
             .containsOnly(REPLICA);

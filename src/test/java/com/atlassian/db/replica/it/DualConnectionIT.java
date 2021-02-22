@@ -10,6 +10,7 @@ import org.junit.Test;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 
 public class DualConnectionIT {
 
@@ -39,6 +40,48 @@ public class DualConnectionIT {
             connection.prepareStatement("SELECT 1;").executeQuery();
             connection.commit();
         }
+    }
+
+    @Test
+    public void shouldRunNextValOnMainDatabase() throws SQLException {
+        try (PostgresConnectionProvider connectionProvider = new PostgresConnectionProvider()) {
+            createTestSequence(connectionProvider);
+
+            final Connection connection = DualConnection.builder(
+                connectionProvider,
+                CircularConsistency.permanentConsistency().build()
+            ).build();
+
+            connection.prepareStatement("SELECT nextval('test_sequence');").executeQuery();
+        }
+    }
+
+    private void createTestSequence(PostgresConnectionProvider connectionProvider) throws SQLException {
+        final Connection mainConnection = connectionProvider.getMainConnection();
+        try (final Statement mainStatement = mainConnection.createStatement()) {
+            mainStatement.execute("CREATE SEQUENCE test_sequence;");
+            final LsnReplicaConsistency consistency = new LsnReplicaConsistency();
+            waitForReplicaConsistency(connectionProvider, mainConnection, consistency);
+        }
+    }
+
+    private void waitForReplicaConsistency(
+        PostgresConnectionProvider connectionProvider,
+        Connection mainConnection,
+        LsnReplicaConsistency consistency
+    ) {
+        consistency.write(mainConnection);
+        for (int i = 0; i < 30; i++) {
+            if (consistency.isConsistent(connectionProvider::getReplicaConnection)) {
+                return;
+            }
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        }
+        throw new RuntimeException("Replica is still inconsistent after 30s.");
     }
 
 }
