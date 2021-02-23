@@ -21,7 +21,10 @@ Adding a requirement of a major version of a dependency is breaking a contract.
 Dropping a requirement of a major version of a dependency is a new contract.
 
 ## [Unreleased]
-[Unreleased]: https://github.com/atlassian-labs/db-replica/compare/release-0.1.26...master
+[Unreleased]: https://github.com/atlassian-labs/db-replica/compare/release-0.1.27...master
+
+## [0.1.27] - 2021-02-23
+[0.1.27]: https://github.com/atlassian-labs/db-replica/compare/release-0.1.26...release-0.1.27
 
 ### Fixed
 - Propagate the read-only mode to the main connection
