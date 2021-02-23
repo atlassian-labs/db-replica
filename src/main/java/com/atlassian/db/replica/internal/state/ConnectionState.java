@@ -208,6 +208,9 @@ public final class ConnectionState {
             } catch (Exception e) {
                 warnings.saveWarning(new SQLWarning(e));
             }
+            if (parameters.isReadOnly()) {
+                connection.setReadOnly(false);
+            }
             connection.close();
         } finally {
             connectionReference.reset();

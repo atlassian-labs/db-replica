@@ -76,7 +76,7 @@ public final class ConnectionParameters {
         this.holdability = holdability;
     }
 
-    public Boolean isReadOnly() {
+    public boolean isReadOnly() {
         return readOnly != null && readOnly;
     }
 
