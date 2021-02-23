@@ -28,11 +28,7 @@ import java.time.*;
 
 class Example {
 
-    private final ReplicaConsistency consistency = ReplicaConsistency.assumePropagationDelay(
-        Duration.ofMillis(100),
-        Clock.systemUTC(),
-        Cache.cacheMonotonicValuesInMemory()
-    );
+    private final ReplicaConsistency consistency = new PessimisticPropagationConsistency.Builder().build();
 
     ResultSet queryReplicaOrMain(String sql) {
         try (ConnectionProvider connectionProvider = new PostgresConnectionProvider()) {
