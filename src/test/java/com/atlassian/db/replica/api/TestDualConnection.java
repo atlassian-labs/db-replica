@@ -781,6 +781,7 @@ public class TestDualConnection {
         ).build();
 
         connection.setReadOnly(true);
+        connection.prepareStatement(SIMPLE_QUERY).executeQuery();
 
         assertThat(connectionProvider.getProvidedConnectionTypes())
             .containsOnly(REPLICA);
@@ -797,6 +798,7 @@ public class TestDualConnection {
         ).build();
 
         connection.setReadOnly(false);
+        connection.prepareStatement(SIMPLE_QUERY).executeQuery();
 
         assertThat(connectionProvider.getProvidedConnectionTypes())
             .containsOnly(REPLICA);

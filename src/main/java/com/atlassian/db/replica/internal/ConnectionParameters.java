@@ -9,6 +9,7 @@ import java.util.Map;
 public final class ConnectionParameters {
 
     private Boolean isAutoCommit;
+    private Boolean readOnly;
     private Integer transactionIsolation;
     private String catalog;
     private Map<String, Class<?>> typeMap;
@@ -29,6 +30,9 @@ public final class ConnectionParameters {
         }
         if (holdability != null) {
             connection.setHoldability(holdability);
+        }
+        if (readOnly != null) {
+            connection.setReadOnly(readOnly);
         }
     }
 
@@ -72,10 +76,19 @@ public final class ConnectionParameters {
         this.holdability = holdability;
     }
 
+    public Boolean isReadOnly() {
+        return readOnly != null && readOnly;
+    }
+
+    public void setReadOnly(boolean readOnly) {
+        this.readOnly = readOnly;
+    }
+
     @Override
     public String toString() {
         return "ConnectionParameters{" +
             "isAutoCommit=" + isAutoCommit +
+            ", isReadOnly=" + readOnly +
             ", transactionIsolation=" + transactionIsolation +
             ", catalog='" + catalog + '\'' +
             ", typeMap=" + typeMap +

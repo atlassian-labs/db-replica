@@ -131,11 +131,10 @@ public final class ConnectionState {
         final Optional<Connection> connection = getConnection();
         if (connection.isPresent() && connection.get().equals(writeConnection.get(decisionBuilder))) {
             readConnection.reset();
-            parameters.initialize(writeConnection.get(decisionBuilder));
         } else {
             closeConnection(readConnection, decisionBuilder);
-            parameters.initialize(writeConnection.get(decisionBuilder));
         }
+        parameters.initialize(writeConnection.get(decisionBuilder));
         return writeConnection.get(decisionBuilder);
     }
 
