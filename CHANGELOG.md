@@ -67,7 +67,7 @@ Dropping a requirement of a major version of a dependency is a new contract.
 - Add `State#getName` method.
 
 ## [0.1.22] - 2021-02-05
-[0.1.22]: https://github.com/atlassian-labs/db-replica/compare/release-0.1.20...release-0.1.22
+[0.1.22]: https://github.com/atlassian-labs/db-replica/compare/release-0.1.21...release-0.1.22
 
 ### Added
 - Add `PessimisticPropagationConsistency.Builder`.
@@ -77,6 +77,8 @@ Dropping a requirement of a major version of a dependency is a new contract.
 - Remove `ReplicaConsistency.assumePropagationDelay`. Use `PessimisticPropagationConsistency.Builder` instead.
 
 ## [0.1.21] - 2021-01-08
+[0.1.21]: https://github.com/atlassian-labs/db-replica/compare/release-0.1.20...release-0.1.21
+
 No changes.
 
 ## [0.1.20] - 2021-01-08
