@@ -514,7 +514,7 @@ public class ReplicaStatement implements Statement {
                 //noinspection unchecked
                 operation.accept(getCurrentStatement());
             } catch (Exception e) {
-                throw new ReadReplicaUnsupportedOperationException();
+                throw new ReadReplicaUnsupportedOperationException(e);
             }
         }
         operations.clear();

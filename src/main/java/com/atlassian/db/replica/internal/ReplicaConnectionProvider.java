@@ -22,7 +22,6 @@ public class ReplicaConnectionProvider implements AutoCloseable {
     private final ReplicaConsistency consistency;
     private final ConnectionState state;
     private final ConnectionParameters parameters;
-    private Boolean isReadOnly;
     private final Warnings warnings;
 
     public ReplicaConnectionProvider(
@@ -77,12 +76,11 @@ public class ReplicaConnectionProvider implements AutoCloseable {
     }
 
     public boolean getReadOnly() {
-        return isReadOnly != null && isReadOnly;
+        return parameters.isReadOnly();
     }
 
     public void setReadOnly(boolean readOnly) throws SQLException {
-        this.isReadOnly = readOnly;
-        state.getReadConnection(new RouteDecisionBuilder(RO_API_CALL)).setReadOnly(readOnly);
+        parameters.setReadOnly(readOnly);
     }
 
     public String getCatalog() {

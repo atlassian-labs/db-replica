@@ -3,14 +3,18 @@ package com.atlassian.db.replica.it;
 import com.atlassian.db.replica.api.DualConnection;
 import com.atlassian.db.replica.api.mocks.CircularConsistency;
 import com.atlassian.db.replica.internal.LsnReplicaConsistency;
+import com.atlassian.db.replica.it.consistency.WaitingReplicaConsistency;
 import com.google.common.collect.ImmutableList;
 import org.assertj.core.api.Assertions;
 import org.junit.Test;
 
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+
+import static org.assertj.core.api.Assertions.catchThrowable;
 
 public class DualConnectionIT {
 
@@ -28,7 +32,7 @@ public class DualConnectionIT {
 
 
     @Test
-    public void shouldPreserveAutoCommitModeWhileSwitchingFromReplicaToMain() throws SQLException {
+    public void shouldPreserveAutoCommitModeWhileSwitchingFromMainToReplica() throws SQLException {
         try (PostgresConnectionProvider connectionProvider = new PostgresConnectionProvider()) {
             final Connection connection = DualConnection.builder(
                 connectionProvider,
@@ -43,45 +47,48 @@ public class DualConnectionIT {
     }
 
     @Test
-    public void shouldRunNextValOnMainDatabase() throws SQLException {
+    public void shouldPreserveReadOnlyModeWhileSwitchingFromReplicaToMain() throws SQLException {
         try (PostgresConnectionProvider connectionProvider = new PostgresConnectionProvider()) {
-            createTestSequence(connectionProvider);
-
+            final WaitingReplicaConsistency consistency = new WaitingReplicaConsistency(new LsnReplicaConsistency());
+            createTable(DualConnection.builder(connectionProvider, consistency).build());
             final Connection connection = DualConnection.builder(
                 connectionProvider,
-                CircularConsistency.permanentConsistency().build()
+                consistency
             ).build();
+
+            connection.setAutoCommit(false);
+            connection.setReadOnly(true);
+            final PreparedStatement preparedStatement = connection.prepareStatement("INSERT INTO foo(bar) VALUES(?);");
+            preparedStatement.setString(1, "test");
+
+            final Throwable throwable = catchThrowable(preparedStatement::executeUpdate);
+
+            Assertions.assertThat(connection.isReadOnly()).isTrue();
+            Assertions.assertThat(throwable).hasMessage("ERROR: cannot execute INSERT in a read-only transaction");
+        }
+    }
+
+    @Test
+    public void shouldRunNextValOnMainDatabase() throws SQLException {
+        try (PostgresConnectionProvider connectionProvider = new PostgresConnectionProvider()) {
+            final WaitingReplicaConsistency consistency = new WaitingReplicaConsistency(new LsnReplicaConsistency());
+            createTestSequence(DualConnection.builder(connectionProvider, consistency).build());
+            final Connection connection = DualConnection.builder(connectionProvider, consistency).build();
 
             connection.prepareStatement("SELECT nextval('test_sequence');").executeQuery();
         }
     }
 
-    private void createTestSequence(PostgresConnectionProvider connectionProvider) throws SQLException {
-        final Connection mainConnection = connectionProvider.getMainConnection();
-        try (final Statement mainStatement = mainConnection.createStatement()) {
+    private void createTestSequence(Connection connection) throws SQLException {
+        try (final Statement mainStatement = connection.createStatement()) {
             mainStatement.execute("CREATE SEQUENCE test_sequence;");
-            final LsnReplicaConsistency consistency = new LsnReplicaConsistency();
-            waitForReplicaConsistency(connectionProvider, mainConnection, consistency);
         }
     }
 
-    private void waitForReplicaConsistency(
-        PostgresConnectionProvider connectionProvider,
-        Connection mainConnection,
-        LsnReplicaConsistency consistency
-    ) {
-        consistency.write(mainConnection);
-        for (int i = 0; i < 30; i++) {
-            if (consistency.isConsistent(connectionProvider::getReplicaConnection)) {
-                return;
-            }
-            try {
-                Thread.sleep(1000);
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
+    private void createTable(Connection connection) throws SQLException {
+        try (final Statement mainStatement = connection.createStatement()) {
+            mainStatement.execute("CREATE TABLE foo (bar VARCHAR ( 255 ));");
         }
-        throw new RuntimeException("Replica is still inconsistent after 30s.");
     }
 
 }
