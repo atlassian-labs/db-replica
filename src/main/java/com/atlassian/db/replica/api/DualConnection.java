@@ -9,6 +9,7 @@ import com.atlassian.db.replica.internal.circuitbreaker.BreakerConnection;
 import com.atlassian.db.replica.internal.circuitbreaker.BreakerHandler;
 import com.atlassian.db.replica.spi.ConnectionProvider;
 import com.atlassian.db.replica.spi.DatabaseCall;
+import com.atlassian.db.replica.spi.Experiment;
 import com.atlassian.db.replica.spi.ReplicaConsistency;
 import com.atlassian.db.replica.spi.circuitbreaker.CircuitBreaker;
 import com.atlassian.db.replica.spi.state.StateListener;
@@ -28,18 +29,21 @@ public final class DualConnection implements Connection {
     private final ReplicaConsistency consistency;
     private final DatabaseCall databaseCall;
     private final Set<String> readOnlyFunctions;
+    private final Experiments experiments;
 
     private DualConnection(
         ConnectionProvider connectionProvider,
         ReplicaConsistency consistency,
         DatabaseCall databaseCall,
         StateListener stateListener,
-        Set<String> readOnlyFunctions
+        Set<String> readOnlyFunctions,
+        Experiments experiments
     ) {
         this.connectionProvider = new ReplicaConnectionProvider(connectionProvider, consistency, stateListener);
         this.consistency = consistency;
         this.databaseCall = databaseCall;
         this.readOnlyFunctions = readOnlyFunctions;
+        this.experiments = experiments;
     }
 
     @Override
@@ -486,6 +490,7 @@ public final class DualConnection implements Connection {
         private CircuitBreaker circuitBreaker = new BreakOnNotSupportedOperations();
         private StateListener stateListener = new NoOpStateListener();
         private Set<String> readOnlyFunctions = new HashSet<>();
+        private Collection<Experiment> experiments = new HashSet<>();
 
         private Builder(
             ConnectionProvider connectionProvider,
@@ -520,6 +525,11 @@ public final class DualConnection implements Connection {
             return this;
         }
 
+        public DualConnection.Builder experiments(Collection<Experiment> experiments) {
+            this.experiments = new HashSet<>(experiments);
+            return this;
+        }
+
         public Connection build() throws SQLException {
             if (circuitBreaker == null) {
                 return new DualConnection(
@@ -527,7 +537,8 @@ public final class DualConnection implements Connection {
                     consistency,
                     databaseCall,
                     stateListener,
-                    readOnlyFunctions
+                    readOnlyFunctions,
+                    new Experiments(this.experiments)
                 );
             }
             if (circuitBreaker.getState().equals(BreakerState.OPEN)) {
@@ -539,7 +550,8 @@ public final class DualConnection implements Connection {
                 consistency,
                 databaseCall,
                 stateListener,
-                readOnlyFunctions
+                readOnlyFunctions,
+                new Experiments(this.experiments)
             );
             return new BreakerConnection(dualConnection, breakerHandler);
         }
