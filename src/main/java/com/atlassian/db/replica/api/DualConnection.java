@@ -3,7 +3,13 @@ package com.atlassian.db.replica.api;
 import com.atlassian.db.replica.api.circuitbreaker.BreakerState;
 import com.atlassian.db.replica.api.reason.Reason;
 import com.atlassian.db.replica.api.state.NoOpStateListener;
-import com.atlassian.db.replica.internal.*;
+import com.atlassian.db.replica.internal.ForwardCall;
+import com.atlassian.db.replica.internal.ReadReplicaUnsupportedOperationException;
+import com.atlassian.db.replica.internal.ReplicaCallableStatement;
+import com.atlassian.db.replica.internal.ReplicaConnectionProvider;
+import com.atlassian.db.replica.internal.ReplicaPreparedStatement;
+import com.atlassian.db.replica.internal.ReplicaStatement;
+import com.atlassian.db.replica.internal.RouteDecisionBuilder;
 import com.atlassian.db.replica.internal.circuitbreaker.BreakOnNotSupportedOperations;
 import com.atlassian.db.replica.internal.circuitbreaker.BreakerConnection;
 import com.atlassian.db.replica.internal.circuitbreaker.BreakerHandler;
@@ -13,8 +19,28 @@ import com.atlassian.db.replica.spi.ReplicaConsistency;
 import com.atlassian.db.replica.spi.circuitbreaker.CircuitBreaker;
 import com.atlassian.db.replica.spi.state.StateListener;
 
-import java.sql.*;
-import java.util.*;
+import java.sql.Array;
+import java.sql.Blob;
+import java.sql.CallableStatement;
+import java.sql.ClientInfoStatus;
+import java.sql.Clob;
+import java.sql.Connection;
+import java.sql.DatabaseMetaData;
+import java.sql.NClob;
+import java.sql.PreparedStatement;
+import java.sql.SQLClientInfoException;
+import java.sql.SQLException;
+import java.sql.SQLWarning;
+import java.sql.SQLXML;
+import java.sql.Savepoint;
+import java.sql.Statement;
+import java.sql.Struct;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Properties;
+import java.util.Set;
 import java.util.concurrent.Executor;
 
 /**
@@ -28,18 +54,21 @@ public final class DualConnection implements Connection {
     private final ReplicaConsistency consistency;
     private final DatabaseCall databaseCall;
     private final Set<String> readOnlyFunctions;
+    private final boolean compatibleWithPreviousVersion;
 
     private DualConnection(
         ConnectionProvider connectionProvider,
         ReplicaConsistency consistency,
         DatabaseCall databaseCall,
         StateListener stateListener,
-        Set<String> readOnlyFunctions
+        Set<String> readOnlyFunctions,
+        boolean compatibleWithPreviousVersion
     ) {
         this.connectionProvider = new ReplicaConnectionProvider(connectionProvider, consistency, stateListener);
         this.consistency = consistency;
         this.databaseCall = databaseCall;
         this.readOnlyFunctions = readOnlyFunctions;
+        this.compatibleWithPreviousVersion = compatibleWithPreviousVersion;
     }
 
     @Override
@@ -486,6 +515,7 @@ public final class DualConnection implements Connection {
         private CircuitBreaker circuitBreaker = new BreakOnNotSupportedOperations();
         private StateListener stateListener = new NoOpStateListener();
         private Set<String> readOnlyFunctions = new HashSet<>();
+        private boolean compatibleWithPreviousVersion = false;
 
         private Builder(
             ConnectionProvider connectionProvider,
@@ -520,6 +550,19 @@ public final class DualConnection implements Connection {
             return this;
         }
 
+        /**
+         * Puts this connection in compatibility mode with a previous version. Developers can use this method to
+         * roll out the new version of the library with a feature flag.
+         *
+         * It's best-effort, and there's no guarantee the library in compatibility mode will always behave
+         * the same way as the previous version of the library.
+         *
+         */
+        public DualConnection.Builder compatibleWithPreviousVersion() {
+            this.compatibleWithPreviousVersion = true;
+            return this;
+        }
+
         public Connection build() throws SQLException {
             if (circuitBreaker == null) {
                 return new DualConnection(
@@ -527,7 +570,8 @@ public final class DualConnection implements Connection {
                     consistency,
                     databaseCall,
                     stateListener,
-                    readOnlyFunctions
+                    readOnlyFunctions,
+                    compatibleWithPreviousVersion
                 );
             }
             if (circuitBreaker.getState().equals(BreakerState.OPEN)) {
@@ -539,7 +583,8 @@ public final class DualConnection implements Connection {
                 consistency,
                 databaseCall,
                 stateListener,
-                readOnlyFunctions
+                readOnlyFunctions,
+                compatibleWithPreviousVersion
             );
             return new BreakerConnection(dualConnection, breakerHandler);
         }
