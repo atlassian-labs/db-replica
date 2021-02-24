@@ -18,4 +18,4 @@ You can inject your implementation of `Experiment` via the `DualConnection` buil
 
 
 
-Experiments are short living. It's expected to remove it with the next releases.
+Experiments are short-lived. It's expected to remove it with the next releases.
