@@ -3,7 +3,14 @@ package com.atlassian.db.replica.api;
 import com.atlassian.db.replica.api.circuitbreaker.BreakerState;
 import com.atlassian.db.replica.api.reason.Reason;
 import com.atlassian.db.replica.api.state.NoOpStateListener;
-import com.atlassian.db.replica.internal.*;
+import com.atlassian.db.replica.internal.Experiments;
+import com.atlassian.db.replica.internal.ForwardCall;
+import com.atlassian.db.replica.internal.ReadReplicaUnsupportedOperationException;
+import com.atlassian.db.replica.internal.ReplicaCallableStatement;
+import com.atlassian.db.replica.internal.ReplicaConnectionProvider;
+import com.atlassian.db.replica.internal.ReplicaPreparedStatement;
+import com.atlassian.db.replica.internal.ReplicaStatement;
+import com.atlassian.db.replica.internal.RouteDecisionBuilder;
 import com.atlassian.db.replica.internal.circuitbreaker.BreakOnNotSupportedOperations;
 import com.atlassian.db.replica.internal.circuitbreaker.BreakerConnection;
 import com.atlassian.db.replica.internal.circuitbreaker.BreakerHandler;
@@ -14,8 +21,29 @@ import com.atlassian.db.replica.spi.ReplicaConsistency;
 import com.atlassian.db.replica.spi.circuitbreaker.CircuitBreaker;
 import com.atlassian.db.replica.spi.state.StateListener;
 
-import java.sql.*;
-import java.util.*;
+import java.sql.Array;
+import java.sql.Blob;
+import java.sql.CallableStatement;
+import java.sql.ClientInfoStatus;
+import java.sql.Clob;
+import java.sql.Connection;
+import java.sql.DatabaseMetaData;
+import java.sql.NClob;
+import java.sql.PreparedStatement;
+import java.sql.SQLClientInfoException;
+import java.sql.SQLException;
+import java.sql.SQLWarning;
+import java.sql.SQLXML;
+import java.sql.Savepoint;
+import java.sql.Statement;
+import java.sql.Struct;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Properties;
+import java.util.Set;
 import java.util.concurrent.Executor;
 
 /**
@@ -79,8 +107,13 @@ public final class DualConnection implements Connection {
     @Override
     public String nativeSQL(String sql) throws SQLException {
         checkClosed();
-        return connectionProvider.getWriteConnection(new RouteDecisionBuilder(Reason.RW_API_CALL).sql(sql)).nativeSQL(
-            sql);
+        if (experiments.isEnabled("com.atlassian.db.replica.experiment.nativesql.on.replica")) {
+            return connectionProvider.getReadConnection(new RouteDecisionBuilder(Reason.RO_API_CALL).sql(sql)).nativeSQL(
+                sql);
+        } else {
+            return connectionProvider.getWriteConnection(new RouteDecisionBuilder(Reason.RW_API_CALL).sql(sql)).nativeSQL(
+                sql);
+        }
     }
 
     @Override
@@ -525,8 +558,8 @@ public final class DualConnection implements Connection {
             return this;
         }
 
-        public DualConnection.Builder experiments(Collection<Experiment> experiments) {
-            this.experiments = new HashSet<>(experiments);
+        public DualConnection.Builder experiments(Experiment... experiments) {
+            this.experiments = new HashSet<>(Arrays.asList(experiments));
             return this;
         }
 

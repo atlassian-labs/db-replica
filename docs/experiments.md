@@ -14,7 +14,7 @@ You can inject your implementation of `Experiment` via the `DualConnection` buil
 
 ## Current experiments
 
-none
+- `com.atlassian.db.replica.experiment.nativesql.on.replica` - controls "`Connection#nativeSQL` uses replica database" fix
 
 
 

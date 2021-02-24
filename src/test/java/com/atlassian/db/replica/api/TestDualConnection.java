@@ -8,6 +8,7 @@ import com.atlassian.db.replica.api.mocks.ReadOnlyAwareConnection;
 import com.atlassian.db.replica.api.mocks.SingleConnectionProvider;
 import com.atlassian.db.replica.api.reason.Reason;
 import com.atlassian.db.replica.internal.RouteDecisionBuilder;
+import com.atlassian.db.replica.internal.StaticExperiment;
 import com.atlassian.db.replica.spi.DatabaseCall;
 import com.atlassian.db.replica.spi.ReplicaConsistency;
 import com.google.common.collect.ImmutableSet;
@@ -190,12 +191,27 @@ public class TestDualConnection {
     }
 
     @Test
-    public void shouldRunNativeSqlOnMain() throws SQLException {
+    public void shouldRunNativeSqlOnReplica() throws SQLException {
         final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
         final Connection connection = DualConnection.builder(
             connectionProvider,
-            permanentInconsistency().build()
+            permanentConsistency().build()
         ).build();
+
+        connection.nativeSQL(SIMPLE_QUERY);
+
+        assertThat(connectionProvider.getProvidedConnectionTypes())
+            .containsExactly(REPLICA);
+    }
+
+    @Test
+    public void shouldBePossibleToDisableNativeSqlFix() throws SQLException {
+        final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
+        final Connection connection = DualConnection.builder(
+            connectionProvider,
+            permanentConsistency().build()
+        ).experiments(new StaticExperiment("com.atlassian.db.replica.experiment.nativesql.on.replica", false))
+            .build();
 
         connection.nativeSQL(SIMPLE_QUERY);
 
