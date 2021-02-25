@@ -24,121 +24,121 @@ import java.util.concurrent.Executor;
 
 public class BreakerConnection implements Connection {
     private final Connection delegate;
-    private final CircuitBreaker breaker;
+    private final CircuitBreaker circuitBreaker;
 
-    public BreakerConnection(Connection delegate, CircuitBreaker breaker) {
+    public BreakerConnection(Connection delegate, CircuitBreaker circuitBreaker) {
         this.delegate = delegate;
-        this.breaker = breaker;
+        this.circuitBreaker = circuitBreaker;
     }
 
     @Override
     public Statement createStatement() throws SQLException {
         return new BreakerStatement(
-            breaker.handle((SqlCall<Statement>) delegate::createStatement),
-            breaker
+            circuitBreaker.handle((SqlCall<Statement>) delegate::createStatement),
+            circuitBreaker
         );
     }
 
     @Override
     public PreparedStatement prepareStatement(String sql) throws SQLException {
         return new BreakerPreparedStatement(
-            breaker.handle(() -> delegate.prepareStatement(sql)),
-            breaker
+            circuitBreaker.handle(() -> delegate.prepareStatement(sql)),
+            circuitBreaker
         );
     }
 
     @Override
     public CallableStatement prepareCall(String sql) throws SQLException {
-        return new BreakerCallableStatement(breaker.handle(() -> delegate.prepareCall(sql)), breaker);
+        return new BreakerCallableStatement(circuitBreaker.handle(() -> delegate.prepareCall(sql)), circuitBreaker);
     }
 
     @Override
     public String nativeSQL(String sql) throws SQLException {
-        return breaker.handle(() -> delegate.nativeSQL(sql));
+        return circuitBreaker.handle(() -> delegate.nativeSQL(sql));
     }
 
     @Override
     public void setAutoCommit(boolean autoCommit) throws SQLException {
-        breaker.handle(() -> delegate.setAutoCommit(autoCommit));
+        circuitBreaker.handle(() -> delegate.setAutoCommit(autoCommit));
     }
 
     @Override
     public boolean getAutoCommit() throws SQLException {
-        return breaker.handle(delegate::getAutoCommit);
+        return circuitBreaker.handle(delegate::getAutoCommit);
     }
 
     @Override
     public void commit() throws SQLException {
-        breaker.handle(delegate::commit);
+        circuitBreaker.handle(delegate::commit);
     }
 
     @Override
     public void rollback() throws SQLException {
-        breaker.handle((SqlRun) delegate::rollback);
+        circuitBreaker.handle((SqlRun) delegate::rollback);
     }
 
     @Override
     public void close() throws SQLException {
-        breaker.handle(delegate::close);
+        circuitBreaker.handle(delegate::close);
     }
 
     @Override
     public boolean isClosed() throws SQLException {
-        return breaker.handle(delegate::isClosed);
+        return circuitBreaker.handle(delegate::isClosed);
     }
 
     @Override
     public DatabaseMetaData getMetaData() throws SQLException {
-        return breaker.handle(delegate::getMetaData);
+        return circuitBreaker.handle(delegate::getMetaData);
     }
 
     @Override
     public void setReadOnly(boolean readOnly) throws SQLException {
-        breaker.handle(() -> delegate.setReadOnly(readOnly));
+        circuitBreaker.handle(() -> delegate.setReadOnly(readOnly));
     }
 
     @Override
     public boolean isReadOnly() throws SQLException {
-        return breaker.handle(delegate::isReadOnly);
+        return circuitBreaker.handle(delegate::isReadOnly);
     }
 
     @Override
     public void setCatalog(String catalog) throws SQLException {
-        breaker.handle(() -> delegate.setCatalog(catalog));
+        circuitBreaker.handle(() -> delegate.setCatalog(catalog));
     }
 
     @Override
     public String getCatalog() throws SQLException {
-        return breaker.handle(delegate::getCatalog);
+        return circuitBreaker.handle(delegate::getCatalog);
     }
 
     @Override
     public void setTransactionIsolation(int level) throws SQLException {
-        breaker.handle(() -> delegate.setTransactionIsolation(level));
+        circuitBreaker.handle(() -> delegate.setTransactionIsolation(level));
     }
 
     @Override
     public int getTransactionIsolation() throws SQLException {
         //noinspection MagicConstant
-        return breaker.handle(delegate::getTransactionIsolation);
+        return circuitBreaker.handle(delegate::getTransactionIsolation);
     }
 
     @Override
     public SQLWarning getWarnings() throws SQLException {
-        return breaker.handle(delegate::getWarnings);
+        return circuitBreaker.handle(delegate::getWarnings);
     }
 
     @Override
     public void clearWarnings() throws SQLException {
-        breaker.handle(delegate::clearWarnings);
+        circuitBreaker.handle(delegate::clearWarnings);
     }
 
     @Override
     public Statement createStatement(int resultSetType, int resultSetConcurrency) throws SQLException {
-        return new BreakerStatement(breaker.handle(() -> delegate.createStatement(
+        return new BreakerStatement(circuitBreaker.handle(() -> delegate.createStatement(
             resultSetType,
             resultSetConcurrency
-        )), breaker);
+        )), circuitBreaker);
     }
 
     @Override
@@ -148,57 +148,57 @@ public class BreakerConnection implements Connection {
         int resultSetConcurrency
     ) throws SQLException {
         return new BreakerPreparedStatement(
-            breaker.handle(() -> delegate.prepareStatement(sql, resultSetType, resultSetConcurrency)),
-            breaker
+            circuitBreaker.handle(() -> delegate.prepareStatement(sql, resultSetType, resultSetConcurrency)),
+            circuitBreaker
         );
     }
 
     @Override
     public CallableStatement prepareCall(String sql, int resultSetType, int resultSetConcurrency) throws SQLException {
         return new BreakerCallableStatement(
-            breaker.handle(() -> delegate.prepareCall(sql, resultSetType, resultSetConcurrency)),
-            breaker
+            circuitBreaker.handle(() -> delegate.prepareCall(sql, resultSetType, resultSetConcurrency)),
+            circuitBreaker
         );
     }
 
     @Override
     public Map<String, Class<?>> getTypeMap() throws SQLException {
-        return breaker.handle(delegate::getTypeMap);
+        return circuitBreaker.handle(delegate::getTypeMap);
     }
 
     @Override
     public void setTypeMap(Map<String, Class<?>> map) throws SQLException {
-        breaker.handle(() -> delegate.setTypeMap(map));
+        circuitBreaker.handle(() -> delegate.setTypeMap(map));
     }
 
     @Override
     public void setHoldability(int holdability) throws SQLException {
-        breaker.handle(() -> delegate.setHoldability(holdability));
+        circuitBreaker.handle(() -> delegate.setHoldability(holdability));
     }
 
     @Override
     public int getHoldability() throws SQLException {
-        return breaker.handle(delegate::getHoldability);
+        return circuitBreaker.handle(delegate::getHoldability);
     }
 
     @Override
     public Savepoint setSavepoint() throws SQLException {
-        return breaker.handle((SqlCall<Savepoint>) delegate::setSavepoint);
+        return circuitBreaker.handle((SqlCall<Savepoint>) delegate::setSavepoint);
     }
 
     @Override
     public Savepoint setSavepoint(String name) throws SQLException {
-        return breaker.handle(() -> delegate.setSavepoint(name));
+        return circuitBreaker.handle(() -> delegate.setSavepoint(name));
     }
 
     @Override
     public void rollback(Savepoint savepoint) throws SQLException {
-        breaker.handle(() -> delegate.rollback(savepoint));
+        circuitBreaker.handle(() -> delegate.rollback(savepoint));
     }
 
     @Override
     public void releaseSavepoint(Savepoint savepoint) throws SQLException {
-        breaker.handle(() -> delegate.releaseSavepoint(savepoint));
+        circuitBreaker.handle(() -> delegate.releaseSavepoint(savepoint));
     }
 
     @Override
@@ -208,12 +208,12 @@ public class BreakerConnection implements Connection {
         int resultSetHoldability
     ) throws SQLException {
         return new BreakerStatement(
-            breaker.handle(() -> delegate.createStatement(
+            circuitBreaker.handle(() -> delegate.createStatement(
                 resultSetType,
                 resultSetConcurrency,
                 resultSetHoldability
             )),
-            breaker
+            circuitBreaker
         );
     }
 
@@ -225,13 +225,13 @@ public class BreakerConnection implements Connection {
         int resultSetHoldability
     ) throws SQLException {
         return new BreakerPreparedStatement(
-            breaker.handle(() -> delegate.prepareStatement(
+            circuitBreaker.handle(() -> delegate.prepareStatement(
                 sql,
                 resultSetType,
                 resultSetConcurrency,
                 resultSetHoldability
             )),
-            breaker
+            circuitBreaker
         );
     }
 
@@ -243,69 +243,69 @@ public class BreakerConnection implements Connection {
         int resultSetHoldability
     ) throws SQLException {
         return new BreakerCallableStatement(
-            breaker.handle(() -> delegate.prepareCall(
+            circuitBreaker.handle(() -> delegate.prepareCall(
                 sql,
                 resultSetType,
                 resultSetConcurrency,
                 resultSetHoldability
             )),
-            breaker
+            circuitBreaker
         );
     }
 
     @Override
     public PreparedStatement prepareStatement(String sql, int autoGeneratedKeys) throws SQLException {
         return new BreakerPreparedStatement(
-            breaker.handle(() -> delegate.prepareStatement(sql, autoGeneratedKeys)),
-            breaker
+            circuitBreaker.handle(() -> delegate.prepareStatement(sql, autoGeneratedKeys)),
+            circuitBreaker
         );
     }
 
     @Override
     public PreparedStatement prepareStatement(String sql, int[] columnIndexes) throws SQLException {
         return new BreakerPreparedStatement(
-            breaker.handle(() -> delegate.prepareStatement(sql, columnIndexes)),
-            breaker
+            circuitBreaker.handle(() -> delegate.prepareStatement(sql, columnIndexes)),
+            circuitBreaker
         );
     }
 
     @Override
     public PreparedStatement prepareStatement(String sql, String[] columnNames) throws SQLException {
         return new BreakerPreparedStatement(
-            breaker.handle(() -> delegate.prepareStatement(sql, columnNames)),
-            breaker
+            circuitBreaker.handle(() -> delegate.prepareStatement(sql, columnNames)),
+            circuitBreaker
         );
     }
 
     @Override
     public Clob createClob() throws SQLException {
-        return breaker.handle(delegate::createClob);
+        return circuitBreaker.handle(delegate::createClob);
     }
 
     @Override
     public Blob createBlob() throws SQLException {
-        return breaker.handle(delegate::createBlob);
+        return circuitBreaker.handle(delegate::createBlob);
     }
 
     @Override
     public NClob createNClob() throws SQLException {
-        return breaker.handle(delegate::createNClob);
+        return circuitBreaker.handle(delegate::createNClob);
     }
 
     @Override
     public SQLXML createSQLXML() throws SQLException {
-        return breaker.handle(delegate::createSQLXML);
+        return circuitBreaker.handle(delegate::createSQLXML);
     }
 
     @Override
     public boolean isValid(int timeout) throws SQLException {
-        return breaker.handle(() -> delegate.isValid(timeout));
+        return circuitBreaker.handle(() -> delegate.isValid(timeout));
     }
 
     @Override
     public void setClientInfo(String name, String value) {
         try {
-            breaker.handle(() -> delegate.setClientInfo(name, value));
+            circuitBreaker.handle(() -> delegate.setClientInfo(name, value));
         } catch (SQLException throwables) {
             throw new RuntimeException(throwables);
         }
@@ -314,7 +314,7 @@ public class BreakerConnection implements Connection {
     @Override
     public void setClientInfo(Properties properties) {
         try {
-            breaker.handle(() -> delegate.setClientInfo(properties));
+            circuitBreaker.handle(() -> delegate.setClientInfo(properties));
         } catch (SQLException throwables) {
             throw new RuntimeException(throwables);
         }
@@ -322,56 +322,56 @@ public class BreakerConnection implements Connection {
 
     @Override
     public String getClientInfo(String name) throws SQLException {
-        return breaker.handle(() -> delegate.getClientInfo(name));
+        return circuitBreaker.handle(() -> delegate.getClientInfo(name));
     }
 
     @Override
     public Properties getClientInfo() throws SQLException {
-        return breaker.handle((SqlCall<Properties>) delegate::getClientInfo);
+        return circuitBreaker.handle((SqlCall<Properties>) delegate::getClientInfo);
     }
 
     @Override
     public Array createArrayOf(String typeName, Object[] elements) throws SQLException {
-        return breaker.handle(() -> delegate.createArrayOf(typeName, elements));
+        return circuitBreaker.handle(() -> delegate.createArrayOf(typeName, elements));
     }
 
     @Override
     public Struct createStruct(String typeName, Object[] attributes) throws SQLException {
-        return breaker.handle(() -> delegate.createStruct(typeName, attributes));
+        return circuitBreaker.handle(() -> delegate.createStruct(typeName, attributes));
     }
 
     @Override
     public void setSchema(String schema) throws SQLException {
-        breaker.handle(() -> delegate.setSchema(schema));
+        circuitBreaker.handle(() -> delegate.setSchema(schema));
     }
 
     @Override
     public String getSchema() throws SQLException {
-        return breaker.handle(delegate::getSchema);
+        return circuitBreaker.handle(delegate::getSchema);
     }
 
     @Override
     public void abort(Executor executor) throws SQLException {
-        breaker.handle(() -> delegate.abort(executor));
+        circuitBreaker.handle(() -> delegate.abort(executor));
     }
 
     @Override
     public void setNetworkTimeout(Executor executor, int milliseconds) throws SQLException {
-        breaker.handle(() -> delegate.setNetworkTimeout(executor, milliseconds));
+        circuitBreaker.handle(() -> delegate.setNetworkTimeout(executor, milliseconds));
     }
 
     @Override
     public int getNetworkTimeout() throws SQLException {
-        return breaker.handle(delegate::getNetworkTimeout);
+        return circuitBreaker.handle(delegate::getNetworkTimeout);
     }
 
     @Override
     public <T> T unwrap(Class<T> iface) throws SQLException {
-        return breaker.handle(() -> delegate.unwrap(iface));
+        return circuitBreaker.handle(() -> delegate.unwrap(iface));
     }
 
     @Override
     public boolean isWrapperFor(Class<?> iface) throws SQLException {
-        return breaker.handle(() -> delegate.isWrapperFor(iface));
+        return circuitBreaker.handle(() -> delegate.isWrapperFor(iface));
     }
 }
