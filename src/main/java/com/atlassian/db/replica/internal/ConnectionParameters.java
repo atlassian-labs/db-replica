@@ -5,6 +5,8 @@ import java.sql.SQLException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
+import java.util.function.Supplier;
 
 public final class ConnectionParameters {
 
@@ -36,7 +38,11 @@ public final class ConnectionParameters {
         }
     }
 
-    public void setTransactionIsolation(Integer transactionIsolation) {
+    public void setTransactionIsolation(
+        Supplier<Optional<Connection>> currentConnection,
+        Integer transactionIsolation
+    ) throws SQLException {
+        executeIfPresent(currentConnection, connection -> connection.setTransactionIsolation(transactionIsolation));
         this.transactionIsolation = transactionIsolation;
     }
 
@@ -44,7 +50,11 @@ public final class ConnectionParameters {
         return this.transactionIsolation;
     }
 
-    public void setAutoCommit(Boolean autoCommit) {
+    public void setAutoCommit(
+        Supplier<Optional<Connection>> currentConnection,
+        Boolean autoCommit
+    ) throws SQLException {
+        executeIfPresent(currentConnection, connection -> connection.setAutoCommit(autoCommit));
         this.isAutoCommit = autoCommit;
     }
 
@@ -56,7 +66,8 @@ public final class ConnectionParameters {
         return catalog;
     }
 
-    public void setCatalog(String catalog) {
+    public void setCatalog(Supplier<Optional<Connection>> currentConnection, String catalog) throws SQLException {
+        executeIfPresent(currentConnection, connection -> connection.setCatalog(catalog));
         this.catalog = catalog;
     }
 
@@ -64,7 +75,11 @@ public final class ConnectionParameters {
         return typeMap == null ? Collections.emptyMap() : new HashMap<>(typeMap);
     }
 
-    public void setTypeMap(Map<String, Class<?>> typeMap) {
+    public void setTypeMap(
+        Supplier<Optional<Connection>> currentConnection,
+        Map<String, Class<?>> typeMap
+    ) throws SQLException {
+        executeIfPresent(currentConnection, connection -> connection.setTypeMap(typeMap));
         this.typeMap = typeMap;
     }
 
@@ -72,7 +87,11 @@ public final class ConnectionParameters {
         return holdability;
     }
 
-    public void setHoldability(Integer holdability) {
+    public void setHoldability(
+        Supplier<Optional<Connection>> currentConnection,
+        Integer holdability
+    ) throws SQLException {
+        executeIfPresent(currentConnection, connection -> connection.setHoldability(holdability));
         this.holdability = holdability;
     }
 
@@ -80,8 +99,19 @@ public final class ConnectionParameters {
         return readOnly != null && readOnly;
     }
 
-    public void setReadOnly(boolean readOnly) {
+    public void setReadOnly(Supplier<Optional<Connection>> currentConnection, boolean readOnly) throws SQLException {
+        executeIfPresent(currentConnection, connection -> connection.setReadOnly(readOnly));
         this.readOnly = readOnly;
+    }
+
+    private void executeIfPresent(
+        Supplier<Optional<Connection>> currentConnection,
+        ConnectionOperation operation
+    ) throws SQLException {
+        final Optional<Connection> connection = currentConnection.get();
+        if (connection.isPresent()) {
+            operation.accept(connection.get());
+        }
     }
 
     @Override

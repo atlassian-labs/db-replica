@@ -25,6 +25,7 @@ Dropping a requirement of a major version of a dependency is a new contract.
 
 ### Fixed
 - Initialize connection once
+- Propagate read-only mode immediately
 
 ## [0.1.27] - 2021-02-23
 [0.1.27]: https://github.com/atlassian-labs/db-replica/compare/release-0.1.26...release-0.1.27

@@ -11,6 +11,7 @@ import com.atlassian.db.replica.internal.RouteDecisionBuilder;
 import com.atlassian.db.replica.spi.DatabaseCall;
 import com.atlassian.db.replica.spi.ReplicaConsistency;
 import com.google.common.collect.ImmutableSet;
+import org.assertj.core.api.Assertions;
 import org.junit.Test;
 import org.mockito.Mockito;
 
@@ -1400,6 +1401,21 @@ public class TestDualConnection {
 
         assertThat(connectionProvider.getProvidedConnectionTypes())
             .containsOnly(REPLICA);
+    }
+
+    @Test
+    public void shouldUpdateReadOnlyStateImmediately() throws SQLException {
+        final Connection connection = new ConnectionMock();
+        final SingleConnectionProvider singleConnectionProvider = new SingleConnectionProvider(connection);
+        final Connection dualConnection = DualConnection.builder(
+            singleConnectionProvider,
+            permanentConsistency().build()
+        ).build();
+        dualConnection.setReadOnly(true);
+        dualConnection.prepareStatement(SIMPLE_QUERY).executeQuery();
+        dualConnection.setReadOnly(false);
+
+        Assertions.assertThat(connection.isReadOnly()).isFalse();
     }
 
     @Test
