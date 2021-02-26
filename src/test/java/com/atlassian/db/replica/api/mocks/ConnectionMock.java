@@ -1,15 +1,32 @@
 package com.atlassian.db.replica.api.mocks;
 
-import java.sql.*;
-import java.util.*;
-import java.util.concurrent.*;
+import java.sql.Array;
+import java.sql.Blob;
+import java.sql.CallableStatement;
+import java.sql.Clob;
+import java.sql.Connection;
+import java.sql.DatabaseMetaData;
+import java.sql.NClob;
+import java.sql.PreparedStatement;
+import java.sql.SQLClientInfoException;
+import java.sql.SQLException;
+import java.sql.SQLWarning;
+import java.sql.SQLXML;
+import java.sql.Savepoint;
+import java.sql.Statement;
+import java.sql.Struct;
+import java.util.Map;
+import java.util.Properties;
+import java.util.concurrent.Executor;
 
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 @SuppressWarnings("RedundantThrows")
 public class ConnectionMock implements Connection {
     private boolean isClosed = false;
     private boolean isAutoCommit = true;
+    private boolean readOnly = false;
 
     @Override
     public Statement createStatement() throws SQLException {
@@ -70,12 +87,12 @@ public class ConnectionMock implements Connection {
 
     @Override
     public void setReadOnly(boolean readOnly) throws SQLException {
-        throw new RuntimeException();
+        this.readOnly = readOnly;
     }
 
     @Override
     public boolean isReadOnly() throws SQLException {
-        throw new RuntimeException();
+        return readOnly;
     }
 
     @Override

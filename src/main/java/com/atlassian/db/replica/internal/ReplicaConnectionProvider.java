@@ -43,8 +43,8 @@ public class ReplicaConnectionProvider implements AutoCloseable {
         return state.getReadConnection(decisionBuilder);
     }
 
-    public void setTransactionIsolation(Integer transactionIsolation) {
-        parameters.setTransactionIsolation(transactionIsolation);
+    public void setTransactionIsolation(Integer transactionIsolation) throws SQLException {
+        parameters.setTransactionIsolation(state::getConnection, transactionIsolation);
     }
 
     public int getTransactionIsolation() throws SQLException {
@@ -57,11 +57,7 @@ public class ReplicaConnectionProvider implements AutoCloseable {
 
     public void setAutoCommit(Boolean autoCommit) throws SQLException {
         final boolean autoCommitBefore = getAutoCommit();
-        parameters.setAutoCommit(autoCommit);
-        final Optional<Connection> connection = state.getConnection();
-        if (connection.isPresent()) {
-            connection.get().setAutoCommit(autoCommit);
-        }
+        parameters.setAutoCommit(state::getConnection, autoCommit);
         if (autoCommitBefore != getAutoCommit()) {
             recordCommit(autoCommitBefore);
         }
@@ -80,7 +76,7 @@ public class ReplicaConnectionProvider implements AutoCloseable {
     }
 
     public void setReadOnly(boolean readOnly) throws SQLException {
-        parameters.setReadOnly(readOnly);
+        parameters.setReadOnly(state::getConnection, readOnly);
     }
 
     public String getCatalog() {
@@ -88,11 +84,7 @@ public class ReplicaConnectionProvider implements AutoCloseable {
     }
 
     public void setCatalog(String catalog) throws SQLException {
-        parameters.setCatalog(catalog);
-        final Optional<Connection> connection = state.getConnection();
-        if (connection.isPresent()) {
-            connection.get().setCatalog(catalog);
-        }
+        parameters.setCatalog(state::getConnection, catalog);
     }
 
     public Map<String, Class<?>> getTypeMap() {
@@ -100,11 +92,7 @@ public class ReplicaConnectionProvider implements AutoCloseable {
     }
 
     public void setTypeMap(Map<String, Class<?>> typeMap) throws SQLException {
-        parameters.setTypeMap(typeMap);
-        final Optional<Connection> connection = state.getConnection();
-        if (connection.isPresent()) {
-            connection.get().setTypeMap(typeMap);
-        }
+        parameters.setTypeMap(state::getConnection, typeMap);
     }
 
     public Integer getHoldability() throws SQLException {
@@ -112,11 +100,7 @@ public class ReplicaConnectionProvider implements AutoCloseable {
     }
 
     public void setHoldability(Integer holdability) throws SQLException {
-        parameters.setHoldability(holdability);
-        final Optional<Connection> connection = state.getConnection();
-        if (connection.isPresent()) {
-            connection.get().setHoldability(holdability);
-        }
+        parameters.setHoldability(state::getConnection, holdability);
     }
 
     public SQLWarning getWarning() throws SQLException {
@@ -151,10 +135,6 @@ public class ReplicaConnectionProvider implements AutoCloseable {
         } else {
             return currentConnection.isWrapperFor(iface);
         }
-    }
-
-    public boolean hasWriteConnection() {
-        return this.state.hasWriteConnection();
     }
 
     public State getState() {
