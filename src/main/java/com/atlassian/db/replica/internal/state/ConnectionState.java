@@ -39,7 +39,9 @@ public final class ConnectionState {
         @Override
         public Connection create() throws SQLException {
             if (connectionProvider.isReplicaAvailable()) {
-                return connectionProvider.getReplicaConnection();
+                final Connection replicaConnection = connectionProvider.getReplicaConnection();
+                parameters.initialize(replicaConnection);
+                return replicaConnection;
             } else {
                 return getWriteConnection(getFirstCause());
             }
@@ -49,7 +51,9 @@ public final class ConnectionState {
     private final DecisionAwareReference<Connection> writeConnection = new DecisionAwareReference<Connection>() {
         @Override
         public Connection create() throws SQLException {
-            return connectionProvider.getMainConnection();
+            final Connection mainConnection = connectionProvider.getMainConnection();
+            parameters.initialize(mainConnection);
+            return mainConnection;
         }
     };
 
@@ -134,7 +138,6 @@ public final class ConnectionState {
         } else {
             closeConnection(readConnection, decisionBuilder);
         }
-        parameters.initialize(writeConnection.get(decisionBuilder));
         return writeConnection.get(decisionBuilder);
     }
 
@@ -184,7 +187,6 @@ public final class ConnectionState {
                 closeConnection(writeConnection, decisionBuilder);
             }
             final Connection connection = readConnection.get(decisionBuilder);
-            parameters.initialize(connection);
             replicaConsistent = true;
             return connection;
         } else {

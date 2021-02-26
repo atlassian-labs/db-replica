@@ -79,6 +79,22 @@ public class DualConnectionIT {
         }
     }
 
+    @Test
+    public void shluldNotFailWhenChangingTransactionIsolationLevel() throws SQLException {
+        try (PostgresConnectionProvider connectionProvider = new PostgresConnectionProvider()) {
+            final Connection connection = DualConnection.builder(
+                connectionProvider,
+                CircularConsistency.permanentConsistency().build()
+            ).build();
+
+            connection.setTransactionIsolation(Connection.TRANSACTION_READ_UNCOMMITTED);
+            connection.setAutoCommit(false);
+            connection.prepareStatement("SELECT 1;").executeQuery();
+            connection.prepareStatement("SELECT 1;").executeQuery();
+            connection.commit();
+        }
+    }
+
     private void createTestSequence(Connection connection) throws SQLException {
         try (final Statement mainStatement = connection.createStatement()) {
             mainStatement.execute("CREATE SEQUENCE test_sequence;");
