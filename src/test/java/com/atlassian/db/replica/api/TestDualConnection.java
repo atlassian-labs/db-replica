@@ -1420,18 +1420,17 @@ public class TestDualConnection {
 
     @Test
     public void shouldResetReadOnlyModeBeforeReleasingConnection() throws SQLException {
-        final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
-        final Connection connection = DualConnection.builder(
-            connectionProvider,
+        final Connection connection = new ConnectionMock();
+        final SingleConnectionProvider singleConnectionProvider = new SingleConnectionProvider(connection);
+        final Connection dualConnection = DualConnection.builder(
+            singleConnectionProvider,
             permanentConsistency().build()
         ).build();
-        connection.setReadOnly(true);
-        connection.prepareStatement(SIMPLE_QUERY).executeQuery();
-        final Connection rawConnection = connectionProvider.singleProvidedConnection();
-        Mockito.reset(rawConnection);
+        dualConnection.setReadOnly(true);
+        dualConnection.prepareStatement(SIMPLE_QUERY).executeQuery();
 
-        connection.close();
+        dualConnection.close();
 
-        Mockito.verify(rawConnection).setReadOnly(eq(false));
+        Assertions.assertThat(connection.isReadOnly()).isFalse();
     }
 }
