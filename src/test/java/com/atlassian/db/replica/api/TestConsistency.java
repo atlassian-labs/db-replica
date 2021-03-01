@@ -8,6 +8,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
+import static com.atlassian.db.replica.api.Queries.SELECT_FOR_UPDATE;
 import static com.atlassian.db.replica.api.Queries.SIMPLE_QUERY;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -103,6 +104,18 @@ public class TestConsistency {
         connection.prepareStatement("SELECT doSomething(1234)").executeQuery();
 
         verify(consistency).write(any());
+    }
+
+    @Test
+    public void shouldNotRefreshAfterSelectForUpdate() throws SQLException {
+        final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
+        final ReplicaConsistency consistency = mock(ReplicaConsistency.class);
+        when(consistency.isConsistent(any())).thenReturn(true);
+        final Connection connection = DualConnection.builder(connectionProvider, consistency).build();
+
+        connection.prepareStatement(SELECT_FOR_UPDATE).executeQuery();
+
+        verify(consistency, never()).write(any());
     }
 
     @Test
