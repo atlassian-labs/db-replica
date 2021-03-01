@@ -62,8 +62,10 @@ public class DualConnectionIT {
             preparedStatement.setString(1, "test");
 
             final Throwable throwable = catchThrowable(preparedStatement::executeUpdate);
+            final boolean readOnly = connection.isReadOnly();
+            connection.close();
 
-            Assertions.assertThat(connection.isReadOnly()).isTrue();
+            Assertions.assertThat(readOnly).isTrue();
             Assertions.assertThat(throwable).hasMessage("ERROR: cannot execute INSERT in a read-only transaction");
         }
     }
