@@ -38,6 +38,20 @@ public final class RouteDecision {
         return Optional.ofNullable(cause);
     }
 
+    /**
+     * @return True if the database call would always fail on a read replica.
+     */
+    public boolean isWrite() {
+        return reason.isWrite();
+    }
+
+    /**
+     * @return true if the accompanying {@link com.atlassian.db.replica.api.SqlCall#call()} will be run on the main database.
+     */
+    public boolean willRunOnMain() {
+        return reason.isRunOnMain();
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
