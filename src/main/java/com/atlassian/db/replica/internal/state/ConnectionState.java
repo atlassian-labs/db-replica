@@ -210,7 +210,7 @@ public final class ConnectionState {
             } catch (Exception e) {
                 warnings.saveWarning(new SQLWarning(e));
             }
-            if (parameters.isReadOnly()) {
+            if (connection.isReadOnly()) {
                 connection.setAutoCommit(true);
                 connection.setReadOnly(false);
             }
