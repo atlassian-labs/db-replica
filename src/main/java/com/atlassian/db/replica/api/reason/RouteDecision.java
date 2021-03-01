@@ -3,6 +3,10 @@ package com.atlassian.db.replica.api.reason;
 import java.util.Objects;
 import java.util.Optional;
 
+import static com.atlassian.db.replica.api.reason.Reason.LOCK;
+import static com.atlassian.db.replica.api.reason.Reason.RW_API_CALL;
+import static com.atlassian.db.replica.api.reason.Reason.WRITE_OPERATION;
+
 /**
  * Reveals details related to why, and which database will be used.
  */
@@ -38,14 +42,31 @@ public final class RouteDecision {
         return Optional.ofNullable(cause);
     }
 
+    /**
+     * @return information whether reason was caused by write sql operation.
+     */
+    public boolean isWrite(){
+        return WRITE_OPERATION.equals(reason) ||
+                LOCK.equals(reason) ||
+                RW_API_CALL.equals(reason);
+    }
+
+    /**
+     * @return whether sql was run on Main
+     */
+    public boolean isRunOnMain() {
+        return reason.isRunOnMain();
+    }
+
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         RouteDecision that = (RouteDecision) o;
         return Objects.equals(reason, that.reason) && Objects.equals(
-            sql,
-            that.sql
+                sql,
+                that.sql
         ) && Objects.equals(cause, that.cause);
     }
 
@@ -57,9 +78,9 @@ public final class RouteDecision {
     @Override
     public String toString() {
         return "RouteDecision{" +
-            "reason=" + reason +
-            ", sql='" + sql + '\'' +
-            ", cause=" + cause +
-            '}';
+                "reason=" + reason +
+                ", sql='" + sql + '\'' +
+                ", cause=" + cause +
+                '}';
     }
 }
