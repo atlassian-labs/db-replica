@@ -1,5 +1,6 @@
 package com.atlassian.db.replica.api;
 
+import com.atlassian.db.replica.api.mocks.CircularConsistency;
 import com.atlassian.db.replica.api.mocks.ConnectionMock;
 import com.atlassian.db.replica.api.mocks.ConnectionProviderMock;
 import com.atlassian.db.replica.api.mocks.NoOpConnection;
@@ -7,9 +8,12 @@ import com.atlassian.db.replica.api.mocks.NoOpConnectionProvider;
 import com.atlassian.db.replica.api.mocks.ReadOnlyAwareConnection;
 import com.atlassian.db.replica.api.mocks.SingleConnectionProvider;
 import com.atlassian.db.replica.api.reason.Reason;
+import com.atlassian.db.replica.api.state.State;
 import com.atlassian.db.replica.internal.RouteDecisionBuilder;
 import com.atlassian.db.replica.spi.DatabaseCall;
 import com.atlassian.db.replica.spi.ReplicaConsistency;
+import com.atlassian.db.replica.spi.state.StateListener;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import org.assertj.core.api.Assertions;
 import org.junit.Test;
@@ -40,7 +44,9 @@ import static org.mockito.Mockito.doCallRealMethod;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 @SuppressWarnings({"SqlDialectInspection", "SqlNoDataSourceInspection"})
@@ -103,10 +109,12 @@ public class TestDualConnection {
     @Test
     public void shouldUseMainConnectionForExecute() throws SQLException {
         final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
+        final DatabaseCall databaseCall = mock(DatabaseCall.class);
+        when(databaseCall.call(any(), any())).thenReturn(true);
         final Connection connection = DualConnection.builder(
             connectionProvider,
             permanentConsistency().build()
-        ).build();
+        ).databaseCall(databaseCall).build();
 
         connection.prepareStatement(SIMPLE_QUERY).execute();
         connection.prepareStatement(SIMPLE_QUERY).execute(SIMPLE_QUERY);
@@ -119,6 +127,8 @@ public class TestDualConnection {
             .hasSize(1);
         assertThat(connectionProvider.getProvidedConnectionTypes())
             .containsOnly(MAIN);
+
+        verify(databaseCall, times(6)).call(any(), eq(new RouteDecisionBuilder(Reason.RW_API_CALL).sql(SIMPLE_QUERY).build()));
     }
 
     @Test
@@ -286,7 +296,7 @@ public class TestDualConnection {
     }
 
     @Test
-    public void shouldDetectWriteOperation() throws SQLException {
+    public void shouldDetectWriteOperationForSqlFunction() throws SQLException {
         final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
         final DatabaseCall databaseCall = mock(DatabaseCall.class);
         final Connection connection = DualConnection.builder(
@@ -760,6 +770,98 @@ public class TestDualConnection {
     }
 
     @Test
+    public void shouldShowThatReadRunAfterWriteIsRunOnMainNotReplica() throws SQLException {
+        final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
+        final DatabaseCall databaseCall = mock(DatabaseCall.class);
+        final StateListener stateListener =  mock(StateListener.class);
+        when(databaseCall.call(any(), any())).thenReturn(mock(java.sql.ResultSet.class));
+        final Connection dualConnection = DualConnection.builder(
+                connectionProvider,
+                permanentConsistency().build()
+        ).databaseCall(databaseCall).stateListener(stateListener).build();
+
+
+        dualConnection.prepareStatement(SIMPLE_QUERY).executeQuery();
+        dualConnection.prepareStatement(SIMPLE_QUERY).executeQuery();
+        when(databaseCall.call(any(), any())).thenReturn(true);
+        dualConnection.prepareStatement(SIMPLE_QUERY).execute();
+        Mockito.reset(databaseCall);
+        dualConnection.prepareStatement(SIMPLE_QUERY).executeQuery();
+
+
+        verify(stateListener).transition(State.NOT_INITIALISED, State.REPLICA);
+        verify(stateListener).transition(State.REPLICA, State.MAIN);
+        verifyNoMoreInteractions(stateListener);
+        verify(databaseCall).call(
+                any(),
+                eq(
+                        new RouteDecisionBuilder(Reason.MAIN_CONNECTION_REUSE)
+                                .sql(SIMPLE_QUERY)
+                                .cause(
+                                        new RouteDecisionBuilder(Reason.RW_API_CALL).sql(SIMPLE_QUERY).build()
+                                )
+                                .build()
+                )
+        );
+    }
+
+    @Test
+    public void shouldReuseMainConnectionForNoneWriteAfterInconsistencyWrite() throws SQLException {
+        final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
+        final DatabaseCall databaseCall = mock(DatabaseCall.class);
+        final StateListener stateListener =  mock(StateListener.class);
+        when(databaseCall.call(any(), any())).thenReturn(mock(java.sql.ResultSet.class));
+        final Connection dualConnection = DualConnection.builder(
+                connectionProvider,
+                new CircularConsistency.Builder(ImmutableList.of(true, false)).build()
+        ).databaseCall(databaseCall).stateListener(stateListener).build();
+
+
+        dualConnection.prepareStatement(SIMPLE_QUERY).executeQuery();
+        dualConnection.prepareStatement(SIMPLE_QUERY).executeQuery();
+        when(databaseCall.call(any(), any())).thenReturn(true);
+        dualConnection.prepareStatement(SIMPLE_QUERY).execute();
+        Mockito.reset(databaseCall);
+        when(databaseCall.call(any(), any())).thenReturn(mock(ResultSet.class));
+        dualConnection.prepareStatement(SIMPLE_QUERY).executeQuery();
+
+
+        verify(stateListener).transition(State.NOT_INITIALISED, State.REPLICA);
+        verify(stateListener).transition(State.REPLICA, State.COMMITED_MAIN);
+        verify(stateListener).transition(State.COMMITED_MAIN, State.MAIN);
+        verifyNoMoreInteractions(stateListener);
+        verify(databaseCall).call(
+                any(),
+                eq(
+                        new RouteDecisionBuilder(Reason.MAIN_CONNECTION_REUSE)
+                                .sql(SIMPLE_QUERY)
+                                .cause(
+                                        new RouteDecisionBuilder(Reason.REPLICA_INCONSISTENT).sql(SIMPLE_QUERY).build()
+                                )
+                                .build()
+                )
+        );
+    }
+
+    @Test
+    public void shouldForgiveReplicaIfItCatchesUpOnReads() throws SQLException {
+        final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
+        final StateListener stateListener =  mock(StateListener.class);
+
+        final Connection connection = DualConnection.builder(
+                connectionProvider,
+                new CircularConsistency.Builder(ImmutableList.of(false, true)).build()
+        ).stateListener(stateListener)
+                                                    .build();
+        connection.prepareStatement(SIMPLE_QUERY).executeQuery();
+        Mockito.reset(stateListener);
+
+        connection.prepareStatement(SIMPLE_QUERY).executeQuery();
+
+        verify(stateListener).transition(State.COMMITED_MAIN, State.REPLICA);
+    }
+
+    @Test
     public void shouldUsePrepareNewStatement() throws SQLException {
         final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
         final Connection connection = DualConnection.builder(
@@ -895,7 +997,7 @@ public class TestDualConnection {
     }
 
     @Test
-    public void shouldSetTransactionIsolationLevel() throws SQLException {
+    public void shouldSetTransactionIsolationLevelForRead() throws SQLException {
         final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
         final DatabaseCall databaseCall = mock(DatabaseCall.class);
         final Connection connection = DualConnection.builder(
@@ -911,6 +1013,26 @@ public class TestDualConnection {
         verify(databaseCall).call(
             any(),
             eq(new RouteDecisionBuilder(Reason.HIGH_TRANSACTION_ISOLATION_LEVEL).sql(SIMPLE_QUERY).build())
+        );
+    }
+
+    @Test
+    public void shouldSetTransactionIsolationLevelForWrite() throws SQLException {
+        final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
+        final DatabaseCall databaseCall = mock(DatabaseCall.class);
+        final Connection connection = DualConnection.builder(
+                connectionProvider,
+                permanentInconsistency().build()
+        ).databaseCall(databaseCall).build();
+
+        connection.setTransactionIsolation(TRANSACTION_SERIALIZABLE);
+        when(databaseCall.call(any(), any())).thenReturn(true);
+        connection.prepareStatement(SIMPLE_QUERY).execute();
+
+        verify(connectionProvider.singleProvidedConnection()).setTransactionIsolation(TRANSACTION_SERIALIZABLE);
+        verify(databaseCall).call(
+                any(),
+                eq(new RouteDecisionBuilder(Reason.RW_API_CALL).sql(SIMPLE_QUERY).build())
         );
     }
 
@@ -964,7 +1086,7 @@ public class TestDualConnection {
 
         connection.setTypeMap(typeMap);
 
-        assertThat(connection.getTypeMap().keySet()).containsOnly("MyType");
+        assertThat(connection.getTypeMap()).containsOnlyKeys("MyType");
     }
 
     @Test
@@ -1125,6 +1247,54 @@ public class TestDualConnection {
         connection.getSchema();
 
         verify(connectionProvider.singleProvidedConnection()).getSchema();
+    }
+
+    @Test
+    public void shouldGetSchemaAndRunUpdate() throws SQLException {
+        final DatabaseCall databaseCall = mock(DatabaseCall.class);
+        when(databaseCall.call(any(), any())).thenReturn(1);
+        final StateListener stateListener =  mock(StateListener.class);
+        final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
+        final Connection connection = DualConnection.builder(
+                connectionProvider,
+                permanentConsistency().build()
+        ).stateListener(stateListener).databaseCall(databaseCall).build();
+
+        connection.prepareStatement(SIMPLE_QUERY).executeUpdate();
+        connection.getSchema();
+        connection.prepareStatement(SIMPLE_QUERY).executeUpdate();
+
+        verify(connectionProvider.singleProvidedConnection()).getSchema();
+        verify(stateListener).transition(State.NOT_INITIALISED, State.MAIN);
+
+        verify(databaseCall, times(2)).call(
+                any(),
+                eq(new RouteDecisionBuilder(Reason.RW_API_CALL).sql(SIMPLE_QUERY).build())
+        );
+    }
+
+    @Test
+    public void shouldGetSchemaAndRunQuery() throws SQLException {
+        final DatabaseCall databaseCall = mock(DatabaseCall.class);
+        when(databaseCall.call(any(), any())).thenReturn(mock(ResultSet.class));
+        final StateListener stateListener =  mock(StateListener.class);
+        final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
+        final Connection connection = DualConnection.builder(
+                connectionProvider,
+                permanentConsistency().build()
+        ).stateListener(stateListener).databaseCall(databaseCall).build();
+
+        connection.prepareStatement(SIMPLE_QUERY).executeQuery();
+        verify(stateListener).transition(State.NOT_INITIALISED, State.REPLICA);
+        connection.getSchema();
+        connection.prepareStatement(SIMPLE_QUERY).executeQuery();
+        verifyNoMoreInteractions(stateListener);
+        verify(connectionProvider.singleProvidedConnection()).getSchema();
+
+        verify(databaseCall, times(2)).call(
+                any(),
+                eq(new RouteDecisionBuilder(Reason.READ_OPERATION).sql(SIMPLE_QUERY).build())
+        );
     }
 
     @Test

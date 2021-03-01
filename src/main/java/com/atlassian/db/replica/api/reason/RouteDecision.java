@@ -38,6 +38,20 @@ public final class RouteDecision {
         return Optional.ofNullable(cause);
     }
 
+    /**
+     * @return True if the database call would always fail on a read replica.
+     */
+    public boolean isWrite() {
+        return reason.isWrite();
+    }
+
+    /**
+     * @return Decision whether current route is Run on Main or Replica
+     */
+    public boolean isRunOnMain() {
+        return reason.isRunOnMain();
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
