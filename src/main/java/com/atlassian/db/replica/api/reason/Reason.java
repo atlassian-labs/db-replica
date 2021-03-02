@@ -33,7 +33,7 @@ public final class Reason {
         return name;
     }
 
-    public boolean isRunOnMain() {
+    boolean isRunOnMain() {
         return isRunOnMain;
     }
 

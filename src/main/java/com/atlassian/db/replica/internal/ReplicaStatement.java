@@ -501,7 +501,7 @@ public class ReplicaStatement implements Statement {
 
     <T> T execute(final SqlCall<T> call, final RouteDecision routeDecision) throws SQLException {
         final T result = databaseCall.call(call, routeDecision);
-        if (routeDecision.getReason().isRunOnMain() && isWriteOperation) {
+        if (routeDecision.isRunOnMain() && isWriteOperation) {
             recordWriteAfterQueryExecution();
         }
         return result;

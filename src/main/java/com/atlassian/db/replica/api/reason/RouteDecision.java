@@ -52,7 +52,7 @@ public final class RouteDecision {
     }
 
     /**
-     * @return whether sql was run on Main
+     * @return whether sql is run on main database connection
      */
     public boolean isRunOnMain() {
         return reason.isRunOnMain();
@@ -65,8 +65,8 @@ public final class RouteDecision {
         if (o == null || getClass() != o.getClass()) return false;
         RouteDecision that = (RouteDecision) o;
         return Objects.equals(reason, that.reason) && Objects.equals(
-                sql,
-                that.sql
+            sql,
+            that.sql
         ) && Objects.equals(cause, that.cause);
     }
 
@@ -78,9 +78,9 @@ public final class RouteDecision {
     @Override
     public String toString() {
         return "RouteDecision{" +
-                "reason=" + reason +
-                ", sql='" + sql + '\'' +
-                ", cause=" + cause +
-                '}';
+            "reason=" + reason +
+            ", sql='" + sql + '\'' +
+            ", cause=" + cause +
+            '}';
     }
 }
