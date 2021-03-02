@@ -43,7 +43,7 @@ public final class RouteDecision {
     }
 
     /**
-     * @return information whether reason was caused by write sql operation.
+     * @return Information whether a reason was caused by write SQL operation.
      */
     public boolean isWrite(){
         return WRITE_OPERATION.equals(reason) ||
