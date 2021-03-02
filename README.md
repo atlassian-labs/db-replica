@@ -8,6 +8,8 @@ Read-only queries can be sent to the replica, while others have to go to the mai
 The `db-replica` API automatically routes the queries to the correct node.
 It integrates at the `java.sql.Connection` level, so you don't have to hunt down hundreds of queries manually.
 
+![High level overview](docs/high-level-overview.png "High level overview")
+
 ## Features
 
 - [Automatic switching between main and replica databases](docs/switching-between-main-and-replica.md).

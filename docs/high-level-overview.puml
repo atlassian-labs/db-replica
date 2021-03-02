@@ -1,0 +1,27 @@
+@startuml
+
+database "Main database" as main
+database "Replica database 1" as replica
+database "Replica database 2"  as replica2
+database "Replica database n"  as replica3
+
+node "Application" {
+    package Connection {
+        package DualConnection {
+            [ConnectionProvider]
+        }
+    }
+    [Business logic] --> Connection : database call
+    [ConnectionProvider] --> [Main Connection] : provides
+    [ConnectionProvider] --> [Replica Connection] : provides
+}
+
+[Main Connection] --> main
+[Replica Connection] --> replica
+[Replica Connection] --> replica2
+[Replica Connection] --> replica3
+
+
+
+
+@enduml
