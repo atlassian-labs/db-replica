@@ -39,9 +39,9 @@ public final class RouteDecision {
     }
 
     /**
-     * @return True if the database call would always fail on a read replica.
+     * @return true if the accompanying {@link SqlCall#call()} would fail when run on replica.
      */
-    public boolean isWrite() {
+    public boolean mustRunOnMain() {
         return reason.isWrite();
     }
 

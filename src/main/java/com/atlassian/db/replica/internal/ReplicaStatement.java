@@ -176,7 +176,8 @@ public class ReplicaStatement implements Statement {
         checkClosed();
         final RouteDecisionBuilder decisionBuilder;
         final Statement statement;
-        if (sql.startsWith("set")) {
+        SqlQuery sqlQuery = new SqlQuery(sql);
+        if (sqlQuery.isSqlSet()) {
             decisionBuilder = new RouteDecisionBuilder(READ_OPERATION).sql(sql);
             statement = getReadStatement(decisionBuilder);
         } else {
@@ -501,7 +502,7 @@ public class ReplicaStatement implements Statement {
 
     <T> T execute(final SqlCall<T> call, final RouteDecision routeDecision) throws SQLException {
         final T result = databaseCall.call(call, routeDecision);
-        if (routeDecision.willRunOnMain() && isWriteOperation) {
+        if (routeDecision.isWrite() && isWriteOperation) {
             recordWriteAfterQueryExecution();
         }
         return result;
@@ -558,33 +559,19 @@ public class ReplicaStatement implements Statement {
             connectionProvider.getStateDecision().ifPresent(decisionBuilder::cause);
             return prepareWriteStatement(decisionBuilder);
         }
-        final String sql = decisionBuilder.getSql();
-        isWriteOperation = sqlFunction.isFunctionCall(sql) || isUpdate(sql) || isDelete(sql);
-        if (isWriteOperation) {
+        SqlQuery sqlQuery = new SqlQuery(decisionBuilder.getSql());
+        if (sqlQuery.isWriteOperation(sqlFunction)) {
             decisionBuilder.reason(WRITE_OPERATION);
             return prepareWriteStatement(decisionBuilder);
         }
 
-        if (isSelectForUpdate(sql)) {
+        if (sqlQuery.isSelectForUpdate()) {
             decisionBuilder.reason(LOCK);
             return prepareWriteStatement(decisionBuilder);
         }
-
         setCurrentStatement(getCurrentStatement() != null ? getCurrentStatement() : readStatement.get(decisionBuilder));
         performOperations();
         return getCurrentStatement();
-    }
-
-    private boolean isSelectForUpdate(String sql) {
-        return sql != null && (sql.endsWith("for update") || sql.endsWith("FOR UPDATE"));
-    }
-
-    private boolean isUpdate(String sql) {
-        return sql != null && (sql.startsWith("update") || sql.startsWith("UPDATE"));
-    }
-
-    private boolean isDelete(String sql) {
-        return sql != null && (sql.startsWith("delete") || sql.startsWith("DELETE"));
     }
 
     protected Statement getWriteStatement(RouteDecisionBuilder decisionBuilder) {
