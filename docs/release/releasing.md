@@ -13,3 +13,4 @@ A release build can be [triggered manually by "workflow dispatch"](trigger-gha-r
 After releasing a new version:
 * the [changelog](../../CHANGELOG.md) needs a new entry
 * the [readme](../../README.md) installation section needs a new Maven version
+* clean up internal `compatibleWithPreviousVersion` usages

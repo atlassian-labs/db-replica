@@ -104,13 +104,8 @@ public final class DualConnection implements Connection {
     @Override
     public String nativeSQL(String sql) throws SQLException {
         checkClosed();
-        if (compatibleWithPreviousVersion) {
-            return connectionProvider.getWriteConnection(new RouteDecisionBuilder(Reason.RW_API_CALL).sql(sql))
-                .nativeSQL(sql);
-        } else {
-            return connectionProvider.getReadConnection(new RouteDecisionBuilder(Reason.RO_API_CALL).sql(sql))
-                .nativeSQL(sql);
-        }
+        return connectionProvider.getReadConnection(new RouteDecisionBuilder(Reason.RO_API_CALL).sql(sql))
+            .nativeSQL(sql);
     }
 
     @Override

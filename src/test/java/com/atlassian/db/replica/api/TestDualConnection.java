@@ -205,21 +205,6 @@ public class TestDualConnection {
     }
 
     @Test
-    public void shouldBePossibleToDisableNativeSqlFix() throws SQLException {
-        final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
-        final Connection connection = DualConnection.builder(
-            connectionProvider,
-            permanentConsistency().build()
-        ).compatibleWithPreviousVersion()
-            .build();
-
-        connection.nativeSQL(SIMPLE_QUERY);
-
-        assertThat(connectionProvider.getProvidedConnectionTypes())
-            .containsExactly(MAIN);
-    }
-
-    @Test
     public void shouldUseMainConnectionForSelectForUpdate() throws SQLException {
         final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
         final Connection connection = DualConnection.builder(
