@@ -39,7 +39,7 @@ public final class RouteDecision {
     }
 
     /**
-     * @return true if the accompanying {@link SqlCall#call()} would fail when run on replica.
+     * @return true if the accompanying {@link com.atlassian.db.replica.api.SqlCall#call()} would fail when run on replica.
      */
     public boolean mustRunOnMain() {
         return reason.isWrite();

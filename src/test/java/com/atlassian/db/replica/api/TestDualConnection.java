@@ -17,6 +17,8 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import org.assertj.core.api.Assertions;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 import org.mockito.Mockito;
 
 import java.sql.Connection;
@@ -24,6 +26,8 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Savepoint;
 import java.sql.Statement;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -50,15 +54,25 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 @SuppressWarnings({"SqlDialectInspection", "SqlNoDataSourceInspection"})
+@RunWith(Parameterized.class)
 public class TestDualConnection {
+
+    @Parameterized.Parameters
+    public static Collection<Boolean> isCompatibleWithPreviousVersion() {
+        return Arrays.asList(true, false);
+    }
+
+    private final boolean shouldUseCompatibleWithPreviousVersion;
+
+    public TestDualConnection(boolean shouldUseCompatibleWithPreviousVersion) {
+        this.shouldUseCompatibleWithPreviousVersion = shouldUseCompatibleWithPreviousVersion;
+    }
+
 
     @Test
     public void shouldUseReplicaConnectionForExecuteQuery() throws SQLException {
         final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
-        final Connection connection = DualConnection.builder(
-            connectionProvider,
-            permanentConsistency().build()
-        ).build();
+        final Connection connection = dualConnectionBuilder(connectionProvider, permanentConsistency()).build();
 
         connection.prepareStatement(SIMPLE_QUERY).executeQuery();
 
@@ -66,13 +80,23 @@ public class TestDualConnection {
             .containsOnly(REPLICA);
     }
 
+    private DualConnection.Builder dualConnectionBuilder(ConnectionProviderMock connectionProvider,
+                                                         CircularConsistency.Builder builder) {
+        DualConnection.Builder builder1 = DualConnection.builder(
+                connectionProvider,
+                builder.build()
+        );
+
+        if (shouldUseCompatibleWithPreviousVersion) {
+            builder1.compatibleWithPreviousVersion();
+        }
+        return builder1;
+    }
+
     @Test
     public void shouldUseReplicaConnectionForExecuteLargeQuery() throws SQLException {
         final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
-        final Connection connection = DualConnection.builder(
-            connectionProvider,
-            permanentConsistency().build()
-        ).build();
+        final Connection connection = dualConnectionBuilder(connectionProvider, permanentConsistency()).build();
 
         connection.prepareStatement(LARGE_SQL_QUERY).executeQuery();
 
@@ -83,10 +107,7 @@ public class TestDualConnection {
     @Test
     public void shouldUseMainConnectionForWrites() throws SQLException {
         final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
-        final Connection connection = DualConnection.builder(
-            connectionProvider,
-            permanentConsistency().build()
-        ).build();
+        final Connection connection = dualConnectionBuilder(connectionProvider, permanentConsistency()).build();
 
         connection.prepareStatement(SIMPLE_QUERY).executeUpdate();
         connection.prepareStatement(SIMPLE_QUERY).executeUpdate(SIMPLE_QUERY);
@@ -111,10 +132,8 @@ public class TestDualConnection {
         final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
         final DatabaseCall databaseCall = mock(DatabaseCall.class);
         when(databaseCall.call(any(), any())).thenReturn(true);
-        final Connection connection = DualConnection.builder(
-            connectionProvider,
-            permanentConsistency().build()
-        ).databaseCall(databaseCall).build();
+        final Connection connection = dualConnectionBuilder(connectionProvider,
+                                                            permanentConsistency()).databaseCall(databaseCall).build();
 
         connection.prepareStatement(SIMPLE_QUERY).execute();
         connection.prepareStatement(SIMPLE_QUERY).execute(SIMPLE_QUERY);
@@ -134,10 +153,7 @@ public class TestDualConnection {
     @Test
     public void shouldSwitchConnectionWhenPerformingWriteAfterRead() throws SQLException {
         final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
-        final Connection connection = DualConnection.builder(
-            connectionProvider,
-            permanentConsistency().build()
-        ).build();
+        final Connection connection = dualConnectionBuilder(connectionProvider, permanentConsistency()).build();
 
         connection.prepareStatement(SIMPLE_QUERY).executeQuery();
         connection.prepareStatement(SIMPLE_QUERY).executeUpdate();
@@ -149,10 +165,7 @@ public class TestDualConnection {
     @Test
     public void shouldKeepUsingWriteConnectionAfterFirstWrite() throws SQLException {
         final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
-        final Connection connection = DualConnection.builder(
-            connectionProvider,
-            permanentConsistency().build()
-        ).build();
+        final Connection connection = dualConnectionBuilder(connectionProvider, permanentConsistency()).build();
 
         connection.prepareStatement(SIMPLE_QUERY).executeUpdate();
         connection.prepareStatement(SIMPLE_QUERY).executeQuery();
@@ -164,7 +177,7 @@ public class TestDualConnection {
     @Test
     public void shouldNotUseReplicaIfNotAvailable() throws SQLException {
         final ConnectionProviderMock provider = new ConnectionProviderMock(false);
-        final Connection connection = DualConnection.builder(provider, permanentInconsistency().build()).build();
+        final Connection connection = dualConnectionBuilder(provider, permanentInconsistency()).build();
 
         connection.prepareStatement(SIMPLE_QUERY).executeQuery();
 
@@ -175,10 +188,7 @@ public class TestDualConnection {
     @Test
     public void shouldSwitchToMainIfNotConsistent() throws SQLException {
         final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
-        final Connection connection = DualConnection.builder(
-            connectionProvider,
-            permanentInconsistency().build()
-        ).build();
+        final Connection connection = dualConnectionBuilder(connectionProvider, permanentInconsistency()).build();
 
         connection.prepareStatement(SIMPLE_QUERY).executeQuery();
 
@@ -189,10 +199,8 @@ public class TestDualConnection {
     @Test
     public void shouldAvoidFetchingReadConnectionWhenNotNecessary() throws SQLException {
         final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
-        final Connection connection = DualConnection.builder(
-            connectionProvider,
-            permanentInconsistency().ignoreSupplier(true).build()
-        ).build();
+        final Connection connection = dualConnectionBuilder(connectionProvider,
+                                                            permanentInconsistency().ignoreSupplier(true)).build();
 
         connection.prepareStatement(SIMPLE_QUERY).executeQuery();
 
@@ -203,10 +211,7 @@ public class TestDualConnection {
     @Test
     public void shouldRunNativeSqlOnReplica() throws SQLException {
         final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
-        final Connection connection = DualConnection.builder(
-            connectionProvider,
-            permanentConsistency().build()
-        ).build();
+        final Connection connection = dualConnectionBuilder(connectionProvider, permanentConsistency()).build();
 
         connection.nativeSQL(SIMPLE_QUERY);
 
@@ -217,10 +222,7 @@ public class TestDualConnection {
     @Test
     public void shouldUseMainConnectionForSelectForUpdate() throws SQLException {
         final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
-        final Connection connection = DualConnection.builder(
-            connectionProvider,
-            permanentConsistency().build()
-        ).build();
+        final Connection connection = dualConnectionBuilder(connectionProvider, permanentConsistency()).build();
 
         connection.prepareStatement(SELECT_FOR_UPDATE).executeQuery();
 
@@ -232,11 +234,9 @@ public class TestDualConnection {
     public void shouldLockForSelectForUpdate() throws SQLException {
         final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
         final DatabaseCall databaseCall = mock(DatabaseCall.class);
-        final Connection connection = DualConnection.builder(
-            connectionProvider,
-            permanentConsistency().build()
-        ).databaseCall(databaseCall)
-            .build();
+        final Connection connection = dualConnectionBuilder(connectionProvider,
+                                                            permanentConsistency()).databaseCall(databaseCall)
+                                                                                   .build();
 
         connection.prepareStatement(SELECT_FOR_UPDATE).executeQuery();
         verify(databaseCall).call(
@@ -248,10 +248,7 @@ public class TestDualConnection {
     @Test
     public void shouldUseMainConnectionForSelectFunctionCalls() throws SQLException {
         final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
-        final Connection connection = DualConnection.builder(
-            connectionProvider,
-            permanentConsistency().build()
-        ).build();
+        final Connection connection = dualConnectionBuilder(connectionProvider, permanentConsistency()).build();
 
         connection.prepareStatement("SELECT concat_lower_or_upper('Hello', 'World', true)").executeQuery();
         connection.prepareStatement("select concat_lower_or_upper('Hello', 'World')").executeQuery();
@@ -266,10 +263,7 @@ public class TestDualConnection {
     @Test
     public void shouldUseReplicaForKnownReadOnlyFunctionCalls() throws SQLException {
         final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
-        final Connection connection = DualConnection.builder(
-            connectionProvider,
-            permanentConsistency().build()
-        ).build();
+        final Connection connection = dualConnectionBuilder(connectionProvider, permanentConsistency()).build();
 
         connection.prepareStatement("SELECT count(*) FROM user").executeQuery();
         connection.prepareStatement("SELECT COUNT(*) FROM user").executeQuery();
@@ -283,11 +277,9 @@ public class TestDualConnection {
     @Test
     public void shouldSupprtCustomReadOnlyFunctions() throws SQLException {
         final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
-        final Connection connection = DualConnection.builder(
-            connectionProvider,
-            permanentConsistency().build()
-        ).readOnlyFunctions(ImmutableSet.of("myFunction"))
-            .build();
+        final Connection connection = dualConnectionBuilder(connectionProvider,
+                                                            permanentConsistency()).readOnlyFunctions(ImmutableSet.of("myFunction"))
+                                                                                   .build();
 
         connection.prepareStatement("SELECT myFunction() FROM user").executeQuery();
 
@@ -299,11 +291,9 @@ public class TestDualConnection {
     public void shouldDetectWriteOperationForSqlFunction() throws SQLException {
         final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
         final DatabaseCall databaseCall = mock(DatabaseCall.class);
-        final Connection connection = DualConnection.builder(
-            connectionProvider,
-            permanentConsistency().build()
-        ).databaseCall(databaseCall)
-            .build();
+        final Connection connection = dualConnectionBuilder(connectionProvider,
+                                                            permanentConsistency()).databaseCall(databaseCall)
+                                                                                   .build();
 
         final String sql = "SELECT doSomething(1234)";
 
@@ -317,10 +307,7 @@ public class TestDualConnection {
     @Test
     public void shouldUseReplicaForComplexQuery() throws SQLException {
         final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
-        final Connection connection = DualConnection.builder(
-            connectionProvider,
-            permanentConsistency().build()
-        ).build();
+        final Connection connection = dualConnectionBuilder(connectionProvider, permanentConsistency()).build();
 
         connection.prepareStatement(
             "select \"project_id_1\" from ((select \"PROJECT_3\".\"id\" as \"project_id_1\" from \"public\".\"project\" \"PROJECT_3\" join \"public\".\"schemepermissions\" \"SCHEME_PERMISSIONS_4\" on \"PROJECT_3\".\"permissionscheme\" = \"SCHEME_PERMISSIONS_4\".\"scheme\" join \"public\".\"projectroleactor\" \"PROJECT_ROLE_ACTOR_5\" on \"SCHEME_PERMISSIONS_4\".\"perm_parameter\" = cast(\"PROJECT_ROLE_ACTOR_5\".\"projectroleid\" as varchar) and \"PROJECT_3\".\"id\" = \"PROJECT_ROLE_ACTOR_5\".\"pid\" where \"SCHEME_PERMISSIONS_4\".\"permission_key\" = $1").executeQuery();
@@ -332,10 +319,7 @@ public class TestDualConnection {
     @Test
     public void shouldUseMainConnectionForUpdateInExecuteQuery() throws SQLException {
         final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
-        final Connection connection = DualConnection.builder(
-            connectionProvider,
-            permanentConsistency().build()
-        ).build();
+        final Connection connection = dualConnectionBuilder(connectionProvider, permanentConsistency()).build();
 
         connection.prepareStatement("update \"jiraissue\" \"ISSUE\"\n" +
             "set \"version\" = \"ISSUE\".\"version\" + 1\n" +
@@ -348,10 +332,7 @@ public class TestDualConnection {
     @Test
     public void shouldUseMainConnectionForUpdateInExecuteQueryUpperCase() throws SQLException {
         final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
-        final Connection connection = DualConnection.builder(
-            connectionProvider,
-            permanentConsistency().build()
-        ).build();
+        final Connection connection = dualConnectionBuilder(connectionProvider, permanentConsistency()).build();
 
         connection.prepareStatement("UPDATE \"jiraissue\" \"ISSUE\"\n" +
             "set \"version\" = \"ISSUE\".\"version\" + 1\n" +
@@ -364,10 +345,7 @@ public class TestDualConnection {
     @Test
     public void shouldUseMainConnectionForDeleteInExecuteQuery() throws SQLException {
         final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
-        final Connection connection = DualConnection.builder(
-            connectionProvider,
-            permanentConsistency().build()
-        ).build();
+        final Connection connection = dualConnectionBuilder(connectionProvider, permanentConsistency()).build();
 
         connection.prepareStatement("delete from \"jiraissue\" \"ISSUE\"\n" +
             "where \"ISSUE\".\"id\" in (42, 43) returning \"ISSUE\".\"id\", \"ISSUE\".\"version\"").executeQuery();
@@ -379,10 +357,7 @@ public class TestDualConnection {
     @Test
     public void shouldUseMainConnectionForDeleteInExecuteQueryUpperCase() throws SQLException {
         final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
-        final Connection connection = DualConnection.builder(
-            connectionProvider,
-            permanentConsistency().build()
-        ).build();
+        final Connection connection = dualConnectionBuilder(connectionProvider, permanentConsistency()).build();
 
         connection.prepareStatement("DELETE FROM \"jiraissue\" \"ISSUE\"\n" +
             "where \"ISSUE\".\"id\" in (42, 43) RETURNING \"ISSUE\".\"id\", \"ISSUE\".\"version\"").executeQuery();
@@ -394,10 +369,7 @@ public class TestDualConnection {
     @Test
     public void shouldGetAutoCommitFalse() throws SQLException {
         final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
-        final Connection connection = DualConnection.builder(
-            connectionProvider,
-            permanentConsistency().build()
-        ).build();
+        final Connection connection = dualConnectionBuilder(connectionProvider, permanentConsistency()).build();
 
         connection.setAutoCommit(false);
 
@@ -409,10 +381,7 @@ public class TestDualConnection {
     @Test
     public void shouldGetAutoCommitTrue() throws SQLException {
         final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
-        final Connection connection = DualConnection.builder(
-            connectionProvider,
-            permanentConsistency().build()
-        ).build();
+        final Connection connection = dualConnectionBuilder(connectionProvider, permanentConsistency()).build();
 
         connection.setAutoCommit(true);
 
@@ -424,10 +393,7 @@ public class TestDualConnection {
     @Test
     public void shouldGetAutoCommitDefault() throws SQLException {
         final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
-        final Connection connection = DualConnection.builder(
-            connectionProvider,
-            permanentConsistency().build()
-        ).build();
+        final Connection connection = dualConnectionBuilder(connectionProvider, permanentConsistency()).build();
 
         assertThat(connection.getAutoCommit()).isTrue();
         assertThat(connectionProvider.getProvidedConnectionTypes())
@@ -437,10 +403,7 @@ public class TestDualConnection {
     @Test
     public void shouldDualConnectionCloseSubConnections() throws SQLException {
         final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
-        final Connection dualConnection = DualConnection.builder(
-            connectionProvider,
-            permanentConsistency().build()
-        ).build();
+        final Connection dualConnection = dualConnectionBuilder(connectionProvider, permanentConsistency()).build();
         dualConnection.prepareStatement(SIMPLE_QUERY).executeQuery();
         dualConnection.prepareStatement(SIMPLE_QUERY).executeUpdate();
 
@@ -460,10 +423,7 @@ public class TestDualConnection {
     @Test
     public void shouldDualConnectionCloseSubConnectionsEvenIfMainConnectionCloseFails() throws SQLException {
         final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
-        final Connection dualConnection = DualConnection.builder(
-            connectionProvider,
-            permanentConsistency().build()
-        ).build();
+        final Connection dualConnection = dualConnectionBuilder(connectionProvider, permanentConsistency()).build();
         dualConnection.prepareStatement(SIMPLE_QUERY).executeQuery();
         dualConnection.prepareStatement(SIMPLE_QUERY).executeUpdate();
         final Connection main = connectionProvider.getProvidedConnections().get(1);
@@ -486,10 +446,7 @@ public class TestDualConnection {
     @Test
     public void shouldDualConnectionCloseSubConnectionsEvenIfReplicaConnectionCloseFails() throws SQLException {
         final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
-        final Connection dualConnection = DualConnection.builder(
-            connectionProvider,
-            permanentConsistency().build()
-        ).build();
+        final Connection dualConnection = dualConnectionBuilder(connectionProvider, permanentConsistency()).build();
         dualConnection.prepareStatement(SIMPLE_QUERY).executeQuery();
         final Connection replica = connectionProvider.getProvidedConnections().get(0);
         doThrow(new RuntimeException("Connection already closed")).when(replica).close();
@@ -512,10 +469,7 @@ public class TestDualConnection {
     @Test
     public void shouldCloseSubConnectionsRegardlessOfWarnings() throws SQLException {
         final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
-        final Connection dualConnection = DualConnection.builder(
-            connectionProvider,
-            permanentConsistency().build()
-        ).build();
+        final Connection dualConnection = dualConnectionBuilder(connectionProvider, permanentConsistency()).build();
         dualConnection.prepareStatement(SIMPLE_QUERY).executeQuery();
         dualConnection.prepareStatement(SIMPLE_QUERY).executeUpdate();
         final Connection main = connectionProvider.getProvidedConnections().get(1);
@@ -538,10 +492,7 @@ public class TestDualConnection {
     @Test
     public void shouldBeOpenAfterQueryExecution() throws SQLException {
         final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
-        final Connection connection = DualConnection.builder(
-            connectionProvider,
-            permanentConsistency().build()
-        ).build();
+        final Connection connection = dualConnectionBuilder(connectionProvider, permanentConsistency()).build();
 
         connection.prepareStatement(SIMPLE_QUERY).executeQuery();
 
@@ -551,10 +502,7 @@ public class TestDualConnection {
     @Test
     public void shouldBeClosedAfterCloseInvoked() throws SQLException {
         final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
-        final Connection connection = DualConnection.builder(
-            connectionProvider,
-            permanentConsistency().build()
-        ).build();
+        final Connection connection = dualConnectionBuilder(connectionProvider, permanentConsistency()).build();
 
         connection.prepareStatement(SIMPLE_QUERY).executeQuery();
         connection.close();
@@ -565,10 +513,7 @@ public class TestDualConnection {
     @Test
     public void shouldInitiallyOpen() throws SQLException {
         final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
-        final Connection connection = DualConnection.builder(
-            connectionProvider,
-            permanentConsistency().build()
-        ).build();
+        final Connection connection = dualConnectionBuilder(connectionProvider, permanentConsistency()).build();
 
         assertThat(connection.isClosed()).isFalse();
         assertThat(connectionProvider.getProvidedConnectionTypes())
@@ -578,7 +523,7 @@ public class TestDualConnection {
     @Test
     public void shouldNotCloseConnectionAfterExecuteQuery() throws SQLException {
         final ConnectionProviderMock provider = new ConnectionProviderMock(false);
-        final Connection dualConnection = DualConnection.builder(provider, permanentInconsistency().build()).build();
+        final Connection dualConnection = dualConnectionBuilder(provider, permanentInconsistency()).build();
 
         dualConnection.prepareStatement(SIMPLE_QUERY).executeQuery();
 
@@ -594,7 +539,7 @@ public class TestDualConnection {
     @Test
     public void shouldCloseConnectionOnce() throws SQLException {
         final ConnectionProviderMock provider = new ConnectionProviderMock(false);
-        final Connection dualConnection = DualConnection.builder(provider, permanentInconsistency().build()).build();
+        final Connection dualConnection = dualConnectionBuilder(provider, permanentInconsistency()).build();
 
         dualConnection.prepareStatement(SIMPLE_QUERY).executeQuery();
         dualConnection.close();
@@ -613,7 +558,7 @@ public class TestDualConnection {
     @Test
     public void shouldSetAutocommit() throws SQLException {
         final ConnectionProviderMock provider = new ConnectionProviderMock(false);
-        final Connection dualConnection = DualConnection.builder(provider, permanentInconsistency().build()).build();
+        final Connection dualConnection = dualConnectionBuilder(provider, permanentInconsistency()).build();
 
         dualConnection.setAutoCommit(false);
         dualConnection.prepareStatement(SIMPLE_QUERY).executeQuery();
@@ -632,7 +577,7 @@ public class TestDualConnection {
     @Test
     public void shouldCommitOnce() throws SQLException {
         final ConnectionProviderMock provider = new ConnectionProviderMock(false);
-        final Connection dualConnection = DualConnection.builder(provider, permanentInconsistency().build()).build();
+        final Connection dualConnection = dualConnectionBuilder(provider, permanentInconsistency()).build();
 
         dualConnection.setAutoCommit(false);
         dualConnection.prepareStatement(SIMPLE_QUERY).executeQuery();
@@ -651,7 +596,7 @@ public class TestDualConnection {
     @Test
     public void shouldRollbackOnce() throws SQLException {
         final ConnectionProviderMock provider = new ConnectionProviderMock(false);
-        final Connection dualConnection = DualConnection.builder(provider, permanentInconsistency().build()).build();
+        final Connection dualConnection = dualConnectionBuilder(provider, permanentInconsistency()).build();
 
         dualConnection.setAutoCommit(false);
         dualConnection.prepareStatement(SIMPLE_QUERY).executeQuery();
@@ -670,10 +615,7 @@ public class TestDualConnection {
     @Test
     public void shouldHoldOnlyOneConnection() throws SQLException {
         final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
-        final Connection connection = DualConnection.builder(
-            connectionProvider,
-            permanentConsistency().build()
-        ).build();
+        final Connection connection = dualConnectionBuilder(connectionProvider, permanentConsistency()).build();
 
         connection.prepareStatement(SIMPLE_QUERY).executeQuery();
         connection.prepareStatement(SIMPLE_QUERY).executeUpdate();
@@ -689,8 +631,7 @@ public class TestDualConnection {
     public void shouldExecuteReadOperationOnReplica() throws SQLException {
         final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
         final DatabaseCall databaseCall = mock(DatabaseCall.class);
-        final Connection connection = DualConnection
-            .builder(connectionProvider, permanentConsistency().build())
+        final Connection connection = dualConnectionBuilder(connectionProvider, permanentConsistency())
             .databaseCall(databaseCall)
             .build();
 
@@ -729,8 +670,7 @@ public class TestDualConnection {
         final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
         final DatabaseCall databaseCall = mock(DatabaseCall.class);
         when(databaseCall.call(any(), any())).thenReturn(1);
-        final Connection connection = DualConnection
-            .builder(connectionProvider, permanentConsistency().build())
+        final Connection connection = dualConnectionBuilder(connectionProvider, permanentConsistency())
             .databaseCall(databaseCall)
             .build();
 
@@ -746,11 +686,9 @@ public class TestDualConnection {
         final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
         final DatabaseCall databaseCall = mock(DatabaseCall.class);
         when(databaseCall.call(any(), any())).thenReturn(1);
-        final Connection dualConnection = DualConnection.builder(
-            connectionProvider,
-            permanentConsistency().build()
-        ).databaseCall(databaseCall)
-            .build();
+        final Connection dualConnection = dualConnectionBuilder(connectionProvider,
+                                                                permanentConsistency()).databaseCall(databaseCall)
+                                                                                       .build();
         dualConnection.prepareStatement(SIMPLE_QUERY).executeUpdate();
         Mockito.reset(databaseCall);
 
@@ -775,10 +713,8 @@ public class TestDualConnection {
         final DatabaseCall databaseCall = mock(DatabaseCall.class);
         final StateListener stateListener =  mock(StateListener.class);
         when(databaseCall.call(any(), any())).thenReturn(mock(java.sql.ResultSet.class));
-        final Connection dualConnection = DualConnection.builder(
-                connectionProvider,
-                permanentConsistency().build()
-        ).databaseCall(databaseCall).stateListener(stateListener).build();
+        final Connection dualConnection = dualConnectionBuilder(connectionProvider,
+                                                                permanentConsistency()).databaseCall(databaseCall).stateListener(stateListener).build();
 
 
         dualConnection.prepareStatement(SIMPLE_QUERY).executeQuery();
@@ -864,10 +800,7 @@ public class TestDualConnection {
     @Test
     public void shouldUsePrepareNewStatement() throws SQLException {
         final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
-        final Connection connection = DualConnection.builder(
-            connectionProvider,
-            permanentConsistency().build()
-        ).build();
+        final Connection connection = dualConnectionBuilder(connectionProvider, permanentConsistency()).build();
 
         for (int i = 0; i < 10; i++) {
             connection.prepareStatement(SIMPLE_QUERY).executeQuery();
@@ -880,10 +813,7 @@ public class TestDualConnection {
     @Test
     public void shouldGetMetaDataFromMaster() throws SQLException {
         final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
-        final Connection connection = DualConnection.builder(
-            connectionProvider,
-            permanentConsistency().build()
-        ).build();
+        final Connection connection = dualConnectionBuilder(connectionProvider, permanentConsistency()).build();
 
         connection.getMetaData();
 
@@ -895,10 +825,7 @@ public class TestDualConnection {
     @Test
     public void shouldStartReadOnlyMode() throws SQLException {
         final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
-        final Connection connection = DualConnection.builder(
-            connectionProvider,
-            permanentConsistency().build()
-        ).build();
+        final Connection connection = dualConnectionBuilder(connectionProvider, permanentConsistency()).build();
 
         connection.setReadOnly(true);
         connection.prepareStatement(SIMPLE_QUERY).executeQuery();
@@ -912,10 +839,7 @@ public class TestDualConnection {
     @Test
     public void shouldStopReadOnlyMode() throws SQLException {
         final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
-        final Connection connection = DualConnection.builder(
-            connectionProvider,
-            permanentConsistency().build()
-        ).build();
+        final Connection connection = dualConnectionBuilder(connectionProvider, permanentConsistency()).build();
 
         connection.setReadOnly(false);
         connection.prepareStatement(SIMPLE_QUERY).executeQuery();
@@ -929,10 +853,7 @@ public class TestDualConnection {
     @Test
     public void shouldUtiliseReplicaEvenAfterDisablingReadOnly() throws SQLException {
         final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
-        final Connection connection = DualConnection.builder(
-            connectionProvider,
-            permanentConsistency().build()
-        ).build();
+        final Connection connection = dualConnectionBuilder(connectionProvider, permanentConsistency()).build();
 
         connection.setReadOnly(false);
         connection.prepareStatement(SIMPLE_QUERY).executeQuery();
@@ -944,10 +865,7 @@ public class TestDualConnection {
     @Test
     public void shouldNotSwitchBackToReplica() throws SQLException {
         final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
-        final Connection connection = DualConnection.builder(
-            connectionProvider,
-            permanentConsistency().build()
-        ).build();
+        final Connection connection = dualConnectionBuilder(connectionProvider, permanentConsistency()).build();
 
         connection.prepareStatement(SIMPLE_QUERY).executeUpdate();
         connection.prepareStatement(SIMPLE_QUERY).executeQuery();
@@ -959,10 +877,7 @@ public class TestDualConnection {
     @Test
     public void shouldNotBeReadOnlyByDefault() throws SQLException {
         final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
-        final Connection connection = DualConnection.builder(
-            connectionProvider,
-            permanentConsistency().build()
-        ).build();
+        final Connection connection = dualConnectionBuilder(connectionProvider, permanentConsistency()).build();
 
         assertThat(connection.isReadOnly()).isFalse();
     }
@@ -970,10 +885,7 @@ public class TestDualConnection {
     @Test
     public void shouldSetCatalog() throws SQLException {
         final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
-        final Connection connection = DualConnection.builder(
-            connectionProvider,
-            permanentConsistency().build()
-        ).build();
+        final Connection connection = dualConnectionBuilder(connectionProvider, permanentConsistency()).build();
         final String catalog = "catalog";
 
         connection.setCatalog(catalog);
@@ -988,10 +900,7 @@ public class TestDualConnection {
     @Test
     public void shouldGetNullCatalog() throws SQLException {
         final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
-        final Connection connection = DualConnection.builder(
-            connectionProvider,
-            permanentConsistency().build()
-        ).build();
+        final Connection connection = dualConnectionBuilder(connectionProvider, permanentConsistency()).build();
 
         assertThat(connection.getCatalog()).isNull();
     }
@@ -1000,11 +909,9 @@ public class TestDualConnection {
     public void shouldSetTransactionIsolationLevelForRead() throws SQLException {
         final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
         final DatabaseCall databaseCall = mock(DatabaseCall.class);
-        final Connection connection = DualConnection.builder(
-            connectionProvider,
-            permanentInconsistency().build()
-        ).databaseCall(databaseCall)
-            .build();
+        final Connection connection = dualConnectionBuilder(connectionProvider,
+                                                            permanentInconsistency()).databaseCall(databaseCall)
+                                                                                     .build();
 
         connection.setTransactionIsolation(TRANSACTION_SERIALIZABLE);
         connection.prepareStatement(SIMPLE_QUERY).executeQuery();
@@ -1020,10 +927,8 @@ public class TestDualConnection {
     public void shouldSetTransactionIsolationLevelForWrite() throws SQLException {
         final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
         final DatabaseCall databaseCall = mock(DatabaseCall.class);
-        final Connection connection = DualConnection.builder(
-                connectionProvider,
-                permanentInconsistency().build()
-        ).databaseCall(databaseCall).build();
+        final Connection connection = dualConnectionBuilder(connectionProvider,
+                                                            permanentInconsistency()).databaseCall(databaseCall).build();
 
         connection.setTransactionIsolation(TRANSACTION_SERIALIZABLE);
         when(databaseCall.call(any(), any())).thenReturn(true);
@@ -1039,10 +944,7 @@ public class TestDualConnection {
     @Test
     public void shouldGetTransactionIsolationLevelCallMainDatabase() throws SQLException {
         final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
-        final Connection connection = DualConnection.builder(
-            connectionProvider,
-            permanentInconsistency().build()
-        ).build();
+        final Connection connection = dualConnectionBuilder(connectionProvider, permanentInconsistency()).build();
 
         connection.getTransactionIsolation();
 
@@ -1052,10 +954,7 @@ public class TestDualConnection {
     @Test
     public void shouldUseSettedTransactionIsolationLevel() throws SQLException {
         final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
-        final Connection connection = DualConnection.builder(
-            connectionProvider,
-            permanentInconsistency().build()
-        ).build();
+        final Connection connection = dualConnectionBuilder(connectionProvider, permanentInconsistency()).build();
         connection.setTransactionIsolation(TRANSACTION_SERIALIZABLE);
 
         connection.getTransactionIsolation();
@@ -1066,10 +965,7 @@ public class TestDualConnection {
     @Test
     public void shouldReturnEmptyTypeMap() throws SQLException {
         final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
-        final Connection connection = DualConnection.builder(
-            connectionProvider,
-            permanentInconsistency().build()
-        ).build();
+        final Connection connection = dualConnectionBuilder(connectionProvider, permanentInconsistency()).build();
 
         assertThat(connection.getTypeMap()).isEmpty();
     }
@@ -1077,10 +973,7 @@ public class TestDualConnection {
     @Test
     public void shouldSetTypeMap() throws SQLException {
         final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
-        final Connection connection = DualConnection.builder(
-            connectionProvider,
-            permanentInconsistency().build()
-        ).build();
+        final Connection connection = dualConnectionBuilder(connectionProvider, permanentInconsistency()).build();
         final Map<String, Class<?>> typeMap = new HashMap<>();
         typeMap.put("MyType", Object.class);
 
@@ -1092,10 +985,7 @@ public class TestDualConnection {
     @Test
     public void shouldReturnTypeMapCopy() throws SQLException {
         final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
-        final Connection connection = DualConnection.builder(
-            connectionProvider,
-            permanentInconsistency().build()
-        ).build();
+        final Connection connection = dualConnectionBuilder(connectionProvider, permanentInconsistency()).build();
         final Map<String, Class<?>> typeMap = new HashMap<>();
         typeMap.put("MyType", Object.class);
         connection.setTypeMap(typeMap);
@@ -1109,10 +999,7 @@ public class TestDualConnection {
     @Test
     public void shouldSetMapOnMain() throws SQLException {
         final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
-        final Connection connection = DualConnection.builder(
-            connectionProvider,
-            permanentConsistency().build()
-        ).build();
+        final Connection connection = dualConnectionBuilder(connectionProvider, permanentConsistency()).build();
         final Map<String, Class<?>> typeMap = new HashMap<>();
         typeMap.put("MyType", Object.class);
 
@@ -1127,10 +1014,7 @@ public class TestDualConnection {
     @Test
     public void shouldSetMapOnReplica() throws SQLException {
         final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
-        final Connection connection = DualConnection.builder(
-            connectionProvider,
-            permanentConsistency().build()
-        ).build();
+        final Connection connection = dualConnectionBuilder(connectionProvider, permanentConsistency()).build();
         final Map<String, Class<?>> typeMap = new HashMap<>();
         typeMap.put("MyType", Object.class);
 
@@ -1145,10 +1029,7 @@ public class TestDualConnection {
     @Test
     public void shouldChangeHoldabilityMain() throws SQLException {
         final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
-        final Connection connection = DualConnection.builder(
-            connectionProvider,
-            permanentConsistency().build()
-        ).build();
+        final Connection connection = dualConnectionBuilder(connectionProvider, permanentConsistency()).build();
 
         connection.setHoldability(ResultSet.HOLD_CURSORS_OVER_COMMIT);
         connection.prepareStatement(SIMPLE_QUERY).executeQuery();
@@ -1167,10 +1048,7 @@ public class TestDualConnection {
     @Test
     public void shouldDelegateToMainIfHoldabilityNotKnown() throws SQLException {
         final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
-        final Connection connection = DualConnection.builder(
-            connectionProvider,
-            permanentConsistency().build()
-        ).build();
+        final Connection connection = dualConnectionBuilder(connectionProvider, permanentConsistency()).build();
 
         connection.getHoldability();
 
@@ -1180,10 +1058,7 @@ public class TestDualConnection {
     @Test
     public void shouldValidateDelegateToReplica() throws SQLException {
         final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
-        final Connection connection = DualConnection.builder(
-            connectionProvider,
-            permanentConsistency().build()
-        ).build();
+        final Connection connection = dualConnectionBuilder(connectionProvider, permanentConsistency()).build();
 
         connection.isValid(10);
 
@@ -1193,10 +1068,7 @@ public class TestDualConnection {
     @Test
     public void shouldValidateDelegateToCurrentConnectionForReplica() throws SQLException {
         final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
-        final Connection connection = DualConnection.builder(
-            connectionProvider,
-            permanentConsistency().build()
-        ).build();
+        final Connection connection = dualConnectionBuilder(connectionProvider, permanentConsistency()).build();
         connection.prepareStatement(SIMPLE_QUERY).executeQuery();
 
         connection.isValid(10);
@@ -1209,10 +1081,7 @@ public class TestDualConnection {
     @Test
     public void shouldValidateDelegateToCurrentConnectionForMain() throws SQLException {
         final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
-        final Connection connection = DualConnection.builder(
-            connectionProvider,
-            permanentConsistency().build()
-        ).build();
+        final Connection connection = dualConnectionBuilder(connectionProvider, permanentConsistency()).build();
         connection.prepareStatement(SIMPLE_QUERY).executeUpdate();
 
         connection.isValid(10);
@@ -1224,10 +1093,7 @@ public class TestDualConnection {
     @Test
     public void shouldCreateArrayOfOnMainConnection() throws SQLException {
         final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
-        final Connection connection = DualConnection.builder(
-            connectionProvider,
-            permanentConsistency().build()
-        ).build();
+        final Connection connection = dualConnectionBuilder(connectionProvider, permanentConsistency()).build();
 
         connection.createArrayOf("type", new Object[]{});
 
@@ -1239,10 +1105,7 @@ public class TestDualConnection {
     @Test
     public void shouldGetSchema() throws SQLException {
         final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
-        final Connection connection = DualConnection.builder(
-            connectionProvider,
-            permanentConsistency().build()
-        ).build();
+        final Connection connection = dualConnectionBuilder(connectionProvider, permanentConsistency()).build();
 
         connection.getSchema();
 
@@ -1255,10 +1118,8 @@ public class TestDualConnection {
         when(databaseCall.call(any(), any())).thenReturn(1);
         final StateListener stateListener =  mock(StateListener.class);
         final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
-        final Connection connection = DualConnection.builder(
-                connectionProvider,
-                permanentConsistency().build()
-        ).stateListener(stateListener).databaseCall(databaseCall).build();
+        final Connection connection = dualConnectionBuilder(connectionProvider,
+                                                            permanentConsistency()).stateListener(stateListener).databaseCall(databaseCall).build();
 
         connection.prepareStatement(SIMPLE_QUERY).executeUpdate();
         connection.getSchema();
@@ -1279,10 +1140,8 @@ public class TestDualConnection {
         when(databaseCall.call(any(), any())).thenReturn(mock(ResultSet.class));
         final StateListener stateListener =  mock(StateListener.class);
         final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
-        final Connection connection = DualConnection.builder(
-                connectionProvider,
-                permanentConsistency().build()
-        ).stateListener(stateListener).databaseCall(databaseCall).build();
+        final Connection connection = dualConnectionBuilder(connectionProvider,
+                                                            permanentConsistency()).stateListener(stateListener).databaseCall(databaseCall).build();
 
         connection.prepareStatement(SIMPLE_QUERY).executeQuery();
         verify(stateListener).transition(State.NOT_INITIALISED, State.REPLICA);
@@ -1348,10 +1207,7 @@ public class TestDualConnection {
     @Test
     public void shouldDelegateCheckIfIsWrappedForUnknownClass() throws SQLException {
         final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
-        final Connection dualConnection = DualConnection.builder(
-            connectionProvider,
-            permanentConsistency().build()
-        ).build();
+        final Connection dualConnection = dualConnectionBuilder(connectionProvider, permanentConsistency()).build();
 
         dualConnection.isWrapperFor(Integer.class);
 
@@ -1439,10 +1295,7 @@ public class TestDualConnection {
     @Test
     public void shouldSetSavepoint() throws SQLException {
         final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
-        final Connection dualConnection = DualConnection.builder(
-            connectionProvider,
-            permanentConsistency().build()
-        ).build();
+        final Connection dualConnection = dualConnectionBuilder(connectionProvider, permanentConsistency()).build();
 
         dualConnection.setSavepoint();
 
@@ -1452,10 +1305,7 @@ public class TestDualConnection {
     @Test
     public void shouldSetNamedSavepoint() throws SQLException {
         final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
-        final Connection dualConnection = DualConnection.builder(
-            connectionProvider,
-            permanentConsistency().build()
-        ).build();
+        final Connection dualConnection = dualConnectionBuilder(connectionProvider, permanentConsistency()).build();
 
         dualConnection.setSavepoint("name");
 
@@ -1465,10 +1315,7 @@ public class TestDualConnection {
     @Test
     public void shouldRollbackSavepoint() throws SQLException {
         final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
-        final Connection dualConnection = DualConnection.builder(
-            connectionProvider,
-            permanentConsistency().build()
-        ).build();
+        final Connection dualConnection = dualConnectionBuilder(connectionProvider, permanentConsistency()).build();
         final Savepoint savepoint = mock(Savepoint.class);
 
         dualConnection.rollback(savepoint);
@@ -1479,10 +1326,7 @@ public class TestDualConnection {
     @Test
     public void shouldReleaseSavepoint() throws SQLException {
         final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
-        final Connection dualConnection = DualConnection.builder(
-            connectionProvider,
-            permanentConsistency().build()
-        ).build();
+        final Connection dualConnection = dualConnectionBuilder(connectionProvider, permanentConsistency()).build();
         final Savepoint savepoint = mock(Savepoint.class);
 
         dualConnection.releaseSavepoint(savepoint);
@@ -1558,10 +1402,7 @@ public class TestDualConnection {
     @Test
     public void shouldKeepUsingReplicaAfterSettingTimeout() throws SQLException {
         final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
-        final Connection connection = DualConnection.builder(
-            connectionProvider,
-            permanentConsistency().build()
-        ).build();
+        final Connection connection = dualConnectionBuilder(connectionProvider, permanentConsistency()).build();
 
         try (Statement statement = connection.createStatement()) {
             statement.execute("set statement_timeout to 30000");
