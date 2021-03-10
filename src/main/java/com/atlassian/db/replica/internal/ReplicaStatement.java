@@ -24,7 +24,6 @@ public class ReplicaStatement implements Statement {
     private final List<StatementOperation<Statement>> batches = new ArrayList<>();
     private final ReplicaConsistency consistency;
     private final DatabaseCall databaseCall;
-    private boolean isWriteOperation = true;
     private final SqlFunction sqlFunction;
     private final DecisionAwareReference<Statement> readStatement = new DecisionAwareReference<Statement>() {
         @Override
@@ -39,8 +38,6 @@ public class ReplicaStatement implements Statement {
         }
     };
 
-    private boolean compatibleWithPreviousVersion;
-
     public ReplicaStatement(
         ReplicaConsistency consistency,
         ReplicaConnectionProvider connectionProvider,
@@ -48,8 +45,7 @@ public class ReplicaStatement implements Statement {
         Integer resultSetType,
         Integer resultSetConcurrency,
         Integer resultSetHoldability,
-        Set<String> readOnlyFunctions,
-        boolean compatibleWithPreviousVersion
+        Set<String> readOnlyFunctions
     ) {
         this.consistency = consistency;
         this.connectionProvider = connectionProvider;
@@ -58,7 +54,6 @@ public class ReplicaStatement implements Statement {
         this.resultSetConcurrency = resultSetConcurrency;
         this.resultSetHoldability = resultSetHoldability;
         this.sqlFunction = new SqlFunction(readOnlyFunctions);
-        this.compatibleWithPreviousVersion = compatibleWithPreviousVersion;
     }
 
     @Override
@@ -506,14 +501,8 @@ public class ReplicaStatement implements Statement {
 
     <T> T execute(final SqlCall<T> call, final RouteDecision routeDecision) throws SQLException {
         final T result = databaseCall.call(call, routeDecision);
-        if (compatibleWithPreviousVersion) {
-            if (routeDecision.willRunOnMain() && isWriteOperation) {
-                recordWriteAfterQueryExecution();
-            }
-        } else {
-            if (routeDecision.mustRunOnMain()) {
-                recordWriteAfterQueryExecution();
-            }
+        if (routeDecision.mustRunOnMain()) {
+            recordWriteAfterQueryExecution();
         }
         return result;
     }
@@ -551,10 +540,9 @@ public class ReplicaStatement implements Statement {
         ReplicaConnectionProvider connectionProvider,
         ReplicaConsistency consistency,
         DatabaseCall databaseCall,
-        Set<String> readOnlyFunctions,
-        boolean compatibleWithPreviousVersion
+        Set<String> readOnlyFunctions
     ) {
-        return new Builder(connectionProvider, consistency, databaseCall, readOnlyFunctions, compatibleWithPreviousVersion);
+        return new Builder(connectionProvider, consistency, databaseCall, readOnlyFunctions);
     }
 
     void recordWriteAfterQueryExecution() throws SQLException {
@@ -571,17 +559,9 @@ public class ReplicaStatement implements Statement {
             return prepareWriteStatement(decisionBuilder);
         }
         SqlQuery sqlQuery = new SqlQuery(decisionBuilder.getSql());
-        if (compatibleWithPreviousVersion) {
-            isWriteOperation = sqlQuery.isWriteOperation(sqlFunction);
-            if (isWriteOperation) {
-                decisionBuilder.reason(WRITE_OPERATION);
-                return prepareWriteStatement(decisionBuilder);
-            }
-        } else {
-            if (sqlQuery.isWriteOperation(sqlFunction)) {
-                decisionBuilder.reason(WRITE_OPERATION);
-                return prepareWriteStatement(decisionBuilder);
-            }
+        if (sqlQuery.isWriteOperation(sqlFunction)) {
+            decisionBuilder.reason(WRITE_OPERATION);
+            return prepareWriteStatement(decisionBuilder);
         }
 
         if (sqlQuery.isSelectForUpdate()) {
@@ -594,9 +574,6 @@ public class ReplicaStatement implements Statement {
     }
 
     protected Statement getWriteStatement(RouteDecisionBuilder decisionBuilder) {
-        if (compatibleWithPreviousVersion) {
-            isWriteOperation = true;
-        }
         return prepareWriteStatement(decisionBuilder);
     }
 
@@ -632,7 +609,6 @@ public class ReplicaStatement implements Statement {
         private final ReplicaConsistency consistency;
         private final DatabaseCall databaseCall;
         private final Set<String> readOnlyFunctions;
-        private final boolean compatibleWithPreviousVersion;
         private Integer resultSetType;
         private Integer resultSetConcurrency;
         private Integer resultSetHoldability;
@@ -641,14 +617,12 @@ public class ReplicaStatement implements Statement {
             ReplicaConnectionProvider connectionProvider,
             ReplicaConsistency consistency,
             DatabaseCall databaseCall,
-            Set<String> readOnlyFunctions,
-            boolean compatibleWithPreviousVersion
+            Set<String> readOnlyFunctions
         ) {
             this.connectionProvider = connectionProvider;
             this.consistency = consistency;
             this.databaseCall = databaseCall;
             this.readOnlyFunctions = readOnlyFunctions;
-            this.compatibleWithPreviousVersion = compatibleWithPreviousVersion;
         }
 
         public Builder resultSetType(int resultSetType) {
@@ -674,8 +648,8 @@ public class ReplicaStatement implements Statement {
                 resultSetType,
                 resultSetConcurrency,
                 resultSetHoldability,
-                readOnlyFunctions,
-                compatibleWithPreviousVersion);
+                readOnlyFunctions
+            );
         }
     }
 
