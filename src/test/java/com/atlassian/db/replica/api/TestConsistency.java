@@ -3,40 +3,24 @@ package com.atlassian.db.replica.api;
 import com.atlassian.db.replica.api.mocks.ConnectionProviderMock;
 import com.atlassian.db.replica.spi.ReplicaConsistency;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.util.Arrays;
-import java.util.Collection;
 
 import static com.atlassian.db.replica.api.Queries.SELECT_FOR_UPDATE;
 import static com.atlassian.db.replica.api.Queries.SIMPLE_QUERY;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
-@RunWith(Parameterized.class)
 public class TestConsistency {
-
-    @Parameterized.Parameters
-    public static Collection<Boolean> isCompatibleWithPreviousVersion() {
-        return Arrays.asList(true, false);
-    }
-
-    private final boolean shouldUseCompatibleWithPreviousVersion;
-
-    public TestConsistency(boolean shouldUseCompatibleWithPreviousVersion) {
-        this.shouldUseCompatibleWithPreviousVersion = shouldUseCompatibleWithPreviousVersion;
-    }
 
     @Test
     public void shouldRefreshCommitted() throws SQLException {
         final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
         final ReplicaConsistency consistency = mock(ReplicaConsistency.class);
         when(consistency.isConsistent(any())).thenReturn(true);
-        final Connection connection = dualConnectionBuilder(connectionProvider, consistency).build();
+        final Connection connection = DualConnection.builder(connectionProvider, consistency).build();
 
         connection.setAutoCommit(false);
         connection.prepareStatement(SIMPLE_QUERY).executeUpdate();
@@ -45,21 +29,12 @@ public class TestConsistency {
         verify(consistency).write(any());
     }
 
-    private DualConnection.Builder dualConnectionBuilder(ConnectionProviderMock connectionProvider,
-                                                         ReplicaConsistency consistency) {
-        DualConnection.Builder builder = DualConnection.builder(connectionProvider, consistency);
-        if (shouldUseCompatibleWithPreviousVersion) {
-            builder.compatibleWithPreviousVersion();
-        }
-        return builder;
-    }
-
     @Test
     public void shouldNotRefreshWhenNotCommitted() throws SQLException {
         final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
         final ReplicaConsistency consistency = mock(ReplicaConsistency.class);
         when(consistency.isConsistent(any())).thenReturn(true);
-        final Connection connection = dualConnectionBuilder(connectionProvider, consistency).build();
+        final Connection connection = DualConnection.builder(connectionProvider, consistency).build();
 
         connection.setAutoCommit(false);
         connection.prepareStatement(SIMPLE_QUERY).executeUpdate();
@@ -72,7 +47,7 @@ public class TestConsistency {
         final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
         final ReplicaConsistency consistency = mock(ReplicaConsistency.class);
         when(consistency.isConsistent(any())).thenReturn(true);
-        final Connection connection = dualConnectionBuilder(connectionProvider, consistency).build();
+        final Connection connection = DualConnection.builder(connectionProvider, consistency).build();
         connection.setAutoCommit(false);
 
         connection.prepareStatement(SIMPLE_QUERY).executeUpdate();
@@ -86,7 +61,7 @@ public class TestConsistency {
         final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
         final ReplicaConsistency consistency = mock(ReplicaConsistency.class);
         when(consistency.isConsistent(any())).thenReturn(true);
-        final Connection connection = dualConnectionBuilder(connectionProvider, consistency).build();
+        final Connection connection = DualConnection.builder(connectionProvider, consistency).build();
 
         connection.prepareStatement(SIMPLE_QUERY).executeQuery();
 
@@ -98,7 +73,7 @@ public class TestConsistency {
         final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
         final ReplicaConsistency consistency = mock(ReplicaConsistency.class);
         when(consistency.isConsistent(any())).thenReturn(true);
-        final Connection connection = dualConnectionBuilder(connectionProvider, consistency).build();
+        final Connection connection = DualConnection.builder(connectionProvider, consistency).build();
         connection.setAutoCommit(true);
 
         connection.prepareStatement(SIMPLE_QUERY).executeUpdate();
@@ -111,7 +86,7 @@ public class TestConsistency {
         final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
         final ReplicaConsistency consistency = mock(ReplicaConsistency.class);
         when(consistency.isConsistent(any())).thenReturn(true);
-        final Connection connection = dualConnectionBuilder(connectionProvider, consistency).build();
+        final Connection connection = DualConnection.builder(connectionProvider, consistency).build();
 
         connection.prepareStatement(SIMPLE_QUERY).executeUpdate();
 
@@ -123,7 +98,7 @@ public class TestConsistency {
         final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
         final ReplicaConsistency consistency = mock(ReplicaConsistency.class);
         when(consistency.isConsistent(any())).thenReturn(true);
-        final Connection connection = dualConnectionBuilder(connectionProvider, consistency).build();
+        final Connection connection = DualConnection.builder(connectionProvider, consistency).build();
 
         //noinspection SqlDialectInspection,SqlNoDataSourceInspection
         connection.prepareStatement("SELECT doSomething(1234)").executeQuery();
@@ -136,7 +111,7 @@ public class TestConsistency {
         final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
         final ReplicaConsistency consistency = mock(ReplicaConsistency.class);
         when(consistency.isConsistent(any())).thenReturn(true);
-        final Connection connection = dualConnectionBuilder(connectionProvider, consistency).build();
+        final Connection connection = DualConnection.builder(connectionProvider, consistency).build();
 
         connection.prepareStatement(SELECT_FOR_UPDATE).executeQuery();
 
@@ -148,7 +123,7 @@ public class TestConsistency {
         final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
         final ReplicaConsistency consistency = mock(ReplicaConsistency.class);
         when(consistency.isConsistent(any())).thenReturn(true);
-        final Connection connection = dualConnectionBuilder(connectionProvider, consistency).build();
+        final Connection connection = DualConnection.builder(connectionProvider, consistency).build();
 
         connection.setAutoCommit(false);
         connection.prepareStatement(SIMPLE_QUERY).executeUpdate();
@@ -162,7 +137,7 @@ public class TestConsistency {
         final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
         final ReplicaConsistency consistency = mock(ReplicaConsistency.class);
         when(consistency.isConsistent(any())).thenReturn(true);
-        final Connection connection = dualConnectionBuilder(connectionProvider, consistency).build();
+        final Connection connection = DualConnection.builder(connectionProvider, consistency).build();
 
         connection.setAutoCommit(false);
         connection.prepareStatement(SIMPLE_QUERY).executeUpdate();
@@ -175,7 +150,7 @@ public class TestConsistency {
         final ConnectionProviderMock provider = new ConnectionProviderMock(true);
         final ReplicaConsistency consistency = mock(ReplicaConsistency.class);
         when(consistency.isConsistent(any())).thenReturn(false);
-        final Connection dualConnection = dualConnectionBuilder(provider, consistency).build();
+        final Connection dualConnection = DualConnection.builder(provider,consistency).build();
 
         dualConnection.prepareStatement(SIMPLE_QUERY).executeQuery();
 
@@ -187,7 +162,7 @@ public class TestConsistency {
         final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
         final ReplicaConsistency consistency = mock(ReplicaConsistency.class);
         when(consistency.isConsistent(any())).thenReturn(false);
-        final Connection connection = dualConnectionBuilder(connectionProvider, consistency).build();
+        final Connection connection = DualConnection.builder(connectionProvider, consistency).build();
         final PreparedStatement preparedStatement = connection.prepareStatement(SIMPLE_QUERY);
 
         preparedStatement.executeQuery();
