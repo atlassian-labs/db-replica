@@ -1,6 +1,6 @@
 # Releasing
 
-## Releasing new version od db-replica
+## Releasing new version
 * A new changed merged in source
 * Release and publish a new version of library 
 * Mark release with the new version containing:
@@ -17,4 +17,3 @@ It can be used locally or in CI.
 ### GitHub Actions
 GitHub Actions use Gradle to release the library.
 A release build can be [triggered manually by "workflow dispatch"](trigger-gha-release.mp4).
-
