@@ -1,6 +1,4 @@
-package com.atlassian.db.replica.api.state;
-
-import com.atlassian.db.replica.spi.state.StateListener;
+package com.atlassian.db.replica.internal.state;
 
 public final class NoOpStateListener implements StateListener {
     @Override

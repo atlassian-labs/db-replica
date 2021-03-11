@@ -1,4 +1,4 @@
-package com.atlassian.db.replica.api.state;
+package com.atlassian.db.replica.internal.state;
 
 
 import java.util.Objects;

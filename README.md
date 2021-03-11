@@ -16,7 +16,6 @@ It integrates at the `java.sql.Connection` level, so you don't have to hunt down
 - [Configurable consistency model](docs/consistency.md).
 - [Configurable circuit breaker](src/main/java/com/atlassian/db/replica/spi/circuitbreaker/CircuitBreaker.java).
 - [Configurable main/replica split instrumentation](docs/split-instrumentation.md).
-- [Connection state change listener](src/main/java/com/atlassian/db/replica/spi/state/StateListener.java).
 
 ## Usage
 

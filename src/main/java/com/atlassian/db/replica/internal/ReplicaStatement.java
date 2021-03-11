@@ -10,7 +10,7 @@ import java.sql.*;
 import java.util.*;
 
 import static com.atlassian.db.replica.api.reason.Reason.*;
-import static com.atlassian.db.replica.api.state.State.MAIN;
+import static com.atlassian.db.replica.internal.state.State.MAIN;
 
 public class ReplicaStatement implements Statement {
     private final ReplicaConnectionProvider connectionProvider;

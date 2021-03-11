@@ -1,6 +1,4 @@
-package com.atlassian.db.replica.spi.state;
-
-import com.atlassian.db.replica.api.state.State;
+package com.atlassian.db.replica.internal.state;
 
 
 public interface StateListener {
