@@ -1,14 +1,12 @@
 package com.atlassian.db.replica.internal.state;
 
 import com.atlassian.db.replica.api.reason.RouteDecision;
-import com.atlassian.db.replica.api.state.State;
 import com.atlassian.db.replica.internal.ConnectionParameters;
 import com.atlassian.db.replica.internal.DecisionAwareReference;
 import com.atlassian.db.replica.internal.RouteDecisionBuilder;
 import com.atlassian.db.replica.internal.Warnings;
 import com.atlassian.db.replica.spi.ConnectionProvider;
 import com.atlassian.db.replica.spi.ReplicaConsistency;
-import com.atlassian.db.replica.spi.state.StateListener;
 
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -20,11 +18,11 @@ import static com.atlassian.db.replica.api.reason.Reason.MAIN_CONNECTION_REUSE;
 import static com.atlassian.db.replica.api.reason.Reason.REPLICA_INCONSISTENT;
 import static com.atlassian.db.replica.api.reason.Reason.RO_API_CALL;
 import static com.atlassian.db.replica.api.reason.Reason.RW_API_CALL;
-import static com.atlassian.db.replica.api.state.State.CLOSED;
-import static com.atlassian.db.replica.api.state.State.COMMITED_MAIN;
-import static com.atlassian.db.replica.api.state.State.MAIN;
-import static com.atlassian.db.replica.api.state.State.NOT_INITIALISED;
-import static com.atlassian.db.replica.api.state.State.REPLICA;
+import static com.atlassian.db.replica.internal.state.State.CLOSED;
+import static com.atlassian.db.replica.internal.state.State.COMMITED_MAIN;
+import static com.atlassian.db.replica.internal.state.State.MAIN;
+import static com.atlassian.db.replica.internal.state.State.NOT_INITIALISED;
+import static com.atlassian.db.replica.internal.state.State.REPLICA;
 
 public final class ConnectionState {
     private final ConnectionProvider connectionProvider;

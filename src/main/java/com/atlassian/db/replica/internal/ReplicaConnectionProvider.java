@@ -2,11 +2,11 @@ package com.atlassian.db.replica.internal;
 
 import com.atlassian.db.replica.api.reason.Reason;
 import com.atlassian.db.replica.api.reason.RouteDecision;
-import com.atlassian.db.replica.api.state.State;
+import com.atlassian.db.replica.internal.state.State;
 import com.atlassian.db.replica.internal.state.ConnectionState;
 import com.atlassian.db.replica.spi.ConnectionProvider;
 import com.atlassian.db.replica.spi.ReplicaConsistency;
-import com.atlassian.db.replica.spi.state.StateListener;
+import com.atlassian.db.replica.internal.state.StateListener;
 
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -15,8 +15,8 @@ import java.util.Map;
 import java.util.Optional;
 
 import static com.atlassian.db.replica.api.reason.Reason.RO_API_CALL;
-import static com.atlassian.db.replica.api.state.State.CLOSED;
-import static com.atlassian.db.replica.api.state.State.MAIN;
+import static com.atlassian.db.replica.internal.state.State.CLOSED;
+import static com.atlassian.db.replica.internal.state.State.MAIN;
 
 public class ReplicaConnectionProvider implements AutoCloseable {
     private final ReplicaConsistency consistency;
