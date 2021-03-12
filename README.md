@@ -14,7 +14,6 @@ It integrates at the `java.sql.Connection` level, so you don't have to hunt down
 
 - [Automatic switching between main and replica databases](docs/switching-between-main-and-replica.md).
 - [Configurable consistency model](docs/consistency.md).
-- [Configurable circuit breaker](src/main/java/com/atlassian/db/replica/spi/circuitbreaker/CircuitBreaker.java).
 - [Configurable main/replica split instrumentation](docs/split-instrumentation.md).
 
 ## Usage

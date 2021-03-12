@@ -1,13 +1,11 @@
 package com.atlassian.db.replica.internal.circuitbreaker;
 
-import com.atlassian.db.replica.api.circuitbreaker.BreakerState;
-import com.atlassian.db.replica.spi.circuitbreaker.CircuitBreaker;
 import com.atlassian.db.replica.internal.ReadReplicaUnsupportedOperationException;
 
 import java.sql.SQLFeatureNotSupportedException;
 
-import static com.atlassian.db.replica.api.circuitbreaker.BreakerState.CLOSED;
-import static com.atlassian.db.replica.api.circuitbreaker.BreakerState.OPEN;
+import static com.atlassian.db.replica.internal.circuitbreaker.BreakerState.CLOSED;
+import static com.atlassian.db.replica.internal.circuitbreaker.BreakerState.OPEN;
 
 public class BreakOnNotSupportedOperations implements CircuitBreaker {
     private static volatile BreakerState state = CLOSED;
