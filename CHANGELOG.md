@@ -27,6 +27,9 @@ Dropping a requirement of a major version of a dependency is a new contract.
 - `DualConnection.Builder.stateListener()`
 - `StateListener`
 - `State`
+- `DualConnection.Builder.circuitBreaker()`
+- `CircuitBreaker`
+- `BreakerState`
 
 ## [0.1.31] - 2021-03-10
 [0.1.31]: https://github.com/atlassian-labs/db-replica/compare/release-0.1.30...release-0.1.31

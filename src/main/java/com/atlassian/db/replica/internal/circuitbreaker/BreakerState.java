@@ -1,4 +1,4 @@
-package com.atlassian.db.replica.api.circuitbreaker;
+package com.atlassian.db.replica.internal.circuitbreaker;
 
 /**
  * States of <a href="https://www.martinfowler.com/bliki/CircuitBreaker.html">circuit breakers</a>.

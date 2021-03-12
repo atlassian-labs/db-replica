@@ -1,7 +1,6 @@
 package com.atlassian.db.replica.internal.circuitbreaker;
 
 import com.atlassian.db.replica.api.SqlCall;
-import com.atlassian.db.replica.spi.circuitbreaker.CircuitBreaker;
 
 import java.sql.SQLException;
 
