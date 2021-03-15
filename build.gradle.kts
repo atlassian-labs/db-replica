@@ -1,6 +1,7 @@
 plugins {
     `java-library`
     id("com.atlassian.performance.tools.gradle-release").version("0.7.3")
+    signing
 }
 
 tasks.wrapper {
@@ -78,3 +79,12 @@ group = "com.atlassian.db.replica"
 gradleRelease {
     atlassianPrivateMode = true
 }
+
+val useInMemoryPgpKeys = task<Task>("useInMemoryPgpKeys") {
+    val signingKeyId: String? by project
+    val signingKey: String? by project
+    val signingPassword: String? by project
+    val signingExtension = SigningExtension(project)
+    signingExtension.useInMemoryPgpKeys(signingKeyId, signingKey, signingPassword)
+}
+tasks["signMavenJavaPublication"].dependsOn(useInMemoryPgpKeys)
