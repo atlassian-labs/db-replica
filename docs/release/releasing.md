@@ -1,19 +1,17 @@
 # Releasing
+1. Ensure that the next version maintains SemVer:
+    * Check if `Unreleased` changes need a MINOR or MAJOR bump.
+    * If yes, then mark the next version as per [`gradle-release` plugin] docs.
+    * Otherwise, it will default to a PATCH bump.
+2. Release and publish a new version of library:
+    * It can be [triggered in GitHub Actions].
+    * If you want to debug it, you can run it locally as per [`gradle-release` plugin] docs.
+3. Update the repo to the new version (via pull request):
+    * Cut off the `Unreleased` section in the [changelog] with the new version.
+    * Update the version in the [readme] installation section.
+    * Clean up internal `compatibleWithPreviousVersion` usages if they exist.
 
-## Releasing new version
-* A new changed merged in source
-* Release and publish a new version of library 
-* Mark release with the new version containing:
-  * the [changelog](../../CHANGELOG.md) needs a new entry
-  * the [readme](../../README.md) installation section needs a new Maven version
-  * (optional) clean up internal `compatibleWithPreviousVersion` usages
-
-
-### Gradle
-The [`gradle-release` plugin](https://bitbucket.org/atlassian/gradle-release/src/master/README.md) is used.
-It documents how to release, publish and mark versions.
-It can be used locally or in CI.
-
-### GitHub Actions
-GitHub Actions use Gradle to release the library.
-A release build can be [triggered manually by "workflow dispatch"](trigger-gha-release.mp4).
+[changelog]: ../../CHANGELOG.md
+[readme]: ../../README.md
+[`gradle-release` plugin]: https://bitbucket.org/atlassian/gradle-release/src/master/README.md
+[triggered in GitHub Actions]: trigger-gha-release.mp4
