@@ -6,8 +6,9 @@ on:
   workflow_dispatch:
     inputs:
       release:
-        description: 'Release? yes/no'
-        default: 'no'
+        description: 'Release? Major/Minor/Patch/None'
+        required : true
+        default: 'None'
 
 jobs:
   build:
@@ -31,10 +32,11 @@ jobs:
         name: test-reports
         path: build/reports/tests
     - name: Release
-      if: github.event.inputs.release == 'yes'
+      if: github.event.inputs.release != null && github.event.inputs.release != 'None'
       env:
         atlassian_private_username: ${{ secrets.ARTIFACTORY_USERNAME }}
         atlassian_private_password: ${{ secrets.ARTIFACTORY_API_KEY }}
       run: |
+        ./gradlew markNextVersion -Prelease.incrementer=increment${{ github.event.inputs.release }} -Prelease.localOnly
         ./gradlew release -Prelease.customUsername=${{ secrets.REPOSITORY_ACCESS_TOKEN }}
         ./gradlew publish
