@@ -381,25 +381,49 @@ public final class DualConnection implements Connection {
     @Override
     public Clob createClob() throws SQLException {
         checkClosed();
-        throw new ReadReplicaUnsupportedOperationException();
+        if(compatibleWithPreviousVersion) {
+            throw new ReadReplicaUnsupportedOperationException();
+        } else {
+            return connectionProvider
+                .getWriteConnection(new RouteDecisionBuilder(Reason.RW_API_CALL))
+                .createClob();
+        }
     }
 
     @Override
     public Blob createBlob() throws SQLException {
         checkClosed();
-        throw new ReadReplicaUnsupportedOperationException();
+        if(compatibleWithPreviousVersion) {
+            throw new ReadReplicaUnsupportedOperationException();
+        } else {
+            return connectionProvider
+                .getWriteConnection(new RouteDecisionBuilder(Reason.RW_API_CALL))
+                .createBlob();
+        }
     }
 
     @Override
     public NClob createNClob() throws SQLException {
         checkClosed();
-        throw new ReadReplicaUnsupportedOperationException();
+        if(compatibleWithPreviousVersion) {
+            throw new ReadReplicaUnsupportedOperationException();
+        } else {
+            return connectionProvider
+                .getWriteConnection(new RouteDecisionBuilder(Reason.RW_API_CALL))
+                .createNClob();
+        }
     }
 
     @Override
     public SQLXML createSQLXML() throws SQLException {
         checkClosed();
-        throw new ReadReplicaUnsupportedOperationException();
+        if(compatibleWithPreviousVersion) {
+            throw new ReadReplicaUnsupportedOperationException();
+        } else {
+            return connectionProvider
+                .getWriteConnection(new RouteDecisionBuilder(Reason.RW_API_CALL))
+                .createSQLXML();
+        }
     }
 
     @Override
@@ -462,13 +486,25 @@ public final class DualConnection implements Connection {
     @Override
     public String getClientInfo(String name) throws SQLException {
         checkClosed();
-        throw new ReadReplicaUnsupportedOperationException();
+        if (compatibleWithPreviousVersion) {
+            throw new ReadReplicaUnsupportedOperationException();
+        } else {
+            return connectionProvider
+                .getWriteConnection(new RouteDecisionBuilder(Reason.RW_API_CALL))
+                .getClientInfo(name);
+        }
     }
 
     @Override
     public Properties getClientInfo() throws SQLException {
         checkClosed();
-        throw new ReadReplicaUnsupportedOperationException();
+        if (compatibleWithPreviousVersion) {
+            throw new ReadReplicaUnsupportedOperationException();
+        } else {
+            return connectionProvider
+                .getWriteConnection(new RouteDecisionBuilder(Reason.RW_API_CALL))
+                .getClientInfo();
+        }
     }
 
     @Override
@@ -482,7 +518,13 @@ public final class DualConnection implements Connection {
     @Override
     public Struct createStruct(String typeName, Object[] attributes) throws SQLException {
         checkClosed();
-        throw new ReadReplicaUnsupportedOperationException();
+        if(compatibleWithPreviousVersion) {
+            throw new ReadReplicaUnsupportedOperationException();
+        } else {
+            return connectionProvider
+            .getWriteConnection(new RouteDecisionBuilder(Reason.RW_API_CALL))
+            .createStruct(typeName, attributes);
+        }
     }
 
     @Override
@@ -523,7 +565,13 @@ public final class DualConnection implements Connection {
     @Override
     public int getNetworkTimeout() throws SQLException {
         checkClosed();
-        throw new ReadReplicaUnsupportedOperationException();
+        if(compatibleWithPreviousVersion) {
+            throw new ReadReplicaUnsupportedOperationException();
+        } else {
+            return connectionProvider
+                .getWriteConnection(new RouteDecisionBuilder(Reason.RW_API_CALL))
+                .getNetworkTimeout();
+        }
     }
 
     @Override
