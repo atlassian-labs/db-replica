@@ -1,6 +1,26 @@
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath("info.solidsoft.gradle.pitest:gradle-pitest-plugin:1.4.7")
+    }
+}
+
 plugins {
     `java-library`
     id("com.atlassian.performance.tools.gradle-release").version("0.7.3")
+    id("info.solidsoft.pitest").version("1.6.0")
+}
+
+configure<info.solidsoft.gradle.pitest.PitestPluginExtension> {
+    junit5PluginVersion.set("0.12")
+    avoidCallsTo.set(setOf("kotlin.jvm.internal", "kotlinx.coroutines"))
+    mutators.set(setOf("STRONGER"))
+    targetClasses.set(setOf("com.atlassian.db.replica.*"))
+    targetTests.set(setOf("*Test"))
+    threads.set(Runtime.getRuntime().availableProcessors())
+    outputFormats.set(setOf("XML", "HTML"))
 }
 
 tasks.wrapper {
