@@ -31,6 +31,12 @@ jobs:
       with:
         name: test-reports
         path: build/reports/tests
+    - name: Upload pitest reports
+      if: always()
+      uses: actions/upload-artifact@v2
+      with:
+        name: pitest-reports
+        path: build/reports/pitest
     - name: Release
       if: github.event.inputs.release != null && github.event.inputs.release != 'None'
       env:
