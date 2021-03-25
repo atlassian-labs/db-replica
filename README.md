@@ -60,6 +60,7 @@ See [how to release the library](docs/release/releasing.md).
 
 Run all checks: `./gradlew build`
 Run just the unit tests: `./gradlew test`
+Run mutation tests: `./gradlew pitest`
 
 ## Contributions
 

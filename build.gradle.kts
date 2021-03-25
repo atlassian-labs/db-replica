@@ -1,6 +1,16 @@
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath("info.solidsoft.gradle.pitest:gradle-pitest-plugin:1.4.7")
+    }
+}
+
 plugins {
     `java-library`
     id("com.atlassian.performance.tools.gradle-release").version("0.7.3")
+    id("info.solidsoft.pitest").version("1.6.0")
 }
 
 tasks.wrapper {
@@ -61,6 +71,12 @@ tasks.test {
     filter {
         exclude("**/*IT.class")
     }
+}
+
+tasks.withType<info.solidsoft.gradle.pitest.PitestTask> {
+    threads.set(8)
+    outputFormats.set(setOf("XML", "HTML"))
+    avoidCallsTo.set(setOf("kotlin.jvm.internal", "kotlinx.coroutines"))
 }
 
 val testIntegration = task<Test>("testIntegration") {
