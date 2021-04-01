@@ -23,6 +23,9 @@ Dropping a requirement of a major version of a dependency is a new contract.
 ## [Unreleased]
 [Unreleased]: https://github.com/atlassian-labs/db-replica/compare/release-1.1.0...master
 
+### Changed
+- `AuroraPostgresLsnReplicaConsistency` uses `aurora_replica_status()` function
+
 ## [1.1.0] - 2021-03-18
 [1.1.0]: https://github.com/atlassian-labs/db-replica/compare/release-1.0.0...release-1.1.0
 

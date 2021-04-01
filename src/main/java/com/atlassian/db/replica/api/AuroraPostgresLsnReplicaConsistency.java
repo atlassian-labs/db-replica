@@ -69,14 +69,14 @@ public final class AuroraPostgresLsnReplicaConsistency implements ReplicaConsist
      * @return LSN (log sequence number) for the main database (the highest LSN)
      */
     private long queryMainDbLsn(Connection connection) {
-        return queryLsn(connection, "SELECT MAX(durable_lsn) AS lsn FROM aurora_global_db_instance_status();");
+        return queryLsn(connection, "SELECT MAX(durable_lsn) AS lsn FROM aurora_replica_status();");
     }
 
     /**
      * @return LSN (log sequence number) for the most outdated replica database (the lowest LSN)
      */
     private long queryReplicaDbLsn(Connection connection) {
-        return queryLsn(connection, "SELECT MIN(durable_lsn) AS lsn FROM aurora_global_db_instance_status();");
+        return queryLsn(connection, "SELECT MIN(durable_lsn) AS lsn FROM aurora_replica_status();");
     }
 
     private long queryLsn(Connection connection, String rawSqlQuery) {
