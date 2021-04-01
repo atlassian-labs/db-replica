@@ -1,13 +1,16 @@
 package com.atlassian.db.replica.api;
 
 import com.atlassian.db.replica.internal.MonotonicMemoryCache;
+import com.atlassian.db.replica.internal.NoCacheSuppliedCache;
 import com.atlassian.db.replica.spi.Cache;
 import com.atlassian.db.replica.spi.ReplicaConsistency;
+import com.atlassian.db.replica.spi.SuppliedCache;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Optional;
 import java.util.function.Supplier;
 
 /**
@@ -21,9 +24,11 @@ import java.util.function.Supplier;
 public final class AuroraPostgresLsnReplicaConsistency implements ReplicaConsistency {
 
     private final Cache<Long> lastWrite;
+    private final SuppliedCache<Long> replicaLsnCache;
 
     public static final class Builder {
         private Cache<Long> lastWrite = new MonotonicMemoryCache<>();
+        private SuppliedCache<Long> replicaLsnCache = new NoCacheSuppliedCache<>();
 
         /**
          * @param lastWrite remembers last write
@@ -34,15 +39,27 @@ public final class AuroraPostgresLsnReplicaConsistency implements ReplicaConsist
         }
 
         /**
+         * @param cache remembers replica lsn (potentially stale)
+         */
+        public Builder replicaLsnCache(SuppliedCache<Long> cache) {
+            this.replicaLsnCache = cache;
+            return this;
+        }
+
+        /**
          * @return consistency assuming that LSN (log sequence number) is greater or equal to LSN for last write (if known)
          */
         public AuroraPostgresLsnReplicaConsistency build() {
-            return new AuroraPostgresLsnReplicaConsistency(lastWrite);
+            return new AuroraPostgresLsnReplicaConsistency(lastWrite, replicaLsnCache);
         }
     }
 
-    private AuroraPostgresLsnReplicaConsistency(Cache<Long> lastWrite) {
+    private AuroraPostgresLsnReplicaConsistency(
+        Cache<Long> lastWrite,
+        SuppliedCache<Long> replicaLsnCache
+    ) {
         this.lastWrite = lastWrite;
+        this.replicaLsnCache = replicaLsnCache;
     }
 
     @Override
@@ -58,11 +75,17 @@ public final class AuroraPostgresLsnReplicaConsistency implements ReplicaConsist
     public boolean isConsistent(Supplier<Connection> replica) {
         try {
             return lastWrite.get()
-                .map(lastWriteLsn -> queryReplicaDbLsn(replica.get()) >= lastWriteLsn)
+                .flatMap(lastWriteLsn -> isConsistentBasedOnLsn(replica, lastWriteLsn))
                 .orElse(false);
         } catch (Exception e) {
             return false;
         }
+    }
+
+    private Optional<Boolean> isConsistentBasedOnLsn(Supplier<Connection> replica, Long lastWriteLsn) {
+        return replicaLsnCache
+            .get(() -> queryReplicaDbLsn(replica.get()))
+            .map(lsn -> lsn >= lastWriteLsn);
     }
 
     /**
