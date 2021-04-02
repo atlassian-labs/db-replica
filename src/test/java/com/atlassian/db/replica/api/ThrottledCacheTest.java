@@ -4,6 +4,7 @@ import org.junit.Test;
 
 import java.util.ConcurrentModificationException;
 import java.util.Random;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -56,9 +57,11 @@ public class ThrottledCacheTest {
 
 
     private void asyncPutWithSlowSupplier(ThrottledCache<Long> cache, long value) throws InterruptedException {
+        final CountDownLatch asyncThreadStarted = new CountDownLatch(1);
         executor.submit(() -> {
             cache.get(() -> {
                 try {
+                    asyncThreadStarted.countDown();
                     Thread.sleep(1000);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
@@ -66,7 +69,7 @@ public class ThrottledCacheTest {
                 return value;
             });
         });
-        Thread.sleep(10);
+        asyncThreadStarted.await();
     }
 
     private Long anyValue() {
