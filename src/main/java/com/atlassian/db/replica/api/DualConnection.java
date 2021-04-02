@@ -509,7 +509,11 @@ public final class DualConnection implements Connection {
     @Override
     public void setNetworkTimeout(Executor executor, int milliseconds) throws SQLException {
         checkClosed();
-        throw new ReadReplicaUnsupportedOperationException();
+        if (compatibleWithPreviousVersion) {
+            throw new ReadReplicaUnsupportedOperationException();
+        } else {
+            connectionProvider.setNetworkTimeout(executor, milliseconds);
+        }
     }
 
     @Override

@@ -18,6 +18,7 @@ public final class ConnectionParameters {
     private Integer holdability;
     private String schema;
     private ClientInfo clientInfo;
+    private NetworkTimeout networkTimeout;
 
     public ConnectionParameters(boolean compatibleWithPreviousVersion) {
         this.compatibleWithPreviousVersion = compatibleWithPreviousVersion;
@@ -48,6 +49,9 @@ public final class ConnectionParameters {
             }
             if (clientInfo != null) {
                 clientInfo.configure(connection);
+            }
+            if (networkTimeout != null) {
+                networkTimeout.configure(connection);
             }
         }
     }
@@ -143,6 +147,13 @@ public final class ConnectionParameters {
         if (!compatibleWithPreviousVersion) {
             executeIfPresent(currentConnection, clientInfo::configure);
             this.clientInfo = clientInfo;
+        }
+    }
+
+    public void setNetworkTimeout(Supplier<Optional<Connection>> currentConnection, NetworkTimeout networkTimeout) throws SQLException {
+        if (!compatibleWithPreviousVersion) {
+            executeIfPresent(currentConnection, networkTimeout::configure);
+            this.networkTimeout = networkTimeout;
         }
     }
 
