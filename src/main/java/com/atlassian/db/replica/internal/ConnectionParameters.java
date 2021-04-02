@@ -17,6 +17,7 @@ public final class ConnectionParameters {
     private Map<String, Class<?>> typeMap;
     private Integer holdability;
     private String schema;
+    private ClientInfo clientInfo;
 
     public ConnectionParameters(boolean compatibleWithPreviousVersion) {
         this.compatibleWithPreviousVersion = compatibleWithPreviousVersion;
@@ -44,6 +45,9 @@ public final class ConnectionParameters {
         if (!compatibleWithPreviousVersion) {
             if (schema != null) {
                 connection.setSchema(schema);
+            }
+            if (clientInfo != null) {
+                clientInfo.configure(connection);
             }
         }
     }
@@ -132,6 +136,13 @@ public final class ConnectionParameters {
         if (!compatibleWithPreviousVersion) {
             executeIfPresent(currentConnection, connection -> connection.setSchema(schema));
             this.schema = schema;
+        }
+    }
+
+    public void setClientInfo(Supplier<Optional<Connection>> currentConnection, ClientInfo clientInfo) throws SQLException {
+        if (!compatibleWithPreviousVersion) {
+            executeIfPresent(currentConnection, clientInfo::configure);
+            this.clientInfo = clientInfo;
         }
     }
 

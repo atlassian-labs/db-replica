@@ -68,6 +68,10 @@ public class ReplicaConnectionProvider implements AutoCloseable {
         parameters.setSchema(state::getConnection, schema);
     }
 
+    public void setClientInfo(ClientInfo clientInfo) throws SQLException {
+        parameters.setClientInfo(state::getConnection, clientInfo);
+    }
+
     public boolean getAutoCommit() {
         return parameters.isAutoCommit();
     }

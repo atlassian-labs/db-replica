@@ -1,8 +1,7 @@
 package com.atlassian.db.replica.api;
 
-import com.atlassian.db.replica.internal.circuitbreaker.BreakerState;
 import com.atlassian.db.replica.api.reason.Reason;
-import com.atlassian.db.replica.internal.state.NoOpStateListener;
+import com.atlassian.db.replica.internal.ClientInfo;
 import com.atlassian.db.replica.internal.ForwardCall;
 import com.atlassian.db.replica.internal.ReadReplicaUnsupportedOperationException;
 import com.atlassian.db.replica.internal.ReplicaCallableStatement;
@@ -13,11 +12,13 @@ import com.atlassian.db.replica.internal.RouteDecisionBuilder;
 import com.atlassian.db.replica.internal.circuitbreaker.BreakOnNotSupportedOperations;
 import com.atlassian.db.replica.internal.circuitbreaker.BreakerConnection;
 import com.atlassian.db.replica.internal.circuitbreaker.BreakerHandler;
+import com.atlassian.db.replica.internal.circuitbreaker.BreakerState;
+import com.atlassian.db.replica.internal.circuitbreaker.CircuitBreaker;
+import com.atlassian.db.replica.internal.state.NoOpStateListener;
+import com.atlassian.db.replica.internal.state.StateListener;
 import com.atlassian.db.replica.spi.ConnectionProvider;
 import com.atlassian.db.replica.spi.DatabaseCall;
 import com.atlassian.db.replica.spi.ReplicaConsistency;
-import com.atlassian.db.replica.internal.circuitbreaker.CircuitBreaker;
-import com.atlassian.db.replica.internal.state.StateListener;
 
 import java.sql.Array;
 import java.sql.Blob;
@@ -418,7 +419,18 @@ public final class DualConnection implements Connection {
             failures.put(name, ClientInfoStatus.REASON_UNKNOWN);
             throw new SQLClientInfoException(CONNECTION_CLOSED_MESSAGE, failures, cause);
         }
-        throw new ReadReplicaUnsupportedOperationException();
+        if (compatibleWithPreviousVersion) {
+            throw new ReadReplicaUnsupportedOperationException();
+        } else {
+            try {
+                connectionProvider.setClientInfo(new ClientInfo(name, value));
+            } catch (SQLException cause) {
+                final Map<String, ClientInfoStatus> failures = new HashMap<>();
+                failures.put(name, ClientInfoStatus.REASON_UNKNOWN);
+                throw new SQLClientInfoException(CONNECTION_CLOSED_MESSAGE, failures, cause);
+            }
+
+        }
     }
 
     @Override
@@ -432,7 +444,19 @@ public final class DualConnection implements Connection {
             }
             throw new SQLClientInfoException(CONNECTION_CLOSED_MESSAGE, failures, cause);
         }
-        throw new ReadReplicaUnsupportedOperationException();
+        if (compatibleWithPreviousVersion) {
+            throw new ReadReplicaUnsupportedOperationException();
+        } else {
+            try {
+                connectionProvider.setClientInfo(new ClientInfo(properties));
+            } catch (SQLException cause) {
+                final Map<String, ClientInfoStatus> failures = new HashMap<>();
+                for (Map.Entry<Object, Object> e : properties.entrySet()) {
+                    failures.put((String) e.getKey(), ClientInfoStatus.REASON_UNKNOWN);
+                }
+                throw new SQLClientInfoException(CONNECTION_CLOSED_MESSAGE, failures, cause);
+            }
+        }
     }
 
     @Override
