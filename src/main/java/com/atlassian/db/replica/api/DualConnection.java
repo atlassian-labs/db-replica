@@ -502,8 +502,12 @@ public final class DualConnection implements Connection {
     }
 
     @Override
-    public void abort(Executor executor) {
-        throw new ReadReplicaUnsupportedOperationException();
+    public void abort(Executor executor) throws SQLException {
+        if (compatibleWithPreviousVersion) {
+            throw new ReadReplicaUnsupportedOperationException();
+        } else {
+            connectionProvider.abort(executor);
+        }
     }
 
     @Override

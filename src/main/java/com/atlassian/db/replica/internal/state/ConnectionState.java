@@ -12,6 +12,7 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.SQLWarning;
 import java.util.Optional;
+import java.util.concurrent.Executor;
 
 import static com.atlassian.db.replica.api.reason.Reason.HIGH_TRANSACTION_ISOLATION_LEVEL;
 import static com.atlassian.db.replica.api.reason.Reason.MAIN_CONNECTION_REUSE;
@@ -164,6 +165,14 @@ public final class ConnectionState {
         final State stateAfter = getState();
         if (!stateAfter.equals(state)) {
             stateListener.transition(state, stateAfter);
+        }
+    }
+
+    public void abort(Executor executor) throws SQLException {
+        isClosed = true;
+        final Optional<Connection> connection = getConnection();
+        if (connection.isPresent()) {
+            connection.get().abort(executor);
         }
     }
 

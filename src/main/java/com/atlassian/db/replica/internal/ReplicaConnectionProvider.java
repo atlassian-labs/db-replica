@@ -184,4 +184,8 @@ public class ReplicaConnectionProvider implements AutoCloseable {
     public void close() throws SQLException {
         state.close();
     }
+
+    public void abort(Executor executor) throws SQLException {
+        state.abort(executor);
+    }
 }
