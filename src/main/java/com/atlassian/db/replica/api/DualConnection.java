@@ -64,7 +64,12 @@ public final class DualConnection implements Connection {
         Set<String> readOnlyFunctions,
         boolean compatibleWithPreviousVersion
     ) {
-        this.connectionProvider = new ReplicaConnectionProvider(connectionProvider, consistency, stateListener);
+        this.connectionProvider = new ReplicaConnectionProvider(
+            connectionProvider,
+            consistency,
+            stateListener,
+            compatibleWithPreviousVersion
+        );
         this.consistency = consistency;
         this.databaseCall = databaseCall;
         this.readOnlyFunctions = readOnlyFunctions;
@@ -459,7 +464,11 @@ public final class DualConnection implements Connection {
     @Override
     public void setSchema(String schema) throws SQLException {
         checkClosed();
-        throw new ReadReplicaUnsupportedOperationException();
+        if(compatibleWithPreviousVersion) {
+            throw new ReadReplicaUnsupportedOperationException();
+        }else{
+            connectionProvider.setSchema(schema);
+        }
     }
 
     @Override

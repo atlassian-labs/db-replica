@@ -27,9 +27,10 @@ public class ReplicaConnectionProvider implements AutoCloseable {
     public ReplicaConnectionProvider(
         ConnectionProvider connectionProvider,
         ReplicaConsistency consistency,
-        StateListener stateListener
+        StateListener stateListener,
+        boolean compatibleWithPreviousVersion
     ) {
-        this.parameters = new ConnectionParameters();
+        this.parameters = new ConnectionParameters(compatibleWithPreviousVersion);
         this.warnings = new Warnings();
         this.state = new ConnectionState(connectionProvider, consistency, parameters, warnings, stateListener);
         this.consistency = consistency;
@@ -61,6 +62,10 @@ public class ReplicaConnectionProvider implements AutoCloseable {
         if (autoCommitBefore != getAutoCommit()) {
             recordCommit(autoCommitBefore);
         }
+    }
+
+    public void setSchema(String schema) throws SQLException {
+        parameters.setSchema(state::getConnection, schema);
     }
 
     public boolean getAutoCommit() {

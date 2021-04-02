@@ -9,13 +9,18 @@ import java.util.Optional;
 import java.util.function.Supplier;
 
 public final class ConnectionParameters {
-
+    private final boolean compatibleWithPreviousVersion;
     private Boolean isAutoCommit;
     private Boolean readOnly;
     private Integer transactionIsolation;
     private String catalog;
     private Map<String, Class<?>> typeMap;
     private Integer holdability;
+    private String schema;
+
+    public ConnectionParameters(boolean compatibleWithPreviousVersion) {
+        this.compatibleWithPreviousVersion = compatibleWithPreviousVersion;
+    }
 
     public void initialize(Connection connection) throws SQLException {
         if (isAutoCommit != null) {
@@ -35,6 +40,11 @@ public final class ConnectionParameters {
         }
         if (readOnly != null) {
             connection.setReadOnly(readOnly);
+        }
+        if (!compatibleWithPreviousVersion) {
+            if (schema != null) {
+                connection.setSchema(schema);
+            }
         }
     }
 
@@ -114,15 +124,27 @@ public final class ConnectionParameters {
         }
     }
 
+    public String getSchema() {
+        return schema;
+    }
+
+    public void setSchema(Supplier<Optional<Connection>> currentConnection, String schema) throws SQLException {
+        if (!compatibleWithPreviousVersion) {
+            executeIfPresent(currentConnection, connection -> connection.setSchema(schema));
+            this.schema = schema;
+        }
+    }
+
     @Override
     public String toString() {
         return "ConnectionParameters{" +
             "isAutoCommit=" + isAutoCommit +
-            ", isReadOnly=" + readOnly +
+            ", readOnly=" + readOnly +
             ", transactionIsolation=" + transactionIsolation +
             ", catalog='" + catalog + '\'' +
             ", typeMap=" + typeMap +
             ", holdability=" + holdability +
+            ", schema='" + schema + '\'' +
             '}';
     }
 }
