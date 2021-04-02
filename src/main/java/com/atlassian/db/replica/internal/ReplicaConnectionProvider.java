@@ -2,17 +2,18 @@ package com.atlassian.db.replica.internal;
 
 import com.atlassian.db.replica.api.reason.Reason;
 import com.atlassian.db.replica.api.reason.RouteDecision;
-import com.atlassian.db.replica.internal.state.State;
 import com.atlassian.db.replica.internal.state.ConnectionState;
+import com.atlassian.db.replica.internal.state.State;
+import com.atlassian.db.replica.internal.state.StateListener;
 import com.atlassian.db.replica.spi.ConnectionProvider;
 import com.atlassian.db.replica.spi.ReplicaConsistency;
-import com.atlassian.db.replica.internal.state.StateListener;
 
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.SQLWarning;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.Executor;
 
 import static com.atlassian.db.replica.api.reason.Reason.RO_API_CALL;
 import static com.atlassian.db.replica.internal.state.State.CLOSED;
@@ -70,6 +71,10 @@ public class ReplicaConnectionProvider implements AutoCloseable {
 
     public void setClientInfo(ClientInfo clientInfo) throws SQLException {
         parameters.setClientInfo(state::getConnection, clientInfo);
+    }
+
+    public void setNetworkTimeout(Executor executor, int milliseconds) throws SQLException {
+        parameters.setNetworkTimeout(state::getConnection,new NetworkTimeout(executor,milliseconds));
     }
 
     public boolean getAutoCommit() {
