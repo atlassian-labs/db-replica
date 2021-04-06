@@ -9,7 +9,6 @@ import java.util.Optional;
 import java.util.function.Supplier;
 
 public final class ConnectionParameters {
-    private final boolean compatibleWithPreviousVersion;
     private Boolean isAutoCommit;
     private Boolean readOnly;
     private Integer transactionIsolation;
@@ -19,10 +18,6 @@ public final class ConnectionParameters {
     private String schema;
     private ClientInfo clientInfo;
     private NetworkTimeout networkTimeout;
-
-    public ConnectionParameters(boolean compatibleWithPreviousVersion) {
-        this.compatibleWithPreviousVersion = compatibleWithPreviousVersion;
-    }
 
     public void initialize(Connection connection) throws SQLException {
         if (isAutoCommit != null) {
@@ -43,16 +38,14 @@ public final class ConnectionParameters {
         if (readOnly != null) {
             connection.setReadOnly(readOnly);
         }
-        if (!compatibleWithPreviousVersion) {
-            if (schema != null) {
-                connection.setSchema(schema);
-            }
-            if (clientInfo != null) {
-                clientInfo.configure(connection);
-            }
-            if (networkTimeout != null) {
-                networkTimeout.configure(connection);
-            }
+        if (schema != null) {
+            connection.setSchema(schema);
+        }
+        if (clientInfo != null) {
+            clientInfo.configure(connection);
+        }
+        if (networkTimeout != null) {
+            networkTimeout.configure(connection);
         }
     }
 
@@ -137,24 +130,24 @@ public final class ConnectionParameters {
     }
 
     public void setSchema(Supplier<Optional<Connection>> currentConnection, String schema) throws SQLException {
-        if (!compatibleWithPreviousVersion) {
-            executeIfPresent(currentConnection, connection -> connection.setSchema(schema));
-            this.schema = schema;
-        }
+        executeIfPresent(currentConnection, connection -> connection.setSchema(schema));
+        this.schema = schema;
     }
 
-    public void setClientInfo(Supplier<Optional<Connection>> currentConnection, ClientInfo clientInfo) throws SQLException {
-        if (!compatibleWithPreviousVersion) {
-            executeIfPresent(currentConnection, clientInfo::configure);
-            this.clientInfo = clientInfo;
-        }
+    public void setClientInfo(
+        Supplier<Optional<Connection>> currentConnection,
+        ClientInfo clientInfo
+    ) throws SQLException {
+        executeIfPresent(currentConnection, clientInfo::configure);
+        this.clientInfo = clientInfo;
     }
 
-    public void setNetworkTimeout(Supplier<Optional<Connection>> currentConnection, NetworkTimeout networkTimeout) throws SQLException {
-        if (!compatibleWithPreviousVersion) {
-            executeIfPresent(currentConnection, networkTimeout::configure);
-            this.networkTimeout = networkTimeout;
-        }
+    public void setNetworkTimeout(
+        Supplier<Optional<Connection>> currentConnection,
+        NetworkTimeout networkTimeout
+    ) throws SQLException {
+        executeIfPresent(currentConnection, networkTimeout::configure);
+        this.networkTimeout = networkTimeout;
     }
 
     @Override

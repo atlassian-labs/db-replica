@@ -3,7 +3,6 @@ package com.atlassian.db.replica.api;
 import com.atlassian.db.replica.api.reason.Reason;
 import com.atlassian.db.replica.internal.ClientInfo;
 import com.atlassian.db.replica.internal.ForwardCall;
-import com.atlassian.db.replica.internal.ReadReplicaUnsupportedOperationException;
 import com.atlassian.db.replica.internal.ReplicaCallableStatement;
 import com.atlassian.db.replica.internal.ReplicaConnectionProvider;
 import com.atlassian.db.replica.internal.ReplicaPreparedStatement;
@@ -68,8 +67,7 @@ public final class DualConnection implements Connection {
         this.connectionProvider = new ReplicaConnectionProvider(
             connectionProvider,
             consistency,
-            stateListener,
-            compatibleWithPreviousVersion
+            stateListener
         );
         this.consistency = consistency;
         this.databaseCall = databaseCall;
@@ -381,49 +379,33 @@ public final class DualConnection implements Connection {
     @Override
     public Clob createClob() throws SQLException {
         checkClosed();
-        if(compatibleWithPreviousVersion) {
-            throw new ReadReplicaUnsupportedOperationException();
-        } else {
-            return connectionProvider
-                .getWriteConnection(new RouteDecisionBuilder(Reason.RW_API_CALL))
-                .createClob();
-        }
+        return connectionProvider
+            .getWriteConnection(new RouteDecisionBuilder(Reason.RW_API_CALL))
+            .createClob();
     }
 
     @Override
     public Blob createBlob() throws SQLException {
         checkClosed();
-        if(compatibleWithPreviousVersion) {
-            throw new ReadReplicaUnsupportedOperationException();
-        } else {
-            return connectionProvider
-                .getWriteConnection(new RouteDecisionBuilder(Reason.RW_API_CALL))
-                .createBlob();
-        }
+        return connectionProvider
+            .getWriteConnection(new RouteDecisionBuilder(Reason.RW_API_CALL))
+            .createBlob();
     }
 
     @Override
     public NClob createNClob() throws SQLException {
         checkClosed();
-        if(compatibleWithPreviousVersion) {
-            throw new ReadReplicaUnsupportedOperationException();
-        } else {
-            return connectionProvider
-                .getWriteConnection(new RouteDecisionBuilder(Reason.RW_API_CALL))
-                .createNClob();
-        }
+        return connectionProvider
+            .getWriteConnection(new RouteDecisionBuilder(Reason.RW_API_CALL))
+            .createNClob();
     }
 
     @Override
     public SQLXML createSQLXML() throws SQLException {
         checkClosed();
-        if(compatibleWithPreviousVersion) {
-            throw new ReadReplicaUnsupportedOperationException();
-        } else {
-            return connectionProvider
-                .getWriteConnection(new RouteDecisionBuilder(Reason.RW_API_CALL))
-                .createSQLXML();
-        }
+        return connectionProvider
+            .getWriteConnection(new RouteDecisionBuilder(Reason.RW_API_CALL))
+            .createSQLXML();
     }
 
     @Override
@@ -443,18 +425,14 @@ public final class DualConnection implements Connection {
             failures.put(name, ClientInfoStatus.REASON_UNKNOWN);
             throw new SQLClientInfoException(CONNECTION_CLOSED_MESSAGE, failures, cause);
         }
-        if (compatibleWithPreviousVersion) {
-            throw new ReadReplicaUnsupportedOperationException();
-        } else {
-            try {
-                connectionProvider.setClientInfo(new ClientInfo(name, value));
-            } catch (SQLException cause) {
-                final Map<String, ClientInfoStatus> failures = new HashMap<>();
-                failures.put(name, ClientInfoStatus.REASON_UNKNOWN);
-                throw new SQLClientInfoException(CONNECTION_CLOSED_MESSAGE, failures, cause);
-            }
-
+        try {
+            connectionProvider.setClientInfo(new ClientInfo(name, value));
+        } catch (SQLException cause) {
+            final Map<String, ClientInfoStatus> failures = new HashMap<>();
+            failures.put(name, ClientInfoStatus.REASON_UNKNOWN);
+            throw new SQLClientInfoException(CONNECTION_CLOSED_MESSAGE, failures, cause);
         }
+
     }
 
     @Override
@@ -468,43 +446,31 @@ public final class DualConnection implements Connection {
             }
             throw new SQLClientInfoException(CONNECTION_CLOSED_MESSAGE, failures, cause);
         }
-        if (compatibleWithPreviousVersion) {
-            throw new ReadReplicaUnsupportedOperationException();
-        } else {
-            try {
-                connectionProvider.setClientInfo(new ClientInfo(properties));
-            } catch (SQLException cause) {
-                final Map<String, ClientInfoStatus> failures = new HashMap<>();
-                for (Map.Entry<Object, Object> e : properties.entrySet()) {
-                    failures.put((String) e.getKey(), ClientInfoStatus.REASON_UNKNOWN);
-                }
-                throw new SQLClientInfoException(CONNECTION_CLOSED_MESSAGE, failures, cause);
+        try {
+            connectionProvider.setClientInfo(new ClientInfo(properties));
+        } catch (SQLException cause) {
+            final Map<String, ClientInfoStatus> failures = new HashMap<>();
+            for (Map.Entry<Object, Object> e : properties.entrySet()) {
+                failures.put((String) e.getKey(), ClientInfoStatus.REASON_UNKNOWN);
             }
+            throw new SQLClientInfoException(CONNECTION_CLOSED_MESSAGE, failures, cause);
         }
     }
 
     @Override
     public String getClientInfo(String name) throws SQLException {
         checkClosed();
-        if (compatibleWithPreviousVersion) {
-            throw new ReadReplicaUnsupportedOperationException();
-        } else {
-            return connectionProvider
-                .getWriteConnection(new RouteDecisionBuilder(Reason.RW_API_CALL))
-                .getClientInfo(name);
-        }
+        return connectionProvider
+            .getWriteConnection(new RouteDecisionBuilder(Reason.RW_API_CALL))
+            .getClientInfo(name);
     }
 
     @Override
     public Properties getClientInfo() throws SQLException {
         checkClosed();
-        if (compatibleWithPreviousVersion) {
-            throw new ReadReplicaUnsupportedOperationException();
-        } else {
-            return connectionProvider
-                .getWriteConnection(new RouteDecisionBuilder(Reason.RW_API_CALL))
-                .getClientInfo();
-        }
+        return connectionProvider
+            .getWriteConnection(new RouteDecisionBuilder(Reason.RW_API_CALL))
+            .getClientInfo();
     }
 
     @Override
@@ -518,23 +484,15 @@ public final class DualConnection implements Connection {
     @Override
     public Struct createStruct(String typeName, Object[] attributes) throws SQLException {
         checkClosed();
-        if(compatibleWithPreviousVersion) {
-            throw new ReadReplicaUnsupportedOperationException();
-        } else {
-            return connectionProvider
+        return connectionProvider
             .getWriteConnection(new RouteDecisionBuilder(Reason.RW_API_CALL))
             .createStruct(typeName, attributes);
-        }
     }
 
     @Override
     public void setSchema(String schema) throws SQLException {
         checkClosed();
-        if(compatibleWithPreviousVersion) {
-            throw new ReadReplicaUnsupportedOperationException();
-        }else{
-            connectionProvider.setSchema(schema);
-        }
+        connectionProvider.setSchema(schema);
     }
 
     @Override
@@ -545,33 +503,21 @@ public final class DualConnection implements Connection {
 
     @Override
     public void abort(Executor executor) throws SQLException {
-        if (compatibleWithPreviousVersion) {
-            throw new ReadReplicaUnsupportedOperationException();
-        } else {
-            connectionProvider.abort(executor);
-        }
+        connectionProvider.abort(executor);
     }
 
     @Override
     public void setNetworkTimeout(Executor executor, int milliseconds) throws SQLException {
         checkClosed();
-        if (compatibleWithPreviousVersion) {
-            throw new ReadReplicaUnsupportedOperationException();
-        } else {
-            connectionProvider.setNetworkTimeout(executor, milliseconds);
-        }
+        connectionProvider.setNetworkTimeout(executor, milliseconds);
     }
 
     @Override
     public int getNetworkTimeout() throws SQLException {
         checkClosed();
-        if(compatibleWithPreviousVersion) {
-            throw new ReadReplicaUnsupportedOperationException();
-        } else {
-            return connectionProvider
-                .getWriteConnection(new RouteDecisionBuilder(Reason.RW_API_CALL))
-                .getNetworkTimeout();
-        }
+        return connectionProvider
+            .getWriteConnection(new RouteDecisionBuilder(Reason.RW_API_CALL))
+            .getNetworkTimeout();
     }
 
     @Override
@@ -642,10 +588,9 @@ public final class DualConnection implements Connection {
         /**
          * Puts this connection in compatibility mode with a previous version. Developers can use this method to
          * roll out the new version of the library with a feature flag.
-         *
+         * <p>
          * It's best-effort, and there's no guarantee the library in compatibility mode will always behave
          * the same way as the previous version of the library.
-         *
          */
         public DualConnection.Builder compatibleWithPreviousVersion() {
             this.compatibleWithPreviousVersion = true;
