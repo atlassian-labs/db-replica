@@ -1,6 +1,16 @@
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath("info.solidsoft.gradle.pitest:gradle-pitest-plugin:1.4.7")
+    }
+}
+
 plugins {
     `java-library`
     id("com.atlassian.performance.tools.gradle-release").version("0.7.3")
+    id("info.solidsoft.pitest").version("1.6.0")
 }
 
 tasks.wrapper {
@@ -63,6 +73,12 @@ tasks.test {
     }
 }
 
+val pitest = tasks.withType<info.solidsoft.gradle.pitest.PitestTask> {
+    threads.set(12)
+    outputFormats.set(setOf("XML", "HTML"))
+    avoidCallsTo.set(setOf("kotlin.jvm.internal", "kotlinx.coroutines"))
+}
+
 val testIntegration = task<Test>("testIntegration") {
     filter {
         include("**/*IT.class")
@@ -72,6 +88,7 @@ val testIntegration = task<Test>("testIntegration") {
 }
 
 tasks["check"].dependsOn(testIntegration)
+tasks["check"].dependsOn(pitest)
 
 group = "com.atlassian.db.replica"
 
