@@ -23,6 +23,9 @@ Dropping a requirement of a major version of a dependency is a new contract.
 ## [Unreleased]
 [Unreleased]: https://github.com/atlassian-labs/db-replica/compare/release-1.2.0...master
 
+## [1.2.2] - 2021-04-06
+[1.2.2]: https://github.com/atlassian-labs/db-replica/compare/release-1.2.0...release-1.2.2
+
 ### Fixed
 - Implemented missing methods in `DualConnection`
 

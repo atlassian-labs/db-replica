@@ -28,10 +28,9 @@ public class ReplicaConnectionProvider implements AutoCloseable {
     public ReplicaConnectionProvider(
         ConnectionProvider connectionProvider,
         ReplicaConsistency consistency,
-        StateListener stateListener,
-        boolean compatibleWithPreviousVersion
+        StateListener stateListener
     ) {
-        this.parameters = new ConnectionParameters(compatibleWithPreviousVersion);
+        this.parameters = new ConnectionParameters();
         this.warnings = new Warnings();
         this.state = new ConnectionState(connectionProvider, consistency, parameters, warnings, stateListener);
         this.consistency = consistency;
@@ -74,7 +73,7 @@ public class ReplicaConnectionProvider implements AutoCloseable {
     }
 
     public void setNetworkTimeout(Executor executor, int milliseconds) throws SQLException {
-        parameters.setNetworkTimeout(state::getConnection,new NetworkTimeout(executor,milliseconds));
+        parameters.setNetworkTimeout(state::getConnection, new NetworkTimeout(executor, milliseconds));
     }
 
     public boolean getAutoCommit() {
