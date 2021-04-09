@@ -35,28 +35,8 @@ public final class ConnectionState {
     private final StateListener stateListener;
     private volatile boolean replicaConsistent = true;
     private final boolean compatibleWithPreviousVersion;
-
-    private final DecisionAwareReference<Connection> readConnection = new DecisionAwareReference<Connection>() {
-        @Override
-        public Connection create() throws SQLException {
-            if (connectionProvider.isReplicaAvailable()) {
-                final Connection replicaConnection = connectionProvider.getReplicaConnection();
-                parameters.initialize(replicaConnection);
-                return replicaConnection;
-            } else {
-                return getWriteConnection(getFirstCause());
-            }
-        }
-    };
-
-    private final DecisionAwareReference<Connection> writeConnection = new DecisionAwareReference<Connection>() {
-        @Override
-        public Connection create() throws SQLException {
-            final Connection mainConnection = connectionProvider.getMainConnection();
-            parameters.initialize(mainConnection);
-            return mainConnection;
-        }
-    };
+    private final DecisionAwareReference<Connection> readConnection;
+    private final DecisionAwareReference<Connection> writeConnection;
 
     public ConnectionState(
         ConnectionProvider connectionProvider,
@@ -71,6 +51,26 @@ public final class ConnectionState {
         this.parameters = parameters;
         this.warnings = warnings;
         this.stateListener = stateListener;
+        this.readConnection = new DecisionAwareReference<Connection>(compatibleWithPreviousVersion) {
+            @Override
+            public Connection create() throws SQLException {
+                if (connectionProvider.isReplicaAvailable()) {
+                    final Connection replicaConnection = connectionProvider.getReplicaConnection();
+                    parameters.initialize(replicaConnection);
+                    return replicaConnection;
+                } else {
+                    return getWriteConnection(getFirstCause());
+                }
+            }
+        };
+        this.writeConnection = new DecisionAwareReference<Connection>(compatibleWithPreviousVersion) {
+            @Override
+            public Connection create() throws SQLException {
+                final Connection mainConnection = connectionProvider.getMainConnection();
+                parameters.initialize(mainConnection);
+                return mainConnection;
+            }
+        };
         this.compatibleWithPreviousVersion = compatibleWithPreviousVersion;
     }
 

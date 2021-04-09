@@ -37,18 +37,8 @@ public class ReplicaStatement implements Statement {
     private final ReplicaConsistency consistency;
     private final DatabaseCall databaseCall;
     private final SqlFunction sqlFunction;
-    private final DecisionAwareReference<Statement> readStatement = new DecisionAwareReference<Statement>() {
-        @Override
-        public Statement create() throws Exception {
-            return createStatement(connectionProvider.getReadConnection(getFirstCause()));
-        }
-    };
-    private final DecisionAwareReference<Statement> writeStatement = new DecisionAwareReference<Statement>() {
-        @Override
-        public Statement create() throws Exception {
-            return createStatement(connectionProvider.getWriteConnection(getFirstCause()));
-        }
-    };
+    private final DecisionAwareReference<Statement> readStatement;
+    private final DecisionAwareReference<Statement> writeStatement;
 
     public ReplicaStatement(
         ReplicaConsistency consistency,
@@ -57,7 +47,8 @@ public class ReplicaStatement implements Statement {
         Integer resultSetType,
         Integer resultSetConcurrency,
         Integer resultSetHoldability,
-        Set<String> readOnlyFunctions
+        Set<String> readOnlyFunctions,
+        boolean compatibleWithPreviousVersion
     ) {
         this.consistency = consistency;
         this.connectionProvider = connectionProvider;
@@ -66,6 +57,18 @@ public class ReplicaStatement implements Statement {
         this.resultSetConcurrency = resultSetConcurrency;
         this.resultSetHoldability = resultSetHoldability;
         this.sqlFunction = new SqlFunction(readOnlyFunctions);
+        readStatement = new DecisionAwareReference<Statement>(compatibleWithPreviousVersion) {
+            @Override
+            public Statement create() throws Exception {
+                return createStatement(connectionProvider.getReadConnection(getFirstCause()));
+            }
+        };
+        writeStatement = new DecisionAwareReference<Statement>(compatibleWithPreviousVersion) {
+            @Override
+            public Statement create() throws Exception {
+                return createStatement(connectionProvider.getWriteConnection(getFirstCause()));
+            }
+        };
     }
 
     @Override
@@ -548,9 +551,16 @@ public class ReplicaStatement implements Statement {
         ReplicaConnectionProvider connectionProvider,
         ReplicaConsistency consistency,
         DatabaseCall databaseCall,
-        Set<String> readOnlyFunctions
+        Set<String> readOnlyFunctions,
+        boolean compatibleWithPreviousVersion
     ) {
-        return new Builder(connectionProvider, consistency, databaseCall, readOnlyFunctions);
+        return new Builder(
+            connectionProvider,
+            consistency,
+            databaseCall,
+            readOnlyFunctions,
+            compatibleWithPreviousVersion
+        );
     }
 
     void recordWriteAfterQueryExecution() throws SQLException {
@@ -619,6 +629,7 @@ public class ReplicaStatement implements Statement {
         private final ReplicaConsistency consistency;
         private final DatabaseCall databaseCall;
         private final Set<String> readOnlyFunctions;
+        private final boolean compatibleWithPreviousVersion;
         private Integer resultSetType;
         private Integer resultSetConcurrency;
         private Integer resultSetHoldability;
@@ -627,12 +638,14 @@ public class ReplicaStatement implements Statement {
             ReplicaConnectionProvider connectionProvider,
             ReplicaConsistency consistency,
             DatabaseCall databaseCall,
-            Set<String> readOnlyFunctions
+            Set<String> readOnlyFunctions,
+            boolean compatibleWithPreviousVersion
         ) {
             this.connectionProvider = connectionProvider;
             this.consistency = consistency;
             this.databaseCall = databaseCall;
             this.readOnlyFunctions = readOnlyFunctions;
+            this.compatibleWithPreviousVersion = compatibleWithPreviousVersion;
         }
 
         public Builder resultSetType(int resultSetType) {
@@ -658,7 +671,8 @@ public class ReplicaStatement implements Statement {
                 resultSetType,
                 resultSetConcurrency,
                 resultSetHoldability,
-                readOnlyFunctions
+                readOnlyFunctions,
+                compatibleWithPreviousVersion
             );
         }
     }

@@ -5,6 +5,10 @@ import java.util.concurrent.atomic.AtomicReference;
 public abstract class DecisionAwareReference<T> extends LazyReference<T> {
     private final AtomicReference<RouteDecisionBuilder> firstCause = new AtomicReference<>();
 
+    public DecisionAwareReference(boolean compatibleWithPreviousVersion) {
+        super(compatibleWithPreviousVersion);
+    }
+
     public T get(RouteDecisionBuilder currentCause) {
         firstCause.compareAndSet(null, currentCause);
         return super.get();

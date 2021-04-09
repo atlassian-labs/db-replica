@@ -33,7 +33,12 @@ public class ReplicaConnectionProvider implements AutoCloseable {
     ) {
         this.parameters = new ConnectionParameters();
         this.warnings = new Warnings();
-        this.state = new ConnectionState(connectionProvider, consistency, parameters, warnings, stateListener,
+        this.state = new ConnectionState(
+            connectionProvider,
+            consistency,
+            parameters,
+            warnings,
+            stateListener,
             compatibleWithPreviousVersion
         );
         this.consistency = consistency;

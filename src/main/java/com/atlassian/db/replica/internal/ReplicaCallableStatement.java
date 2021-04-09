@@ -38,7 +38,8 @@ public class ReplicaCallableStatement extends ReplicaPreparedStatement implement
         Integer resultSetType,
         Integer resultSetConcurrency,
         Integer resultSetHoldability,
-        Set<String> readOnlyFunctions
+        Set<String> readOnlyFunctions,
+        boolean compatibleWithPreviousVersion
     ) {
         super(
             connectionProvider,
@@ -48,7 +49,8 @@ public class ReplicaCallableStatement extends ReplicaPreparedStatement implement
             resultSetType,
             resultSetConcurrency,
             resultSetHoldability,
-            readOnlyFunctions
+            readOnlyFunctions,
+            compatibleWithPreviousVersion
         );
         this.sql = sql;
         this.resultSetType = resultSetType;
@@ -637,6 +639,7 @@ public class ReplicaCallableStatement extends ReplicaPreparedStatement implement
         private final DatabaseCall databaseCall;
         private final String sql;
         private final Set<String> readOnlyFunctions;
+        private final boolean compatibleWithPreviousVersion;
         private Integer resultSetType;
         private Integer resultSetConcurrency;
         private Integer resultSetHoldability;
@@ -646,13 +649,15 @@ public class ReplicaCallableStatement extends ReplicaPreparedStatement implement
             ReplicaConsistency consistency,
             DatabaseCall databaseCall,
             String sql,
-            Set<String> readOnlyFunctions
+            Set<String> readOnlyFunctions,
+            boolean compatibleWithPreviousVersion
         ) {
             this.connectionProvider = connectionProvider;
             this.consistency = consistency;
             this.databaseCall = databaseCall;
             this.sql = sql;
             this.readOnlyFunctions = readOnlyFunctions;
+            this.compatibleWithPreviousVersion = compatibleWithPreviousVersion;
         }
 
         public ReplicaCallableStatement.Builder resultSetType(int resultSetType) {
@@ -679,7 +684,8 @@ public class ReplicaCallableStatement extends ReplicaPreparedStatement implement
                 resultSetType,
                 resultSetConcurrency,
                 resultSetHoldability,
-                readOnlyFunctions
+                readOnlyFunctions,
+                compatibleWithPreviousVersion
             );
         }
     }
