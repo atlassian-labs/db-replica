@@ -11,8 +11,7 @@ import org.mockito.Mockito;
 import java.sql.Connection;
 import java.sql.SQLException;
 
-import static com.atlassian.db.replica.api.Queries.SELECT_FOR_UPDATE;
-import static com.atlassian.db.replica.api.Queries.SIMPLE_QUERY;
+import static com.atlassian.db.replica.api.Queries.*;
 import static com.atlassian.db.replica.api.mocks.CircularConsistency.permanentConsistency;
 import static com.atlassian.db.replica.api.mocks.CircularConsistency.permanentInconsistency;
 import static com.atlassian.db.replica.internal.state.State.CLOSED;
@@ -82,6 +81,19 @@ public class ConnectionStateTest {
             .build();
 
         connection.prepareStatement(SELECT_FOR_UPDATE).executeQuery();
+
+        verify(stateListener).transition(NOT_INITIALISED, MAIN);
+    }
+
+    @Test
+    public void shouldChangeStateFromNotInitialisedToMainForSelectForUpdateSkipLocked() throws SQLException {
+        final Connection connection = DualConnection.builder(
+            connectionProvider,
+            permanentInconsistency().build()
+        ).stateListener(stateListener)
+            .build();
+
+        connection.prepareStatement(SELECT_FOR_UPDATE_SKIP_LOCKED).executeQuery();
 
         verify(stateListener).transition(NOT_INITIALISED, MAIN);
     }
