@@ -7,6 +7,11 @@ public class Queries {
         "order by O_S_PROPERTY_ENTRY.id desc\n" +
         "for update";
 
+    public static final String SELECT_FOR_UPDATE_SKIP_LOCKED = "select \"AO1\".\"ID\"\n" +
+        "from \"AO1\" \"AO1\"\n" +
+        "where \"AO1\".\"SOURCE_ID\" = ? and \"AO1\".\"ISSUE_ID\" = ?\n" +
+        "FOR UPDATE SKIP LOCKED";
+
     @SuppressWarnings({"SqlDialectInspection", "SqlNoDataSourceInspection"})
     public static final String SIMPLE_QUERY = "SELECT 1;";
 
