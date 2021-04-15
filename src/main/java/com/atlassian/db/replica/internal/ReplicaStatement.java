@@ -37,7 +37,6 @@ public class ReplicaStatement implements Statement {
             return createStatement(connectionProvider.getWriteConnection(getFirstCause()));
         }
     };
-    private final boolean compatibleWithPreviousVersion;
 
     public ReplicaStatement(
         ReplicaConsistency consistency,
@@ -46,8 +45,7 @@ public class ReplicaStatement implements Statement {
         Integer resultSetType,
         Integer resultSetConcurrency,
         Integer resultSetHoldability,
-        Set<String> readOnlyFunctions,
-        boolean compatibleWithPreviousVersion
+        Set<String> readOnlyFunctions
     ) {
         this.consistency = consistency;
         this.connectionProvider = connectionProvider;
@@ -56,7 +54,6 @@ public class ReplicaStatement implements Statement {
         this.resultSetConcurrency = resultSetConcurrency;
         this.resultSetHoldability = resultSetHoldability;
         this.sqlFunction = new SqlFunction(readOnlyFunctions);
-        this.compatibleWithPreviousVersion = compatibleWithPreviousVersion;
     }
 
     @Override
@@ -178,7 +175,7 @@ public class ReplicaStatement implements Statement {
         checkClosed();
         final RouteDecisionBuilder decisionBuilder;
         final Statement statement;
-        SqlQuery sqlQuery = new SqlQuery(sql, compatibleWithPreviousVersion);
+        SqlQuery sqlQuery = new SqlQuery(sql);
         if (sqlQuery.isSqlSet()) {
             decisionBuilder = new RouteDecisionBuilder(READ_OPERATION).sql(sql);
             statement = getReadStatement(decisionBuilder);
@@ -543,12 +540,9 @@ public class ReplicaStatement implements Statement {
         ReplicaConnectionProvider connectionProvider,
         ReplicaConsistency consistency,
         DatabaseCall databaseCall,
-        Set<String> readOnlyFunctions,
-        boolean compatibleWithPreviousVersion
+        Set<String> readOnlyFunctions
     ) {
-        return new Builder(connectionProvider, consistency, databaseCall, readOnlyFunctions,
-            compatibleWithPreviousVersion
-        );
+        return new Builder(connectionProvider, consistency, databaseCall, readOnlyFunctions);
     }
 
     void recordWriteAfterQueryExecution() throws SQLException {
@@ -564,7 +558,7 @@ public class ReplicaStatement implements Statement {
             connectionProvider.getStateDecision().ifPresent(decisionBuilder::cause);
             return prepareWriteStatement(decisionBuilder);
         }
-        SqlQuery sqlQuery = new SqlQuery(decisionBuilder.getSql(), compatibleWithPreviousVersion);
+        SqlQuery sqlQuery = new SqlQuery(decisionBuilder.getSql());
         if (sqlQuery.isWriteOperation(sqlFunction)) {
             decisionBuilder.reason(WRITE_OPERATION);
             return prepareWriteStatement(decisionBuilder);
@@ -615,7 +609,6 @@ public class ReplicaStatement implements Statement {
         private final ReplicaConsistency consistency;
         private final DatabaseCall databaseCall;
         private final Set<String> readOnlyFunctions;
-        private final boolean compatibleWithPreviousVersion;
         private Integer resultSetType;
         private Integer resultSetConcurrency;
         private Integer resultSetHoldability;
@@ -624,14 +617,12 @@ public class ReplicaStatement implements Statement {
             ReplicaConnectionProvider connectionProvider,
             ReplicaConsistency consistency,
             DatabaseCall databaseCall,
-            Set<String> readOnlyFunctions,
-            boolean compatibleWithPreviousVersion
+            Set<String> readOnlyFunctions
         ) {
             this.connectionProvider = connectionProvider;
             this.consistency = consistency;
             this.databaseCall = databaseCall;
             this.readOnlyFunctions = readOnlyFunctions;
-            this.compatibleWithPreviousVersion = compatibleWithPreviousVersion;
         }
 
         public Builder resultSetType(int resultSetType) {
@@ -657,8 +648,7 @@ public class ReplicaStatement implements Statement {
                 resultSetType,
                 resultSetConcurrency,
                 resultSetHoldability,
-                readOnlyFunctions,
-                compatibleWithPreviousVersion
+                readOnlyFunctions
             );
         }
     }
