@@ -21,7 +21,10 @@ Adding a requirement of a major version of a dependency is breaking a contract.
 Dropping a requirement of a major version of a dependency is a new contract.
 
 ## [Unreleased]
-[Unreleased]: https://github.com/atlassian-labs/db-replica/compare/release-1.2.0...master
+[Unreleased]: https://github.com/atlassian-labs/db-replica/compare/release-1.2.4...master
+
+## [1.2.4] - 2021-04-15
+[1.2.4]: https://github.com/atlassian-labs/db-replica/compare/release-1.2.2...release-1.2.4
 
 ### Fixed
 - Support `SELECT FOR UPDATE SKIP LOCKED` statement
