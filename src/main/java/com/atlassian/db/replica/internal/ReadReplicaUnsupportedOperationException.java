@@ -8,8 +8,4 @@ public class ReadReplicaUnsupportedOperationException extends RuntimeException {
     public ReadReplicaUnsupportedOperationException() {
         super();
     }
-
-    public ReadReplicaUnsupportedOperationException(Throwable cause) {
-        super(cause);
-    }
 }

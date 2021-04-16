@@ -28,10 +28,10 @@ public class TestCircuitBreaker {
             new ConnectionProviderMock(),
             permanentConsistency().build()
         ).build();
-        Throwable firstCall = catchThrowable(() -> connection.prepareStatement(SIMPLE_QUERY).isCloseOnCompletion());
+        Throwable firstCall = catchThrowable(() -> connection.prepareStatement(SIMPLE_QUERY).getMetaData());
         final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
         final Connection newConnection = DualConnection.builder(connectionProvider, permanentConsistency().build()).build();
-        Throwable secondCall = catchThrowable(() -> newConnection.prepareStatement(SIMPLE_QUERY).isCloseOnCompletion());
+        Throwable secondCall = catchThrowable(() -> newConnection.prepareStatement(SIMPLE_QUERY).getMetaData());
 
         assertThat(connectionProvider.getPreparedStatements()).isEmpty();
         assertThat(firstCall).isInstanceOf(ReadReplicaUnsupportedOperationException.class);
