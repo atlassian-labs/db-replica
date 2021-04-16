@@ -598,6 +598,9 @@ public final class DualConnection implements Connection {
         }
 
         public Connection build() throws SQLException {
+            if (!compatibleWithPreviousVersion) {
+                circuitBreaker = null;
+            }
             if (circuitBreaker == null) {
                 return new DualConnection(
                     connectionProvider,

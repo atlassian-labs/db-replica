@@ -14,7 +14,6 @@ import static com.atlassian.db.replica.api.Queries.SIMPLE_QUERY;
 import static com.atlassian.db.replica.api.mocks.CircularConsistency.permanentConsistency;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
-import static org.mockito.Mockito.verify;
 
 public class TestCircuitBreaker {
 
@@ -24,18 +23,18 @@ public class TestCircuitBreaker {
     }
 
     @Test
-    public void shouldServeOnlyMasterConnectionAfterUnimplementedMethodCall() throws SQLException {
+    public void shouldPropagateUnimplementedMethodCall() throws SQLException {
         final Connection connection = DualConnection.builder(
             new ConnectionProviderMock(),
             permanentConsistency().build()
         ).build();
-        Throwable thrown = catchThrowable(() -> connection.prepareStatement(SIMPLE_QUERY).isCloseOnCompletion());
+        Throwable firstCall = catchThrowable(() -> connection.prepareStatement(SIMPLE_QUERY).isCloseOnCompletion());
         final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
         final Connection newConnection = DualConnection.builder(connectionProvider, permanentConsistency().build()).build();
+        Throwable secondCall = catchThrowable(() -> newConnection.prepareStatement(SIMPLE_QUERY).isCloseOnCompletion());
 
-        newConnection.prepareStatement(SIMPLE_QUERY).isCloseOnCompletion();
-
-        verify(connectionProvider.getPreparedStatements().get(0)).isCloseOnCompletion();
-        assertThat(thrown).isInstanceOf(ReadReplicaUnsupportedOperationException.class);
+        assertThat(connectionProvider.getPreparedStatements()).isEmpty();
+        assertThat(firstCall).isInstanceOf(ReadReplicaUnsupportedOperationException.class);
+        assertThat(secondCall).isInstanceOf(ReadReplicaUnsupportedOperationException.class);
     }
 }
