@@ -25,6 +25,7 @@ Dropping a requirement of a major version of a dependency is a new contract.
 
 ### Fixed
 - No circuit breaker by default.
+- Implemented missing methods in `Statement`
 
 ## [1.2.4] - 2021-04-15
 [1.2.4]: https://github.com/atlassian-labs/db-replica/compare/release-1.2.2...release-1.2.4
