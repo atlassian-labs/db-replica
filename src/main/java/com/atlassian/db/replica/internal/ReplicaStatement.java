@@ -6,13 +6,22 @@ import com.atlassian.db.replica.api.reason.RouteDecision;
 import com.atlassian.db.replica.spi.DatabaseCall;
 import com.atlassian.db.replica.spi.ReplicaConsistency;
 
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.SQLWarning;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
-import static com.atlassian.db.replica.api.reason.Reason.*;
+import static com.atlassian.db.replica.api.reason.Reason.LOCK;
+import static com.atlassian.db.replica.api.reason.Reason.MAIN_CONNECTION_REUSE;
+import static com.atlassian.db.replica.api.reason.Reason.READ_OPERATION;
+import static com.atlassian.db.replica.api.reason.Reason.RO_API_CALL;
+import static com.atlassian.db.replica.api.reason.Reason.RW_API_CALL;
+import static com.atlassian.db.replica.api.reason.Reason.WRITE_OPERATION;
 import static com.atlassian.db.replica.internal.state.State.MAIN;
 
 public class ReplicaStatement implements Statement {
@@ -40,7 +49,6 @@ public class ReplicaStatement implements Statement {
             return createStatement(connectionProvider.getWriteConnection(getFirstCause()));
         }
     };
-    private final boolean compatibleWithPreviousVersion;
 
     public ReplicaStatement(
         ReplicaConsistency consistency,
@@ -49,8 +57,7 @@ public class ReplicaStatement implements Statement {
         Integer resultSetType,
         Integer resultSetConcurrency,
         Integer resultSetHoldability,
-        Set<String> readOnlyFunctions,
-        boolean compatibleWithPreviousVersion
+        Set<String> readOnlyFunctions
     ) {
         this.consistency = consistency;
         this.connectionProvider = connectionProvider;
@@ -59,7 +66,6 @@ public class ReplicaStatement implements Statement {
         this.resultSetConcurrency = resultSetConcurrency;
         this.resultSetHoldability = resultSetHoldability;
         this.sqlFunction = new SqlFunction(readOnlyFunctions);
-        this.compatibleWithPreviousVersion = compatibleWithPreviousVersion;
     }
 
     @Override
@@ -135,11 +141,7 @@ public class ReplicaStatement implements Statement {
     @Override
     public int getQueryTimeout() throws SQLException {
         checkClosed();
-        if (compatibleWithPreviousVersion) {
-            throw new ReadReplicaUnsupportedOperationException();
-        } else {
-            return getReadStatement(new RouteDecisionBuilder(RO_API_CALL)).getQueryTimeout();
-        }
+        return getReadStatement(new RouteDecisionBuilder(RO_API_CALL)).getQueryTimeout();
     }
 
     @Override
@@ -153,11 +155,7 @@ public class ReplicaStatement implements Statement {
     @Override
     public void cancel() throws SQLException {
         checkClosed();
-        if (compatibleWithPreviousVersion) {
-            throw new ReadReplicaUnsupportedOperationException();
-        } else {
-            getReadStatement(new RouteDecisionBuilder(RO_API_CALL)).cancel();
-        }
+        getReadStatement(new RouteDecisionBuilder(RO_API_CALL)).cancel();
     }
 
     @Override
@@ -181,11 +179,7 @@ public class ReplicaStatement implements Statement {
     @Override
     public void setCursorName(String name) throws SQLException {
         checkClosed();
-        if (compatibleWithPreviousVersion) {
-            throw new ReadReplicaUnsupportedOperationException();
-        } else {
-            getWriteStatement(new RouteDecisionBuilder(RW_API_CALL)).setCursorName(name);
-        }
+        getWriteStatement(new RouteDecisionBuilder(RW_API_CALL)).setCursorName(name);
     }
 
     @Override
@@ -193,7 +187,7 @@ public class ReplicaStatement implements Statement {
         checkClosed();
         final RouteDecisionBuilder decisionBuilder;
         final Statement statement;
-        SqlQuery sqlQuery = SqlQuery.create(sql, compatibleWithPreviousVersion);
+        SqlQuery sqlQuery = new SqlQuery(sql);
         if (sqlQuery.isSqlSet()) {
             decisionBuilder = new RouteDecisionBuilder(READ_OPERATION).sql(sql);
             statement = getReadStatement(decisionBuilder);
@@ -245,11 +239,7 @@ public class ReplicaStatement implements Statement {
     @Override
     public int getFetchDirection() throws SQLException {
         checkClosed();
-        if (compatibleWithPreviousVersion) {
-            throw new ReadReplicaUnsupportedOperationException();
-        } else {
-            return getReadStatement(new RouteDecisionBuilder(RO_API_CALL)).getFetchDirection();
-        }
+        return getReadStatement(new RouteDecisionBuilder(RO_API_CALL)).getFetchDirection();
     }
 
     @Override
@@ -261,31 +251,19 @@ public class ReplicaStatement implements Statement {
     @Override
     public int getFetchSize() throws SQLException {
         checkClosed();
-        if (compatibleWithPreviousVersion) {
-            throw new ReadReplicaUnsupportedOperationException();
-        } else {
-            return getReadStatement(new RouteDecisionBuilder(RO_API_CALL)).getFetchSize();
-        }
+        return getReadStatement(new RouteDecisionBuilder(RO_API_CALL)).getFetchSize();
     }
 
     @Override
     public int getResultSetConcurrency() throws SQLException {
         checkClosed();
-        if (compatibleWithPreviousVersion) {
-            throw new ReadReplicaUnsupportedOperationException();
-        } else {
-            return getReadStatement(new RouteDecisionBuilder(RO_API_CALL)).getResultSetConcurrency();
-        }
+        return getReadStatement(new RouteDecisionBuilder(RO_API_CALL)).getResultSetConcurrency();
     }
 
     @Override
     public int getResultSetType() throws SQLException {
         checkClosed();
-        if (compatibleWithPreviousVersion) {
-            throw new ReadReplicaUnsupportedOperationException();
-        } else {
-            return getReadStatement(new RouteDecisionBuilder(RO_API_CALL)).getResultSetType();
-        }
+        return getReadStatement(new RouteDecisionBuilder(RO_API_CALL)).getResultSetType();
     }
 
     @Override
@@ -320,21 +298,13 @@ public class ReplicaStatement implements Statement {
     @Override
     public boolean getMoreResults(int current) throws SQLException {
         checkClosed();
-        if (compatibleWithPreviousVersion) {
-            return currentStatement.getMoreResults(current);
-        } else {
-            return getReadStatement(new RouteDecisionBuilder(RO_API_CALL)).getMoreResults(current);
-        }
+        return getReadStatement(new RouteDecisionBuilder(RO_API_CALL)).getMoreResults(current);
     }
 
     @Override
     public ResultSet getGeneratedKeys() throws SQLException {
         checkClosed();
-        if (compatibleWithPreviousVersion) {
-            return currentStatement.getGeneratedKeys();
-        } else {
-            return getReadStatement(new RouteDecisionBuilder(RO_API_CALL)).getGeneratedKeys();
-        }
+        return getReadStatement(new RouteDecisionBuilder(RO_API_CALL)).getGeneratedKeys();
     }
 
     @Override
@@ -431,21 +401,13 @@ public class ReplicaStatement implements Statement {
     @Override
     public void closeOnCompletion() throws SQLException {
         checkClosed();
-        if (compatibleWithPreviousVersion) {
-            throw new ReadReplicaUnsupportedOperationException();
-        } else {
-            getReadStatement(new RouteDecisionBuilder(RO_API_CALL)).closeOnCompletion();
-        }
+        getReadStatement(new RouteDecisionBuilder(RO_API_CALL)).closeOnCompletion();
     }
 
     @Override
     public boolean isCloseOnCompletion() throws SQLException {
         checkClosed();
-        if (compatibleWithPreviousVersion) {
-            throw new ReadReplicaUnsupportedOperationException();
-        } else {
-            return getReadStatement(new RouteDecisionBuilder(RO_API_CALL)).isCloseOnCompletion();
-        }
+        return getReadStatement(new RouteDecisionBuilder(RO_API_CALL)).isCloseOnCompletion();
     }
 
     @Override
@@ -491,11 +453,7 @@ public class ReplicaStatement implements Statement {
     @Override
     public long getLargeMaxRows() throws SQLException {
         checkClosed();
-        if (compatibleWithPreviousVersion) {
-            throw new ReadReplicaUnsupportedOperationException();
-        } else {
-            return getReadStatement(new RouteDecisionBuilder(RO_API_CALL)).getLargeMaxRows();
-        }
+        return getReadStatement(new RouteDecisionBuilder(RO_API_CALL)).getLargeMaxRows();
     }
 
     @Override
@@ -564,8 +522,8 @@ public class ReplicaStatement implements Statement {
     public void performOperations() throws SQLException {
         //noinspection rawtypes
         for (StatementOperation operation : operations) {
-                //noinspection unchecked
-                operation.accept(getCurrentStatement());
+            //noinspection unchecked
+            operation.accept(getCurrentStatement());
         }
         operations.clear();
     }
@@ -590,12 +548,9 @@ public class ReplicaStatement implements Statement {
         ReplicaConnectionProvider connectionProvider,
         ReplicaConsistency consistency,
         DatabaseCall databaseCall,
-        Set<String> readOnlyFunctions,
-        boolean compatibleWithPreviousVersion
+        Set<String> readOnlyFunctions
     ) {
-        return new Builder(connectionProvider, consistency, databaseCall, readOnlyFunctions,
-            compatibleWithPreviousVersion
-        );
+        return new Builder(connectionProvider, consistency, databaseCall, readOnlyFunctions);
     }
 
     void recordWriteAfterQueryExecution() throws SQLException {
@@ -612,8 +567,8 @@ public class ReplicaStatement implements Statement {
             return prepareWriteStatement(decisionBuilder);
         }
         String sql = decisionBuilder.getSql();
-        if (compatibleWithPreviousVersion) {
-            SqlQuery sqlQuery = SqlQuery.create(sql, compatibleWithPreviousVersion);
+        if (sql != null) {
+            SqlQuery sqlQuery = new SqlQuery(sql);
             if (sqlQuery.isWriteOperation(sqlFunction)) {
                 decisionBuilder.reason(WRITE_OPERATION);
                 return prepareWriteStatement(decisionBuilder);
@@ -621,18 +576,6 @@ public class ReplicaStatement implements Statement {
             if (sqlQuery.isSelectForUpdate()) {
                 decisionBuilder.reason(LOCK);
                 return prepareWriteStatement(decisionBuilder);
-            }
-        } else {
-            if (sql != null) {
-                SqlQuery sqlQuery = SqlQuery.create(sql, compatibleWithPreviousVersion);
-                if (sqlQuery.isWriteOperation(sqlFunction)) {
-                    decisionBuilder.reason(WRITE_OPERATION);
-                    return prepareWriteStatement(decisionBuilder);
-                }
-                if (sqlQuery.isSelectForUpdate()) {
-                    decisionBuilder.reason(LOCK);
-                    return prepareWriteStatement(decisionBuilder);
-                }
             }
         }
         setCurrentStatement(getCurrentStatement() != null ? getCurrentStatement() : readStatement.get(decisionBuilder));
@@ -679,20 +622,17 @@ public class ReplicaStatement implements Statement {
         private Integer resultSetType;
         private Integer resultSetConcurrency;
         private Integer resultSetHoldability;
-        private final boolean compatibleWithPreviousVersion;
 
         private Builder(
             ReplicaConnectionProvider connectionProvider,
             ReplicaConsistency consistency,
             DatabaseCall databaseCall,
-            Set<String> readOnlyFunctions,
-            boolean compatibleWithPreviousVersion
+            Set<String> readOnlyFunctions
         ) {
             this.connectionProvider = connectionProvider;
             this.consistency = consistency;
             this.databaseCall = databaseCall;
             this.readOnlyFunctions = readOnlyFunctions;
-            this.compatibleWithPreviousVersion = compatibleWithPreviousVersion;
         }
 
         public Builder resultSetType(int resultSetType) {
@@ -718,8 +658,7 @@ public class ReplicaStatement implements Statement {
                 resultSetType,
                 resultSetConcurrency,
                 resultSetHoldability,
-                readOnlyFunctions,
-                compatibleWithPreviousVersion
+                readOnlyFunctions
             );
         }
     }

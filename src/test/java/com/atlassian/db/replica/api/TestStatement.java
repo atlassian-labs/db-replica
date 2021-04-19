@@ -354,7 +354,6 @@ public class TestStatement {
         final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
         final Connection connection = DualConnection
             .builder(connectionProvider, permanentConsistency().build())
-            .circuitBreaker(null)
             .build();
         final PreparedStatement preparedStatement = connection.prepareStatement(SIMPLE_QUERY);
 

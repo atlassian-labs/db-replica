@@ -1,16 +1,41 @@
 package com.atlassian.db.replica.api;
 
 import com.atlassian.db.replica.api.reason.Reason;
-import com.atlassian.db.replica.internal.*;
-import com.atlassian.db.replica.internal.circuitbreaker.*;
+import com.atlassian.db.replica.internal.ClientInfo;
+import com.atlassian.db.replica.internal.ForwardCall;
+import com.atlassian.db.replica.internal.ReplicaCallableStatement;
+import com.atlassian.db.replica.internal.ReplicaConnectionProvider;
+import com.atlassian.db.replica.internal.ReplicaPreparedStatement;
+import com.atlassian.db.replica.internal.ReplicaStatement;
+import com.atlassian.db.replica.internal.RouteDecisionBuilder;
 import com.atlassian.db.replica.internal.state.NoOpStateListener;
 import com.atlassian.db.replica.internal.state.StateListener;
 import com.atlassian.db.replica.spi.ConnectionProvider;
 import com.atlassian.db.replica.spi.DatabaseCall;
 import com.atlassian.db.replica.spi.ReplicaConsistency;
 
-import java.sql.*;
-import java.util.*;
+import java.sql.Array;
+import java.sql.Blob;
+import java.sql.CallableStatement;
+import java.sql.ClientInfoStatus;
+import java.sql.Clob;
+import java.sql.Connection;
+import java.sql.DatabaseMetaData;
+import java.sql.NClob;
+import java.sql.PreparedStatement;
+import java.sql.SQLClientInfoException;
+import java.sql.SQLException;
+import java.sql.SQLWarning;
+import java.sql.SQLXML;
+import java.sql.Savepoint;
+import java.sql.Statement;
+import java.sql.Struct;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Properties;
+import java.util.Set;
 import java.util.concurrent.Executor;
 
 /**
@@ -52,8 +77,7 @@ public final class DualConnection implements Connection {
             connectionProvider,
             consistency,
             databaseCall,
-            readOnlyFunctions,
-            compatibleWithPreviousVersion
+            readOnlyFunctions
         ).build();
     }
 
@@ -65,8 +89,7 @@ public final class DualConnection implements Connection {
             consistency,
             databaseCall,
             sql,
-            readOnlyFunctions,
-            compatibleWithPreviousVersion
+            readOnlyFunctions
         ).build();
     }
 
@@ -78,8 +101,7 @@ public final class DualConnection implements Connection {
             consistency,
             databaseCall,
             sql,
-            readOnlyFunctions,
-            compatibleWithPreviousVersion
+            readOnlyFunctions
         ).build();
     }
 
@@ -183,7 +205,7 @@ public final class DualConnection implements Connection {
     public Statement createStatement(int resultSetType, int resultSetConcurrency) throws SQLException {
         checkClosed();
         return ReplicaStatement
-            .builder(connectionProvider, consistency, databaseCall, readOnlyFunctions, compatibleWithPreviousVersion)
+            .builder(connectionProvider, consistency, databaseCall, readOnlyFunctions)
             .resultSetType(resultSetType)
             .resultSetConcurrency(resultSetConcurrency)
             .build();
@@ -201,8 +223,7 @@ public final class DualConnection implements Connection {
             consistency,
             databaseCall,
             sql,
-            readOnlyFunctions,
-            compatibleWithPreviousVersion
+            readOnlyFunctions
         ).resultSetType(resultSetType)
             .resultSetConcurrency(resultSetConcurrency)
             .build();
@@ -212,9 +233,7 @@ public final class DualConnection implements Connection {
     public CallableStatement prepareCall(String sql, int resultSetType, int resultSetConcurrency) throws SQLException {
         checkClosed();
         return new ReplicaCallableStatement
-            .Builder(connectionProvider, consistency, databaseCall, sql, readOnlyFunctions,
-            compatibleWithPreviousVersion
-        )
+            .Builder(connectionProvider, consistency, databaseCall, sql, readOnlyFunctions)
             .resultSetType(resultSetType)
             .resultSetConcurrency(resultSetConcurrency)
             .build();
@@ -279,10 +298,8 @@ public final class DualConnection implements Connection {
             connectionProvider,
             consistency,
             databaseCall,
-            readOnlyFunctions,
-            compatibleWithPreviousVersion
-        )
-            .resultSetType(resultSetType)
+            readOnlyFunctions
+        ).resultSetType(resultSetType)
             .resultSetConcurrency(resultSetConcurrency)
             .resultSetHoldability(resultSetHoldability)
             .build();
@@ -301,8 +318,7 @@ public final class DualConnection implements Connection {
             consistency,
             databaseCall,
             sql,
-            readOnlyFunctions,
-            compatibleWithPreviousVersion
+            readOnlyFunctions
         ).resultSetType(resultSetType)
             .resultSetConcurrency(resultSetConcurrency)
             .resultSetHoldability(resultSetHoldability)
@@ -318,9 +334,7 @@ public final class DualConnection implements Connection {
     ) throws SQLException {
         checkClosed();
         return new ReplicaCallableStatement
-            .Builder(connectionProvider, consistency, databaseCall, sql, readOnlyFunctions,
-            compatibleWithPreviousVersion
-        )
+            .Builder(connectionProvider, consistency, databaseCall, sql, readOnlyFunctions)
             .resultSetType(resultSetType)
             .resultSetConcurrency(resultSetConcurrency)
             .resultSetHoldability(resultSetHoldability)
@@ -335,8 +349,7 @@ public final class DualConnection implements Connection {
             consistency,
             databaseCall,
             sql,
-            readOnlyFunctions,
-            compatibleWithPreviousVersion
+            readOnlyFunctions
         ).autoGeneratedKeys(autoGeneratedKeys)
             .build();
     }
@@ -349,8 +362,7 @@ public final class DualConnection implements Connection {
             consistency,
             databaseCall,
             sql,
-            readOnlyFunctions,
-            compatibleWithPreviousVersion
+            readOnlyFunctions
         ).columnIndexes(columnIndexes)
             .build();
     }
@@ -363,8 +375,7 @@ public final class DualConnection implements Connection {
             consistency,
             databaseCall,
             sql,
-            readOnlyFunctions,
-            compatibleWithPreviousVersion
+            readOnlyFunctions
         ).columnNames(columnNames)
             .build();
     }
@@ -540,7 +551,6 @@ public final class DualConnection implements Connection {
         private final ConnectionProvider connectionProvider;
         private final ReplicaConsistency consistency;
         private DatabaseCall databaseCall = new ForwardCall();
-        private CircuitBreaker circuitBreaker = new BreakOnNotSupportedOperations();
         private StateListener stateListener = new NoOpStateListener();
         private Set<String> readOnlyFunctions = new HashSet<>();
         private boolean compatibleWithPreviousVersion = false;
@@ -568,11 +578,6 @@ public final class DualConnection implements Connection {
             return this;
         }
 
-        DualConnection.Builder circuitBreaker(CircuitBreaker circuitBreaker) {
-            this.circuitBreaker = circuitBreaker;
-            return this;
-        }
-
         DualConnection.Builder stateListener(StateListener stateListener) {
             this.stateListener = stateListener;
             return this;
@@ -591,24 +596,7 @@ public final class DualConnection implements Connection {
         }
 
         public Connection build() throws SQLException {
-            if (!compatibleWithPreviousVersion) {
-                circuitBreaker = null;
-            }
-            if (circuitBreaker == null) {
-                return new DualConnection(
-                    connectionProvider,
-                    consistency,
-                    databaseCall,
-                    stateListener,
-                    readOnlyFunctions,
-                    compatibleWithPreviousVersion
-                );
-            }
-            if (circuitBreaker.getState().equals(BreakerState.OPEN)) {
-                return connectionProvider.getMainConnection();
-            }
-            final BreakerHandler breakerHandler = new BreakerHandler(circuitBreaker);
-            final DualConnection dualConnection = new DualConnection(
+            return new DualConnection(
                 connectionProvider,
                 consistency,
                 databaseCall,
@@ -616,7 +604,6 @@ public final class DualConnection implements Connection {
                 readOnlyFunctions,
                 compatibleWithPreviousVersion
             );
-            return new BreakerConnection(dualConnection, breakerHandler);
         }
     }
 
