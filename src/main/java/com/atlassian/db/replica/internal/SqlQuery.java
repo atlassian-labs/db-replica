@@ -6,6 +6,9 @@ public final class SqlQuery {
     private final String sql;
 
     public SqlQuery(String sql) {
+        if (sql == null) {
+            throw new RuntimeException("An SqlQuery must have an SQL query string");
+        }
         this.sql = sql;
     }
 
@@ -15,7 +18,7 @@ public final class SqlQuery {
 
     boolean isSelectForUpdate() {
         final String trimmedQuery = trimForSelectForUpdateCheck();
-        return sql != null && (trimmedQuery.contains("for update") || trimmedQuery.contains("FOR UPDATE"));
+        return trimmedQuery.contains("for update") || trimmedQuery.contains("FOR UPDATE");
     }
 
     boolean isSqlSet() {
@@ -23,11 +26,11 @@ public final class SqlQuery {
     }
 
     private boolean isUpdate() {
-        return sql != null && (sql.startsWith("update") || sql.startsWith("UPDATE"));
+        return sql.startsWith("update") || sql.startsWith("UPDATE");
     }
 
     private boolean isDelete() {
-        return sql != null && (sql.startsWith("delete") || sql.startsWith("DELETE"));
+        return sql.startsWith("delete") || sql.startsWith("DELETE");
     }
 
     private String trimForSelectForUpdateCheck() {
