@@ -38,8 +38,7 @@ public class ReplicaCallableStatement extends ReplicaPreparedStatement implement
         Integer resultSetType,
         Integer resultSetConcurrency,
         Integer resultSetHoldability,
-        Set<String> readOnlyFunctions,
-        boolean compatibleWithPreviousVersion
+        Set<String> readOnlyFunctions
     ) {
         super(
             connectionProvider,
@@ -49,8 +48,7 @@ public class ReplicaCallableStatement extends ReplicaPreparedStatement implement
             resultSetType,
             resultSetConcurrency,
             resultSetHoldability,
-            readOnlyFunctions,
-            compatibleWithPreviousVersion
+            readOnlyFunctions
         );
         this.sql = sql;
         this.resultSetType = resultSetType;
@@ -642,22 +640,19 @@ public class ReplicaCallableStatement extends ReplicaPreparedStatement implement
         private Integer resultSetType;
         private Integer resultSetConcurrency;
         private Integer resultSetHoldability;
-        private final boolean compatibleWithPreviousVersion;
 
         public Builder(
             ReplicaConnectionProvider connectionProvider,
             ReplicaConsistency consistency,
             DatabaseCall databaseCall,
             String sql,
-            Set<String> readOnlyFunctions,
-            boolean compatibleWithPreviousVersion
+            Set<String> readOnlyFunctions
         ) {
             this.connectionProvider = connectionProvider;
             this.consistency = consistency;
             this.databaseCall = databaseCall;
             this.sql = sql;
             this.readOnlyFunctions = readOnlyFunctions;
-            this.compatibleWithPreviousVersion = compatibleWithPreviousVersion;
         }
 
         public ReplicaCallableStatement.Builder resultSetType(int resultSetType) {
@@ -684,8 +679,7 @@ public class ReplicaCallableStatement extends ReplicaPreparedStatement implement
                 resultSetType,
                 resultSetConcurrency,
                 resultSetHoldability,
-                readOnlyFunctions,
-                compatibleWithPreviousVersion
+                readOnlyFunctions
             );
         }
     }
