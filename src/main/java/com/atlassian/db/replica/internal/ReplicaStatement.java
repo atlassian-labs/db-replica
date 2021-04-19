@@ -6,22 +6,13 @@ import com.atlassian.db.replica.api.reason.RouteDecision;
 import com.atlassian.db.replica.spi.DatabaseCall;
 import com.atlassian.db.replica.spi.ReplicaConsistency;
 
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.SQLWarning;
-import java.sql.Statement;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
-import static com.atlassian.db.replica.api.reason.Reason.LOCK;
-import static com.atlassian.db.replica.api.reason.Reason.MAIN_CONNECTION_REUSE;
-import static com.atlassian.db.replica.api.reason.Reason.READ_OPERATION;
-import static com.atlassian.db.replica.api.reason.Reason.RO_API_CALL;
-import static com.atlassian.db.replica.api.reason.Reason.RW_API_CALL;
-import static com.atlassian.db.replica.api.reason.Reason.WRITE_OPERATION;
+import static com.atlassian.db.replica.api.reason.Reason.*;
 import static com.atlassian.db.replica.internal.state.State.MAIN;
 
 public class ReplicaStatement implements Statement {
@@ -202,7 +193,7 @@ public class ReplicaStatement implements Statement {
         checkClosed();
         final RouteDecisionBuilder decisionBuilder;
         final Statement statement;
-        SqlQuery sqlQuery = new SqlQuery(sql);
+        SqlQuery sqlQuery = SqlQuery.create(sql, compatibleWithPreviousVersion);
         if (sqlQuery.isSqlSet()) {
             decisionBuilder = new RouteDecisionBuilder(READ_OPERATION).sql(sql);
             statement = getReadStatement(decisionBuilder);
@@ -621,8 +612,8 @@ public class ReplicaStatement implements Statement {
             return prepareWriteStatement(decisionBuilder);
         }
         String sql = decisionBuilder.getSql();
-        if (sql != null) {
-            SqlQuery sqlQuery = new SqlQuery(sql);
+        if (compatibleWithPreviousVersion) {
+            SqlQuery sqlQuery = SqlQuery.create(sql, compatibleWithPreviousVersion);
             if (sqlQuery.isWriteOperation(sqlFunction)) {
                 decisionBuilder.reason(WRITE_OPERATION);
                 return prepareWriteStatement(decisionBuilder);
@@ -630,6 +621,18 @@ public class ReplicaStatement implements Statement {
             if (sqlQuery.isSelectForUpdate()) {
                 decisionBuilder.reason(LOCK);
                 return prepareWriteStatement(decisionBuilder);
+            }
+        } else {
+            if (sql != null) {
+                SqlQuery sqlQuery = SqlQuery.create(sql, compatibleWithPreviousVersion);
+                if (sqlQuery.isWriteOperation(sqlFunction)) {
+                    decisionBuilder.reason(WRITE_OPERATION);
+                    return prepareWriteStatement(decisionBuilder);
+                }
+                if (sqlQuery.isSelectForUpdate()) {
+                    decisionBuilder.reason(LOCK);
+                    return prepareWriteStatement(decisionBuilder);
+                }
             }
         }
         setCurrentStatement(getCurrentStatement() != null ? getCurrentStatement() : readStatement.get(decisionBuilder));
