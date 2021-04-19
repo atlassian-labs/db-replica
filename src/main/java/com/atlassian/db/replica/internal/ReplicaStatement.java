@@ -620,15 +620,17 @@ public class ReplicaStatement implements Statement {
             connectionProvider.getStateDecision().ifPresent(decisionBuilder::cause);
             return prepareWriteStatement(decisionBuilder);
         }
-        SqlQuery sqlQuery = new SqlQuery(decisionBuilder.getSql());
-        if (sqlQuery.isWriteOperation(sqlFunction)) {
-            decisionBuilder.reason(WRITE_OPERATION);
-            return prepareWriteStatement(decisionBuilder);
-        }
-
-        if (sqlQuery.isSelectForUpdate()) {
-            decisionBuilder.reason(LOCK);
-            return prepareWriteStatement(decisionBuilder);
+        String sql = decisionBuilder.getSql();
+        if (sql != null) {
+            SqlQuery sqlQuery = new SqlQuery(sql);
+            if (sqlQuery.isWriteOperation(sqlFunction)) {
+                decisionBuilder.reason(WRITE_OPERATION);
+                return prepareWriteStatement(decisionBuilder);
+            }
+            if (sqlQuery.isSelectForUpdate()) {
+                decisionBuilder.reason(LOCK);
+                return prepareWriteStatement(decisionBuilder);
+            }
         }
         setCurrentStatement(getCurrentStatement() != null ? getCurrentStatement() : readStatement.get(decisionBuilder));
         performOperations();
