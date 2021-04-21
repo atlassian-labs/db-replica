@@ -24,15 +24,12 @@ public class ReplicaConnectionProvider implements AutoCloseable {
     private final ConnectionState state;
     private final ConnectionParameters parameters;
     private final Warnings warnings;
-    private final boolean compatibleWithPreviousVersion;
 
     public ReplicaConnectionProvider(
         ConnectionProvider connectionProvider,
         ReplicaConsistency consistency,
-        StateListener stateListener,
-        boolean compatibleWithPreviousVersion
+        StateListener stateListener
     ) {
-        this.compatibleWithPreviousVersion = compatibleWithPreviousVersion;
         this.parameters = new ConnectionParameters();
         this.warnings = new Warnings();
         this.state = new ConnectionState(connectionProvider, consistency, parameters, warnings, stateListener);
@@ -61,10 +58,8 @@ public class ReplicaConnectionProvider implements AutoCloseable {
 
     public void setAutoCommit(Boolean autoCommit) throws SQLException {
         final boolean autoCommitBefore = getAutoCommit();
-        if (!compatibleWithPreviousVersion) {
-            if (autoCommitBefore != autoCommit) {
-                preCommit(autoCommitBefore);
-            }
+        if (autoCommitBefore != autoCommit) {
+            preCommit(autoCommitBefore);
         }
         parameters.setAutoCommit(state::getConnection, autoCommit);
         if (autoCommitBefore != getAutoCommit()) {
@@ -176,9 +171,7 @@ public class ReplicaConnectionProvider implements AutoCloseable {
     public void commit() throws SQLException {
         final Optional<Connection> connection = state.getConnection();
         if (connection.isPresent()) {
-            if (!compatibleWithPreviousVersion) {
-                preCommit(parameters.isAutoCommit());
-            }
+            preCommit(parameters.isAutoCommit());
             connection.get().commit();
             recordCommit(parameters.isAutoCommit());
         }
