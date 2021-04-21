@@ -20,6 +20,9 @@ Changing the license is breaking a contract.
 Adding a requirement of a major version of a dependency is breaking a contract.
 Dropping a requirement of a major version of a dependency is a new contract.
 
+### Added
+- `ReplicaConsistency#preWrite()`
+
 ## [Unreleased]
 [Unreleased]: https://github.com/atlassian-labs/db-replica/compare/release-1.2.6...master
 

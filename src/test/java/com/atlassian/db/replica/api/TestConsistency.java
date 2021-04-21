@@ -3,6 +3,7 @@ package com.atlassian.db.replica.api;
 import com.atlassian.db.replica.api.mocks.ConnectionProviderMock;
 import com.atlassian.db.replica.spi.ReplicaConsistency;
 import org.junit.Test;
+import org.mockito.InOrder;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -26,7 +27,11 @@ public class TestConsistency {
         connection.prepareStatement(SIMPLE_QUERY).executeUpdate();
         connection.commit();
 
-        verify(consistency).write(any());
+        final Connection mainConnection = connectionProvider.getProvidedConnections().get(0);
+        final InOrder inOrder = inOrder(consistency, mainConnection);
+        inOrder.verify(consistency).preCommit(any());
+        inOrder.verify(mainConnection).commit();
+        inOrder.verify(consistency).write(any());
     }
 
     @Test
@@ -39,7 +44,11 @@ public class TestConsistency {
         connection.setAutoCommit(false);
         connection.prepareStatement(SIMPLE_QUERY).executeUpdate();
 
-        verify(consistency, never()).write(any());
+        final Connection mainConnection = connectionProvider.getProvidedConnections().get(0);
+        final InOrder inOrder = inOrder(consistency, mainConnection);
+        inOrder.verify(consistency, never()).preCommit(any());
+        inOrder.verify(mainConnection, never()).commit();
+        inOrder.verify(consistency, never()).write(any());
     }
 
     @Test
@@ -53,7 +62,12 @@ public class TestConsistency {
         connection.prepareStatement(SIMPLE_QUERY).executeUpdate();
         connection.rollback();
 
-        verify(consistency, never()).write(any());
+        final Connection mainConnection = connectionProvider.getProvidedConnections().get(0);
+        final InOrder inOrder = inOrder(consistency, mainConnection);
+        inOrder.verify(mainConnection).rollback();
+        inOrder.verify(consistency, never()).preCommit(any());
+        inOrder.verify(mainConnection, never()).commit();
+        inOrder.verify(consistency, never()).write(any());
     }
 
     @Test
@@ -66,6 +80,7 @@ public class TestConsistency {
         connection.prepareStatement(SIMPLE_QUERY).executeQuery();
 
         verify(consistency, never()).write(any());
+        verify(consistency, never()).preCommit(any());
     }
 
     @Test
@@ -78,6 +93,7 @@ public class TestConsistency {
 
         connection.prepareStatement(SIMPLE_QUERY).executeUpdate();
 
+        verify(consistency, never()).preCommit(any());
         verify(consistency).write(any());
     }
 
@@ -90,6 +106,7 @@ public class TestConsistency {
 
         connection.prepareStatement(SIMPLE_QUERY).executeUpdate();
 
+        verify(consistency, never()).preCommit(any());
         verify(consistency).write(any());
     }
 
@@ -103,6 +120,7 @@ public class TestConsistency {
         //noinspection SqlDialectInspection,SqlNoDataSourceInspection
         connection.prepareStatement("SELECT doSomething(1234)").executeQuery();
 
+        verify(consistency, never()).preCommit(any());
         verify(consistency).write(any());
     }
 
@@ -115,6 +133,7 @@ public class TestConsistency {
 
         connection.prepareStatement(SELECT_FOR_UPDATE).executeQuery();
 
+        verify(consistency, never()).preCommit(any());
         verify(consistency, never()).write(any());
     }
 
@@ -129,7 +148,9 @@ public class TestConsistency {
         connection.prepareStatement(SIMPLE_QUERY).executeUpdate();
         connection.setAutoCommit(true);
 
-        verify(consistency).write(any());
+        final InOrder inOrder = inOrder(consistency);
+        inOrder.verify(consistency).preCommit(any());
+        inOrder.verify(consistency).write(any());
     }
 
     @Test
@@ -142,6 +163,7 @@ public class TestConsistency {
         connection.setAutoCommit(false);
         connection.prepareStatement(SIMPLE_QUERY).executeUpdate();
 
+        verify(consistency, never()).preCommit(any());
         verify(consistency, never()).write(any());
     }
 
@@ -150,10 +172,11 @@ public class TestConsistency {
         final ConnectionProviderMock provider = new ConnectionProviderMock(true);
         final ReplicaConsistency consistency = mock(ReplicaConsistency.class);
         when(consistency.isConsistent(any())).thenReturn(false);
-        final Connection dualConnection = DualConnection.builder(provider,consistency).build();
+        final Connection dualConnection = DualConnection.builder(provider, consistency).build();
 
         dualConnection.prepareStatement(SIMPLE_QUERY).executeQuery();
 
+        verify(consistency, never()).preCommit(any());
         verify(consistency, never()).write(any());
     }
 
