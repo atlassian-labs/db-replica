@@ -24,12 +24,15 @@ public class ReplicaConnectionProvider implements AutoCloseable {
     private final ConnectionState state;
     private final ConnectionParameters parameters;
     private final Warnings warnings;
+    private final boolean compatibleWithPreviousVersion;
 
     public ReplicaConnectionProvider(
         ConnectionProvider connectionProvider,
         ReplicaConsistency consistency,
-        StateListener stateListener
+        StateListener stateListener,
+        boolean compatibleWithPreviousVersion
     ) {
+        this.compatibleWithPreviousVersion = compatibleWithPreviousVersion;
         this.parameters = new ConnectionParameters();
         this.warnings = new Warnings();
         this.state = new ConnectionState(connectionProvider, consistency, parameters, warnings, stateListener);
@@ -58,6 +61,11 @@ public class ReplicaConnectionProvider implements AutoCloseable {
 
     public void setAutoCommit(Boolean autoCommit) throws SQLException {
         final boolean autoCommitBefore = getAutoCommit();
+        if (!compatibleWithPreviousVersion) {
+            if (autoCommitBefore != autoCommit) {
+                preCommit(autoCommitBefore);
+            }
+        }
         parameters.setAutoCommit(state::getConnection, autoCommit);
         if (autoCommitBefore != getAutoCommit()) {
             recordCommit(autoCommitBefore);
@@ -168,6 +176,9 @@ public class ReplicaConnectionProvider implements AutoCloseable {
     public void commit() throws SQLException {
         final Optional<Connection> connection = state.getConnection();
         if (connection.isPresent()) {
+            if (!compatibleWithPreviousVersion) {
+                preCommit(parameters.isAutoCommit());
+            }
             connection.get().commit();
             recordCommit(parameters.isAutoCommit());
         }
@@ -175,7 +186,15 @@ public class ReplicaConnectionProvider implements AutoCloseable {
 
     private void recordCommit(boolean autoCommit) throws SQLException {
         if (state.getState().equals(MAIN) && !autoCommit) {
-            consistency.write(state.getWriteConnection(new RouteDecisionBuilder(Reason.RW_API_CALL)));
+            final Connection mainConnection = state.getWriteConnection(new RouteDecisionBuilder(Reason.RW_API_CALL));
+            consistency.write(mainConnection);
+        }
+    }
+
+    private void preCommit(boolean autoCommit) throws SQLException {
+        if (state.getState().equals(MAIN) && !autoCommit) {
+            final Connection mainConnection = state.getWriteConnection(new RouteDecisionBuilder(Reason.RW_API_CALL));
+            consistency.preCommit(mainConnection);
         }
     }
 
