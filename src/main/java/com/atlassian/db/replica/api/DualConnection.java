@@ -62,8 +62,7 @@ public final class DualConnection implements Connection {
         this.connectionProvider = new ReplicaConnectionProvider(
             connectionProvider,
             consistency,
-            stateListener,
-            compatibleWithPreviousVersion
+            stateListener
         );
         this.consistency = consistency;
         this.databaseCall = databaseCall;
