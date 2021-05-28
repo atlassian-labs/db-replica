@@ -1,7 +1,7 @@
 package com.atlassian.db.replica.internal;
 
 import com.atlassian.db.replica.spi.DatabaseCall;
-import com.atlassian.db.replica.spi.ReplicaConsistency;
+import com.atlassian.db.replica.spi.TransactionHook;
 
 import java.io.InputStream;
 import java.io.Reader;
@@ -32,7 +32,7 @@ public class ReplicaCallableStatement extends ReplicaPreparedStatement implement
 
     public ReplicaCallableStatement(
         ReplicaConnectionProvider connectionProvider,
-        ReplicaConsistency consistency,
+        TransactionHook transactionHook,
         DatabaseCall databaseCall,
         String sql,
         Integer resultSetType,
@@ -42,7 +42,7 @@ public class ReplicaCallableStatement extends ReplicaPreparedStatement implement
     ) {
         super(
             connectionProvider,
-            consistency,
+            transactionHook,
             databaseCall,
             sql,
             resultSetType,
@@ -633,7 +633,7 @@ public class ReplicaCallableStatement extends ReplicaPreparedStatement implement
 
     public static class Builder {
         private final ReplicaConnectionProvider connectionProvider;
-        private final ReplicaConsistency consistency;
+        private final TransactionHook transactionHook;
         private final DatabaseCall databaseCall;
         private final String sql;
         private final Set<String> readOnlyFunctions;
@@ -643,13 +643,13 @@ public class ReplicaCallableStatement extends ReplicaPreparedStatement implement
 
         public Builder(
             ReplicaConnectionProvider connectionProvider,
-            ReplicaConsistency consistency,
+            TransactionHook transactionHook,
             DatabaseCall databaseCall,
             String sql,
             Set<String> readOnlyFunctions
         ) {
             this.connectionProvider = connectionProvider;
-            this.consistency = consistency;
+            this.transactionHook = transactionHook;
             this.databaseCall = databaseCall;
             this.sql = sql;
             this.readOnlyFunctions = readOnlyFunctions;
@@ -673,7 +673,7 @@ public class ReplicaCallableStatement extends ReplicaPreparedStatement implement
         public ReplicaCallableStatement build() {
             return new ReplicaCallableStatement(
                 connectionProvider,
-                consistency,
+                transactionHook,
                 databaseCall,
                 sql,
                 resultSetType,

@@ -1,5 +1,6 @@
 package com.atlassian.db.replica.internal;
 
+import com.atlassian.db.replica.spi.Chief;
 import com.atlassian.db.replica.api.reason.Reason;
 import com.atlassian.db.replica.api.reason.RouteDecision;
 import com.atlassian.db.replica.internal.state.ConnectionState;
@@ -28,11 +29,12 @@ public class ReplicaConnectionProvider implements AutoCloseable {
     public ReplicaConnectionProvider(
         ConnectionProvider connectionProvider,
         ReplicaConsistency consistency,
-        StateListener stateListener
+        StateListener stateListener,
+        Chief chief
     ) {
         this.parameters = new ConnectionParameters();
         this.warnings = new Warnings();
-        this.state = new ConnectionState(connectionProvider, consistency, parameters, warnings, stateListener);
+        this.state = new ConnectionState(connectionProvider, parameters, warnings, stateListener, chief);
         this.consistency = consistency;
     }
 
