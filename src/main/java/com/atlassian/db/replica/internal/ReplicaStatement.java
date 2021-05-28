@@ -14,14 +14,12 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Set;
 
 import static com.atlassian.db.replica.api.reason.Reason.LOCK;
 import static com.atlassian.db.replica.api.reason.Reason.MAIN_CONNECTION_REUSE;
 import static com.atlassian.db.replica.api.reason.Reason.READ_OPERATION;
 import static com.atlassian.db.replica.api.reason.Reason.RO_API_CALL;
 import static com.atlassian.db.replica.api.reason.Reason.RW_API_CALL;
-import static com.atlassian.db.replica.api.reason.Reason.WRITE_OPERATION;
 import static com.atlassian.db.replica.internal.state.State.MAIN;
 
 public class ReplicaStatement implements Statement {
@@ -36,7 +34,6 @@ public class ReplicaStatement implements Statement {
     private final List<StatementOperation<Statement>> batches = new ArrayList<>();
     private final TransactionHook transactionHook;
     private final DatabaseCall databaseCall;
-    private final SqlFunction sqlFunction;
     private final DecisionAwareReference<Statement> readStatement = new DecisionAwareReference<Statement>() {
         @Override
         public Statement create() throws Exception {
@@ -56,8 +53,7 @@ public class ReplicaStatement implements Statement {
         DatabaseCall databaseCall,
         Integer resultSetType,
         Integer resultSetConcurrency,
-        Integer resultSetHoldability,
-        Set<String> readOnlyFunctions
+        Integer resultSetHoldability
     ) {
         this.transactionHook = transactionHook;
         this.connectionProvider = connectionProvider;
@@ -65,7 +61,6 @@ public class ReplicaStatement implements Statement {
         this.resultSetType = resultSetType;
         this.resultSetConcurrency = resultSetConcurrency;
         this.resultSetHoldability = resultSetHoldability;
-        this.sqlFunction = new SqlFunction(readOnlyFunctions);
     }
 
     @Override
@@ -547,10 +542,9 @@ public class ReplicaStatement implements Statement {
     public static Builder builder(
         ReplicaConnectionProvider connectionProvider,
         TransactionHook transactionHook,
-        DatabaseCall databaseCall,
-        Set<String> readOnlyFunctions
+        DatabaseCall databaseCall
     ) {
-        return new Builder(connectionProvider, transactionHook, databaseCall, readOnlyFunctions);
+        return new Builder(connectionProvider, transactionHook, databaseCall);
     }
 
     void recordWriteAfterQueryExecution() throws SQLException {
@@ -569,10 +563,6 @@ public class ReplicaStatement implements Statement {
         String sql = decisionBuilder.getSql();
         if (sql != null) {
             SqlQuery sqlQuery = new SqlQuery(sql);
-            if (sqlQuery.isWriteOperation(sqlFunction)) {
-                decisionBuilder.reason(WRITE_OPERATION);
-                return prepareWriteStatement(decisionBuilder);
-            }
             if (sqlQuery.isSelectForUpdate()) {
                 decisionBuilder.reason(LOCK);
                 return prepareWriteStatement(decisionBuilder);
@@ -618,7 +608,6 @@ public class ReplicaStatement implements Statement {
         private final ReplicaConnectionProvider connectionProvider;
         private final TransactionHook transactionHook;
         private final DatabaseCall databaseCall;
-        private final Set<String> readOnlyFunctions;
         private Integer resultSetType;
         private Integer resultSetConcurrency;
         private Integer resultSetHoldability;
@@ -626,13 +615,11 @@ public class ReplicaStatement implements Statement {
         private Builder(
             ReplicaConnectionProvider connectionProvider,
             TransactionHook transactionHook,
-            DatabaseCall databaseCall,
-            Set<String> readOnlyFunctions
+            DatabaseCall databaseCall
         ) {
             this.connectionProvider = connectionProvider;
             this.transactionHook = transactionHook;
             this.databaseCall = databaseCall;
-            this.readOnlyFunctions = readOnlyFunctions;
         }
 
         public Builder resultSetType(int resultSetType) {
@@ -657,8 +644,7 @@ public class ReplicaStatement implements Statement {
                 databaseCall,
                 resultSetType,
                 resultSetConcurrency,
-                resultSetHoldability,
-                readOnlyFunctions
+                resultSetHoldability
             );
         }
     }

@@ -1,9 +1,11 @@
 package com.atlassian.db.replica.api;
 
 import com.atlassian.db.replica.api.reason.Reason;
+import com.atlassian.db.replica.internal.ChainOfChiefs;
 import com.atlassian.db.replica.internal.ClientInfo;
 import com.atlassian.db.replica.internal.ConsistencyGuardingChief;
 import com.atlassian.db.replica.internal.ConsistencyToTransactionHookAdapter;
+import com.atlassian.db.replica.internal.DatabaseMicroManager;
 import com.atlassian.db.replica.internal.ForwardCall;
 import com.atlassian.db.replica.internal.ReplicaCallableStatement;
 import com.atlassian.db.replica.internal.ReplicaConnectionProvider;
@@ -33,6 +35,7 @@ import java.sql.SQLXML;
 import java.sql.Savepoint;
 import java.sql.Statement;
 import java.sql.Struct;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -50,7 +53,6 @@ public final class DualConnection implements Connection {
     private static final String CONNECTION_CLOSED_MESSAGE = "This connection has been closed.";
     private final ReplicaConnectionProvider connectionProvider;
     private final DatabaseCall databaseCall;
-    private final Set<String> readOnlyFunctions;
     private final boolean compatibleWithPreviousVersion;
     private final TransactionHook transactionHook;
 
@@ -62,15 +64,18 @@ public final class DualConnection implements Connection {
         Set<String> readOnlyFunctions,
         boolean compatibleWithPreviousVersion
     ) {
+        final ChainOfChiefs chiefs = new ChainOfChiefs(Arrays.asList(
+            new DatabaseMicroManager(readOnlyFunctions),
+            new ConsistencyGuardingChief(consistency)
+        ));
         this.connectionProvider = new ReplicaConnectionProvider(
             connectionProvider,
             consistency,
             stateListener,
-            new ConsistencyGuardingChief(consistency)
+            chiefs
         );
         this.transactionHook = new ConsistencyToTransactionHookAdapter(consistency);
         this.databaseCall = databaseCall;
-        this.readOnlyFunctions = readOnlyFunctions;
         this.compatibleWithPreviousVersion = compatibleWithPreviousVersion;
     }
 
@@ -80,8 +85,7 @@ public final class DualConnection implements Connection {
         return ReplicaStatement.builder(
             connectionProvider,
             transactionHook,
-            databaseCall,
-            readOnlyFunctions
+            databaseCall
         ).build();
     }
 
@@ -92,8 +96,7 @@ public final class DualConnection implements Connection {
             connectionProvider,
             transactionHook,
             databaseCall,
-            sql,
-            readOnlyFunctions
+            sql
         ).build();
     }
 
@@ -104,8 +107,7 @@ public final class DualConnection implements Connection {
             connectionProvider,
             transactionHook,
             databaseCall,
-            sql,
-            readOnlyFunctions
+            sql
         ).build();
     }
 
@@ -209,7 +211,7 @@ public final class DualConnection implements Connection {
     public Statement createStatement(int resultSetType, int resultSetConcurrency) throws SQLException {
         checkClosed();
         return ReplicaStatement
-            .builder(connectionProvider, transactionHook, databaseCall, readOnlyFunctions)
+            .builder(connectionProvider, transactionHook, databaseCall)
             .resultSetType(resultSetType)
             .resultSetConcurrency(resultSetConcurrency)
             .build();
@@ -226,8 +228,7 @@ public final class DualConnection implements Connection {
             connectionProvider,
             transactionHook,
             databaseCall,
-            sql,
-            readOnlyFunctions
+            sql
         ).resultSetType(resultSetType)
             .resultSetConcurrency(resultSetConcurrency)
             .build();
@@ -237,7 +238,7 @@ public final class DualConnection implements Connection {
     public CallableStatement prepareCall(String sql, int resultSetType, int resultSetConcurrency) throws SQLException {
         checkClosed();
         return new ReplicaCallableStatement
-            .Builder(connectionProvider, transactionHook, databaseCall, sql, readOnlyFunctions)
+            .Builder(connectionProvider, transactionHook, databaseCall, sql)
             .resultSetType(resultSetType)
             .resultSetConcurrency(resultSetConcurrency)
             .build();
@@ -301,8 +302,7 @@ public final class DualConnection implements Connection {
         return ReplicaStatement.builder(
             connectionProvider,
             transactionHook,
-            databaseCall,
-            readOnlyFunctions
+            databaseCall
         ).resultSetType(resultSetType)
             .resultSetConcurrency(resultSetConcurrency)
             .resultSetHoldability(resultSetHoldability)
@@ -321,8 +321,7 @@ public final class DualConnection implements Connection {
             connectionProvider,
             transactionHook,
             databaseCall,
-            sql,
-            readOnlyFunctions
+            sql
         ).resultSetType(resultSetType)
             .resultSetConcurrency(resultSetConcurrency)
             .resultSetHoldability(resultSetHoldability)
@@ -338,7 +337,7 @@ public final class DualConnection implements Connection {
     ) throws SQLException {
         checkClosed();
         return new ReplicaCallableStatement
-            .Builder(connectionProvider, transactionHook, databaseCall, sql, readOnlyFunctions)
+            .Builder(connectionProvider, transactionHook, databaseCall, sql)
             .resultSetType(resultSetType)
             .resultSetConcurrency(resultSetConcurrency)
             .resultSetHoldability(resultSetHoldability)
@@ -352,8 +351,7 @@ public final class DualConnection implements Connection {
             connectionProvider,
             transactionHook,
             databaseCall,
-            sql,
-            readOnlyFunctions
+            sql
         ).autoGeneratedKeys(autoGeneratedKeys)
             .build();
     }
@@ -365,8 +363,7 @@ public final class DualConnection implements Connection {
             connectionProvider,
             transactionHook,
             databaseCall,
-            sql,
-            readOnlyFunctions
+            sql
         ).columnIndexes(columnIndexes)
             .build();
     }
@@ -378,8 +375,7 @@ public final class DualConnection implements Connection {
             connectionProvider,
             transactionHook,
             databaseCall,
-            sql,
-            readOnlyFunctions
+            sql
         ).columnNames(columnNames)
             .build();
     }
