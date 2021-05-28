@@ -2,6 +2,7 @@
 state isWriteContext <<choice>>
 state isWriteQuery <<choice>>
 state isReplicaConsistent <<choice>>
+state canUseReplica <<choice>>
 
 
 NoConnection   ---> isWriteContext : **Initial query**\n\nis write context?
@@ -9,7 +10,12 @@ isWriteContext ---> MainConnection   : Yes
 
 isWriteContext --> isWriteQuery : No\n\nis write query?
 isWriteQuery ---> MainConnection : Yes
-isWriteQuery ---> isReplicaConsistent: No\n\nis replica consistent?
+isWriteQuery ---> canUseReplica: No\n\ncan use replica?
+
+
+canUseReplica ---> isReplicaConsistent: Yes\n\nis replica consistent?
+canUseReplica ---> CommitedMain: No
+
 
 isReplicaConsistent ---> ReplicaConnection : Yes
 isReplicaConsistent ---> CommitedMain : No
