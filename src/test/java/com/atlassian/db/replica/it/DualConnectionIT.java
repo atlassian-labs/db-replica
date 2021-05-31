@@ -1,6 +1,7 @@
 package com.atlassian.db.replica.it;
 
 import com.atlassian.db.replica.api.DualConnection;
+import com.atlassian.db.replica.api.TransactionReuse;
 import com.atlassian.db.replica.api.mocks.CircularConsistency;
 import com.atlassian.db.replica.internal.EmptyCache;
 import com.atlassian.db.replica.internal.LsnReplicaConsistency;
@@ -212,6 +213,34 @@ public class DualConnectionIT {
             Long mainCounter = counter.getMain(connectionProvider::getMainConnection);
 
             assertThat(mainCounter).isEqualTo(2);
+        }
+    }
+
+    @Test
+    public void shouldCountTransactions() throws Exception {
+        try (PostgresConnectionProvider connectionProvider = new PostgresConnectionProvider()) {
+            Connection main = connectionProvider.getMainConnection();
+            main.setAutoCommit(false);
+            TableCounter counter = new TableCounter("counter");
+            counter.initialize(main);
+            createTable(main);
+            main.commit();
+            ReplicaConsistency consistency = new TransactionReuse(
+                new ProgressCachingConsistency.Builder<>(counter)
+                    .lastMain(new EmptyCache<>())
+                    .build()
+            );
+            Connection connection = DualConnection.builder(connectionProvider, consistency).build();
+
+            connection.setAutoCommit(false);
+            write(connection, "alpha");
+            write(connection, "beta");
+            connection.commit();
+            write(connection, "gamma");
+            write(connection, "delta");
+            Long mainCounter = counter.getMain(connectionProvider::getMainConnection);
+
+            assertThat(mainCounter).isEqualTo(1);
         }
     }
 
