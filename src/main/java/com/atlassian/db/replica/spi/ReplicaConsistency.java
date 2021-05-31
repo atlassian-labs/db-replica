@@ -12,15 +12,15 @@ import java.util.function.Supplier;
 public interface ReplicaConsistency {
 
     /**
-     * Informs that {@code main} received an UPDATE, INSERT or DELETE or transaction commit
-     * when in a transaction.
+     * Informs that {@code main} received an UPDATE, INSERT or DELETE.
+     * If auto-commit is on, the write is already committed.
      *
      * @param main connects to the main database
      */
     void write(Connection main);
 
     /**
-     * Invoked just before transaction commit.
+     * Invoked just before explicit transaction commit.
      *
      * Notice: The method will not handle all writes. Writes done outside of a transaction
      * needs to be handled in `ReplicaConnection#write`.

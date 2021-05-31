@@ -24,6 +24,10 @@ Dropping a requirement of a major version of a dependency is a new contract.
 ## [Unreleased]
 [Unreleased]: https://github.com/atlassian-labs/db-replica/compare/release-1.3.0...master
 
+### Added
+- Call `ReplicaConsistency.preCommit` only for explicit commits.
+- Clarify the relationship of `ReplicaConsistency.write` and auto-commit.
+
 ## [1.3.0] - 2021-04-21
 [1.3.0]: https://github.com/atlassian-labs/db-replica/compare/release-1.2.6...release-1.3.0
 

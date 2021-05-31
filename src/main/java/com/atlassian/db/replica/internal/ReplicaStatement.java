@@ -514,7 +514,7 @@ public class ReplicaStatement implements Statement {
     <T> T execute(final SqlCall<T> call, final RouteDecision routeDecision) throws SQLException {
         final T result = databaseCall.call(call, routeDecision);
         if (routeDecision.mustRunOnMain()) {
-            recordWriteAfterQueryExecution();
+            consistency.write(currentStatement.getConnection());
         }
         return result;
     }
@@ -551,13 +551,6 @@ public class ReplicaStatement implements Statement {
         Set<String> readOnlyFunctions
     ) {
         return new Builder(connectionProvider, consistency, databaseCall, readOnlyFunctions);
-    }
-
-    void recordWriteAfterQueryExecution() throws SQLException {
-        final Connection connection = currentStatement.getConnection();
-        if (connection.getAutoCommit()) {
-            consistency.write(connection);
-        }
     }
 
     public Statement getReadStatement(RouteDecisionBuilder decisionBuilder) throws SQLException {

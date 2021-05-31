@@ -57,14 +57,7 @@ public class ReplicaConnectionProvider implements AutoCloseable {
     }
 
     public void setAutoCommit(Boolean autoCommit) throws SQLException {
-        final boolean autoCommitBefore = getAutoCommit();
-        if (autoCommitBefore != autoCommit) {
-            preCommit(autoCommitBefore);
-        }
         parameters.setAutoCommit(state::getConnection, autoCommit);
-        if (autoCommitBefore != getAutoCommit()) {
-            recordCommit(autoCommitBefore);
-        }
     }
 
     public void setSchema(String schema) throws SQLException {
@@ -173,14 +166,6 @@ public class ReplicaConnectionProvider implements AutoCloseable {
         if (connection.isPresent()) {
             preCommit(parameters.isAutoCommit());
             connection.get().commit();
-            recordCommit(parameters.isAutoCommit());
-        }
-    }
-
-    private void recordCommit(boolean autoCommit) throws SQLException {
-        if (state.getState().equals(MAIN) && !autoCommit) {
-            final Connection mainConnection = state.getWriteConnection(new RouteDecisionBuilder(Reason.RW_API_CALL));
-            consistency.write(mainConnection);
         }
     }
 

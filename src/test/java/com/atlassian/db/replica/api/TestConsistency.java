@@ -31,24 +31,6 @@ public class TestConsistency {
         final InOrder inOrder = inOrder(consistency, mainConnection);
         inOrder.verify(consistency).preCommit(any());
         inOrder.verify(mainConnection).commit();
-        inOrder.verify(consistency).write(any());
-    }
-
-    @Test
-    public void shouldNotRefreshWhenNotCommitted() throws SQLException {
-        final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
-        final ReplicaConsistency consistency = mock(ReplicaConsistency.class);
-        when(consistency.isConsistent(any())).thenReturn(true);
-        final Connection connection = DualConnection.builder(connectionProvider, consistency).build();
-
-        connection.setAutoCommit(false);
-        connection.prepareStatement(SIMPLE_QUERY).executeUpdate();
-
-        final Connection mainConnection = connectionProvider.getProvidedConnections().get(0);
-        final InOrder inOrder = inOrder(consistency, mainConnection);
-        inOrder.verify(consistency, never()).preCommit(any());
-        inOrder.verify(mainConnection, never()).commit();
-        inOrder.verify(consistency, never()).write(any());
     }
 
     @Test
@@ -132,36 +114,6 @@ public class TestConsistency {
         final Connection connection = DualConnection.builder(connectionProvider, consistency).build();
 
         connection.prepareStatement(SELECT_FOR_UPDATE).executeQuery();
-
-        verify(consistency, never()).preCommit(any());
-        verify(consistency, never()).write(any());
-    }
-
-    @Test
-    public void shouldSetAutoCommitRefreshWhenInTransaction() throws SQLException {
-        final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
-        final ReplicaConsistency consistency = mock(ReplicaConsistency.class);
-        when(consistency.isConsistent(any())).thenReturn(true);
-        final Connection connection = DualConnection.builder(connectionProvider, consistency).build();
-
-        connection.setAutoCommit(false);
-        connection.prepareStatement(SIMPLE_QUERY).executeUpdate();
-        connection.setAutoCommit(true);
-
-        final InOrder inOrder = inOrder(consistency);
-        inOrder.verify(consistency).preCommit(any());
-        inOrder.verify(consistency).write(any());
-    }
-
-    @Test
-    public void shouldSetAutoCommitNotRefresh() throws SQLException {
-        final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
-        final ReplicaConsistency consistency = mock(ReplicaConsistency.class);
-        when(consistency.isConsistent(any())).thenReturn(true);
-        final Connection connection = DualConnection.builder(connectionProvider, consistency).build();
-
-        connection.setAutoCommit(false);
-        connection.prepareStatement(SIMPLE_QUERY).executeUpdate();
 
         verify(consistency, never()).preCommit(any());
         verify(consistency, never()).write(any());
