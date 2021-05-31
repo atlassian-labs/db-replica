@@ -2,8 +2,12 @@ package com.atlassian.db.replica.it;
 
 import com.atlassian.db.replica.api.DualConnection;
 import com.atlassian.db.replica.api.mocks.CircularConsistency;
+import com.atlassian.db.replica.internal.EmptyCache;
 import com.atlassian.db.replica.internal.LsnReplicaConsistency;
+import com.atlassian.db.replica.internal.ProgressCachingConsistency;
+import com.atlassian.db.replica.internal.TableCounter;
 import com.atlassian.db.replica.it.consistency.WaitingReplicaConsistency;
+import com.atlassian.db.replica.spi.ReplicaConsistency;
 import com.google.common.collect.ImmutableList;
 import org.junit.Test;
 import org.postgresql.jdbc.PgConnection;
@@ -185,6 +189,32 @@ public class DualConnectionIT {
         }
     }
 
+    @Test
+    public void shouldCountCommittedWrites() throws Exception {
+        try (PostgresConnectionProvider connectionProvider = new PostgresConnectionProvider()) {
+            Connection main = connectionProvider.getMainConnection();
+            main.setAutoCommit(false);
+            TableCounter counter = new TableCounter("counter");
+            counter.initialize(main);
+            createTable(main);
+            main.commit();
+            ReplicaConsistency consistency = new ProgressCachingConsistency.Builder<>(counter)
+                .lastMain(new EmptyCache<>())
+                .build();
+            Connection connection = DualConnection.builder(connectionProvider, consistency).build();
+
+            connection.setAutoCommit(false);
+            write(connection, "alpha");
+            write(connection, "beta");
+            connection.commit();
+            write(connection, "gamma");
+            write(connection, "delta");
+            Long mainCounter = counter.getMain(connectionProvider::getMainConnection);
+
+            assertThat(mainCounter).isEqualTo(2);
+        }
+    }
+
     private void createTestSequence(Connection connection) throws SQLException {
         try (final Statement mainStatement = connection.createStatement()) {
             mainStatement.execute("CREATE SEQUENCE test_sequence;");
@@ -197,4 +227,10 @@ public class DualConnectionIT {
         }
     }
 
+    private void write(Connection connection, String value) throws SQLException {
+        try (PreparedStatement statement = connection.prepareStatement("INSERT INTO foo(bar) VALUES(?);")) {
+            statement.setString(1, value);
+            statement.executeUpdate();
+        }
+    }
 }
