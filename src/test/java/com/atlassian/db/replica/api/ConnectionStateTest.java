@@ -4,8 +4,8 @@ import com.atlassian.db.replica.api.mocks.CircularConsistency;
 import com.atlassian.db.replica.api.mocks.ConnectionProviderMock;
 import com.atlassian.db.replica.internal.state.StateListener;
 import com.google.common.collect.ImmutableList;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 import java.sql.Connection;
@@ -27,7 +27,7 @@ public class ConnectionStateTest {
     private ConnectionProviderMock connectionProvider;
     private StateListener stateListener;
 
-    @Before
+    @BeforeEach
     public void before() {
         this.stateListener = mock(StateListener.class);
         this.connectionProvider = new ConnectionProviderMock();

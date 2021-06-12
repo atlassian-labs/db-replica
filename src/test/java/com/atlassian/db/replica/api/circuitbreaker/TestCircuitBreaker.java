@@ -2,10 +2,10 @@ package com.atlassian.db.replica.api.circuitbreaker;
 
 import com.atlassian.db.replica.api.DualConnection;
 import com.atlassian.db.replica.api.mocks.ConnectionProviderMock;
-import com.atlassian.db.replica.internal.circuitbreaker.BreakOnNotSupportedOperations;
 import com.atlassian.db.replica.internal.ReadReplicaUnsupportedOperationException;
-import org.junit.After;
-import org.junit.Test;
+import com.atlassian.db.replica.internal.circuitbreaker.BreakOnNotSupportedOperations;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
 
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -17,7 +17,7 @@ import static org.assertj.core.api.Assertions.catchThrowable;
 
 public class TestCircuitBreaker {
 
-    @After
+    @AfterEach
     public void after() {
         BreakOnNotSupportedOperations.reset();
     }

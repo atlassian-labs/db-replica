@@ -10,9 +10,10 @@ tasks.wrapper {
 
 dependencies {
     testImplementation("org.postgresql:postgresql:42.2.18")
-    testImplementation("junit:junit:4.12")
-    testImplementation("org.assertj:assertj-core:3.18.1")
-    testImplementation("org.mockito:mockito-core:3.6.0")
+    testImplementation(platform("org.junit:junit-bom:5.7.2"))
+    testImplementation("org.junit.jupiter:junit-jupiter")
+    testImplementation("org.assertj:assertj-core:3.19.0")
+    testImplementation("org.mockito:mockito-core:3.11.0")
     testImplementation("org.threeten:threeten-extra:1.5.0")
     testImplementation("com.github.docker-java:docker-java-core:3.2.6")
     testImplementation("com.github.docker-java:docker-java-transport-httpclient5:3.2.6")
@@ -58,12 +59,14 @@ tasks.withType<Test> {
 }
 
 tasks.test {
+    useJUnitPlatform()
     filter {
         exclude("**/*IT.class")
     }
 }
 
 val testIntegration = task<Test>("testIntegration") {
+    useJUnitPlatform()
     filter {
         include("**/*IT.class")
     }

@@ -2,15 +2,15 @@ package com.atlassian.db.replica.internal;
 
 import com.atlassian.db.replica.api.AuroraPostgresLsnReplicaConsistency;
 import com.atlassian.db.replica.internal.util.ConnectionSupplier;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -24,7 +24,7 @@ public class AuroraPostgresLsnReplicaConsistencyTest {
     private Connection main;
     private Connection replica;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         lastWriteCache = new VolatileCache<>();
         consistency = new AuroraPostgresLsnReplicaConsistency.Builder()
@@ -35,11 +35,11 @@ public class AuroraPostgresLsnReplicaConsistencyTest {
         replica = mock(Connection.class);
     }
 
-    @Test(expected = RuntimeException.class)
+    @Test
     public void shouldThrowRuntimeExceptionWhenLastWriteLsnFails() throws Exception {
         mockLsnFetchingFailure(main);
 
-        consistency.write(main);
+        assertThatThrownBy(() -> consistency.write(main)).isInstanceOf(RuntimeException.class);
     }
 
     @Test
