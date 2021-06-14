@@ -2,7 +2,7 @@ package com.atlassian.db.replica.it;
 
 import com.atlassian.db.replica.api.DualConnection;
 import com.atlassian.db.replica.api.mocks.NoOpConnectionProvider;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.sql.Connection;
 import java.sql.SQLException;

@@ -1,15 +1,19 @@
 package com.atlassian.db.replica.internal;
 
 import com.atlassian.db.replica.internal.util.ConnectionSupplier;
-import com.atlassian.db.replica.spi.*;
-import org.junit.*;
+import com.atlassian.db.replica.spi.ReplicaConsistency;
+import org.junit.jupiter.api.Test;
 
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.function.Supplier;
 
-import static org.assertj.core.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class LsnReplicaConsistencyTest {
 

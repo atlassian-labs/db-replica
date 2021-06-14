@@ -5,7 +5,7 @@ import com.atlassian.db.replica.api.mocks.CircularConsistency;
 import com.atlassian.db.replica.internal.LsnReplicaConsistency;
 import com.atlassian.db.replica.it.consistency.WaitingReplicaConsistency;
 import com.google.common.collect.ImmutableList;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.postgresql.jdbc.PgConnection;
 
 import java.sql.Connection;

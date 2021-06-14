@@ -3,8 +3,8 @@ package com.atlassian.db.replica.internal;
 import com.atlassian.db.replica.api.PessimisticPropagationConsistency;
 import com.atlassian.db.replica.internal.util.ConnectionSupplier;
 import com.atlassian.db.replica.spi.ReplicaConsistency;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.threeten.extra.MutableClock;
 
 import java.sql.Connection;
@@ -19,7 +19,7 @@ public class PessimisticPropagationConsistencyTest {
     private Connection main;
     private Connection replica;
 
-    @Before
+    @BeforeEach
     public void resetState() {
         clock = MutableClock.epochUTC();
         consistencyBuilder = new PessimisticPropagationConsistency.Builder()
