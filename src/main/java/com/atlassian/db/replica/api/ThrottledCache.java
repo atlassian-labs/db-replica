@@ -13,13 +13,18 @@ import java.util.function.Supplier;
  * Other threads instead of waiting are getting last known value.
  */
 @ThreadSafe
-public class ThrottledCache<T> implements SuppliedCache<T> {
+public final class ThrottledCache<T> implements SuppliedCache<T> {
     private final ReentrantLock lock = new ReentrantLock();
     private T value = null;
 
     @Override
     public Optional<T> get(Supplier<T> supplier) {
         maybeRefresh(supplier);
+        return Optional.ofNullable(value);
+    }
+
+    @Override
+    public Optional<T> get() {
         return Optional.ofNullable(value);
     }
 

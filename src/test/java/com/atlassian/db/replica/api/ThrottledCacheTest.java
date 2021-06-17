@@ -24,6 +24,14 @@ public class ThrottledCacheTest {
         assertThat(cache.get(this::anyValue)).hasValue(1L);
     }
 
+    @Test
+    public void readsCachedValue() {
+        ThrottledCache<Long> cache = new ThrottledCache<>();
+
+        cache.get(() -> 1L);
+
+        assertThat(cache.get()).hasValue(1L);
+    }
 
     @Test
     public void serveLatestValue() {

@@ -8,9 +8,14 @@ import java.util.function.Supplier;
 /**
  * No cache implementation
  */
-public class NoCacheSuppliedCache<T> implements SuppliedCache<T> {
+public final class NoCacheSuppliedCache<T> implements SuppliedCache<T> {
     @Override
     public Optional<T> get(Supplier<T> supplier) {
         return Optional.ofNullable(supplier.get());
+    }
+
+    @Override
+    public Optional<T> get() {
+        return Optional.empty();
     }
 }

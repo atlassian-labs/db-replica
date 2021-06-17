@@ -14,7 +14,7 @@ import java.util.function.Supplier;
  * Assumes that writes propagate from main to replicas in at most a given amount of time.
  * If it cannot remember the time of last write, pessimistically assumes it's going to be inconsistent.
  */
-public class PessimisticPropagationConsistency implements ReplicaConsistency {
+public final class PessimisticPropagationConsistency implements ReplicaConsistency {
 
     private final Clock clock;
     private final Duration maxPropagation;
