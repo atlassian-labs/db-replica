@@ -12,4 +12,11 @@ public interface SuppliedCache<T> {
      * @return T last remembered value or empty
      */
     Optional<T> get(Supplier<T> supplier);
+
+    /**
+     * Returns the cached value
+     *
+     * @return
+     */
+    Optional<T> get();
 }
