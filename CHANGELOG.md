@@ -22,7 +22,10 @@ Dropping a requirement of a major version of a dependency is a new contract.
 
 
 ## [Unreleased]
-[Unreleased]: https://github.com/atlassian-labs/db-replica/compare/release-1.3.0...master
+[Unreleased]: https://github.com/atlassian-labs/db-replica/compare/release-2.0.0...master
+
+## [2.0.0] - 2021-06-17
+[2.0.0]: https://github.com/atlassian-labs/db-replica/compare/release-1.3.0...release-2.0.0
 
 ### Added
 - Allow getting cached value from `SuppliedCache` without executing a supplier
