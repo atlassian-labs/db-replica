@@ -1,12 +1,12 @@
 package com.atlassian.db.replica.internal.state;
 
+import com.atlassian.db.replica.spi.Chief;
 import com.atlassian.db.replica.api.reason.RouteDecision;
 import com.atlassian.db.replica.internal.ConnectionParameters;
 import com.atlassian.db.replica.internal.DecisionAwareReference;
 import com.atlassian.db.replica.internal.RouteDecisionBuilder;
 import com.atlassian.db.replica.internal.Warnings;
 import com.atlassian.db.replica.spi.ConnectionProvider;
-import com.atlassian.db.replica.spi.ReplicaConsistency;
 
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -16,7 +16,6 @@ import java.util.concurrent.Executor;
 
 import static com.atlassian.db.replica.api.reason.Reason.HIGH_TRANSACTION_ISOLATION_LEVEL;
 import static com.atlassian.db.replica.api.reason.Reason.MAIN_CONNECTION_REUSE;
-import static com.atlassian.db.replica.api.reason.Reason.REPLICA_INCONSISTENT;
 import static com.atlassian.db.replica.api.reason.Reason.RO_API_CALL;
 import static com.atlassian.db.replica.api.reason.Reason.RW_API_CALL;
 import static com.atlassian.db.replica.internal.state.State.CLOSED;
@@ -24,15 +23,16 @@ import static com.atlassian.db.replica.internal.state.State.COMMITED_MAIN;
 import static com.atlassian.db.replica.internal.state.State.MAIN;
 import static com.atlassian.db.replica.internal.state.State.NOT_INITIALISED;
 import static com.atlassian.db.replica.internal.state.State.REPLICA;
+import static java.util.Collections.singleton;
 
 public final class ConnectionState {
     private final ConnectionProvider connectionProvider;
-    private final ReplicaConsistency consistency;
     private volatile Boolean isClosed = false;
     private final ConnectionParameters parameters;
     private final Warnings warnings;
     private final StateListener stateListener;
-    private volatile boolean replicaConsistent = true;
+    private volatile boolean isMainCommited = true;
+    private final Chief chief;
 
     private final DecisionAwareReference<Connection> readConnection = new DecisionAwareReference<Connection>() {
         @Override
@@ -58,16 +58,16 @@ public final class ConnectionState {
 
     public ConnectionState(
         ConnectionProvider connectionProvider,
-        ReplicaConsistency consistency,
         ConnectionParameters parameters,
         Warnings warnings,
-        StateListener stateListener
+        StateListener stateListener,
+        Chief chief
     ) {
         this.connectionProvider = connectionProvider;
-        this.consistency = consistency;
         this.parameters = parameters;
         this.warnings = warnings;
         this.stateListener = stateListener;
+        this.chief = chief;
     }
 
     public State getState() {
@@ -78,7 +78,7 @@ public final class ConnectionState {
             final boolean writeReady = writeConnection.isInitialized();
             if (!readReady && !writeReady) {
                 return NOT_INITIALISED;
-            } else if (!replicaConsistent && writeReady) {
+            } else if (isMainCommited && writeReady) {
                 return COMMITED_MAIN;
             } else if (writeReady) {
                 return MAIN;
@@ -118,7 +118,7 @@ public final class ConnectionState {
      */
     public Connection getWriteConnection(RouteDecisionBuilder decisionBuilder) throws SQLException {
         final State stateBefore = getState();
-        replicaConsistent = true;
+        isMainCommited = false;
         final Connection connection = prepareMainConnection(decisionBuilder);
         final State stateAfter = getState();
         if (!stateAfter.equals(stateBefore)) {
@@ -189,17 +189,15 @@ public final class ConnectionState {
             decisionBuilder.cause(writeConnection.getFirstCause().build());
             return writeConnection.get(decisionBuilder);
         }
-        if (consistency.isConsistent(() -> readConnection.get(decisionBuilder))) {
+        chief.overrideDecision(decisionBuilder, singleton(() -> readConnection.get(decisionBuilder)));
+        if (decisionBuilder.build().willRunOnMain()) {
+            isMainCommited = true;
+            return prepareMainConnection(decisionBuilder);
+        } else {
             if (getState().equals(COMMITED_MAIN)) {
                 closeConnection(writeConnection, decisionBuilder);
             }
-            final Connection connection = readConnection.get(decisionBuilder);
-            replicaConsistent = true;
-            return connection;
-        } else {
-            replicaConsistent = false;
-            decisionBuilder.reason(REPLICA_INCONSISTENT);
-            return prepareMainConnection(decisionBuilder);
+            return readConnection.get(decisionBuilder);
         }
     }
 

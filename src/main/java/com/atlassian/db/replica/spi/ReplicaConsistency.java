@@ -7,8 +7,11 @@ import java.util.function.Supplier;
 
 /**
  * Tracks data consistency between replica and main databases.
+ *
+ * @deprecated TODO
  */
 @ThreadSafe
+@Deprecated
 public interface ReplicaConsistency {
 
     /**
