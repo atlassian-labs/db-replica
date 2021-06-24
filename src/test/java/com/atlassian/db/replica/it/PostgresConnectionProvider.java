@@ -70,7 +70,7 @@ public class PostgresConnectionProvider implements ConnectionProvider, AutoClose
 
     private void pullImage() {
         try {
-            dockerClient.pullImageCmd("bitnami/postgresql:9.6").start().awaitCompletion();
+            dockerClient.pullImageCmd("bitnami/postgresql:13").start().awaitCompletion();
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
@@ -82,7 +82,7 @@ public class PostgresConnectionProvider implements ConnectionProvider, AutoClose
     }
 
     private void startReplica() {
-        final CreateContainerResponse replicaCreate = dockerClient.createContainerCmd("bitnami/postgresql:9.6")
+        final CreateContainerResponse replicaCreate = dockerClient.createContainerCmd("bitnami/postgresql:13")
             .withEnv(
                 "POSTGRESQL_REPLICATION_MODE=slave",
                 "POSTGRESQL_MASTER_HOST=master",
@@ -113,7 +113,7 @@ public class PostgresConnectionProvider implements ConnectionProvider, AutoClose
     }
 
     private void startMaster() {
-        final CreateContainerResponse masterCreate = dockerClient.createContainerCmd("bitnami/postgresql:9.6")
+        final CreateContainerResponse masterCreate = dockerClient.createContainerCmd("bitnami/postgresql:13")
             .withEnv(
                 "POSTGRESQL_REPLICATION_MODE=master",
                 "POSTGRESQL_USERNAME=postgres",

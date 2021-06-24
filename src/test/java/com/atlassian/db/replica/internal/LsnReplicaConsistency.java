@@ -15,9 +15,9 @@ import java.util.function.Supplier;
  * Each replica updates its WAL via recovery. Recovery-time LSN can be queried by recovery info.
  * When a replica is caught up, it's no longer in recovery. Non-recovery LSN can be queried by backup control.
  *
- * @see <a href="https://www.postgresql.org/docs/9.6/datatype-pg-lsn.html">LSN</a>
- * @see <a href="https://www.postgresql.org/docs/9.6/functions-admin.html#FUNCTIONS-RECOVERY-INFO-TABLE">recovery info</a>
- * @see <a href="https://www.postgresql.org/docs/9.6/functions-admin.html#FUNCTIONS-ADMIN-BACKUP-TABLE">backup control</a>
+ * @see <a href="https://www.postgresql.org/docs/13/datatype-pg-lsn.html">LSN</a>
+ * @see <a href="https://www.postgresql.org/docs/13/functions-admin.html#FUNCTIONS-RECOVERY-INFO-TABLE">recovery info</a>
+ * @see <a href="https://www.postgresql.org/docs/13/functions-admin.html#FUNCTIONS-ADMIN-BACKUP-TABLE">backup control</a>
  * <p>
  * It's a DB specific implementation used in integration tests.
  */
