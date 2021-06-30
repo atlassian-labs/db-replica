@@ -3,8 +3,11 @@ package com.atlassian.db.replica.api;
 import com.atlassian.db.replica.internal.util.ThreadSafe;
 import com.atlassian.db.replica.spi.SuppliedCache;
 
+import java.time.Clock;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.Optional;
-import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
 
@@ -14,8 +17,25 @@ import java.util.function.Supplier;
  */
 @ThreadSafe
 public final class ThrottledCache<T> implements SuppliedCache<T> {
-    private final ReentrantLock lock = new ReentrantLock();
+    private final AtomicReference<Instant> lock = new AtomicReference<>();
+    private final Clock clock;
+    private final Duration timeout;
     private T value = null;
+
+    public ThrottledCache(Clock clock, Duration timeout) {
+        this.clock = clock;
+        this.timeout = timeout;
+    }
+
+    /**
+     * It may be dangerous to use ThrottledCache without any timeout. A single supplier can block the cache refreshes forever.
+     * This constructor is available for compatibility only.
+     */
+    @Deprecated
+    public ThrottledCache() {
+        this.clock = Clock.systemUTC();
+        this.timeout = Duration.ofDays(365);
+    }
 
     @Override
     public Optional<T> get(Supplier<T> supplier) {
@@ -29,12 +49,26 @@ public final class ThrottledCache<T> implements SuppliedCache<T> {
     }
 
     private void maybeRefresh(Supplier<T> supplier) {
-        if(lock.tryLock()) {
-            try {
-                value = supplier.get();
-            } finally {
-                lock.unlock();
+        final boolean hasLock = lock.compareAndSet(null, clock.instant().plus(timeout));
+        if (hasLock) {
+            loadValue(supplier);
+        } else {
+            final Instant instant = lock.get();
+            final boolean didLockExpire = instant != null && instant.isBefore(clock.instant());
+            if (didLockExpire) {
+                final boolean didLockTakeOver = lock.compareAndSet(instant, clock.instant().plus(timeout));
+                if (didLockTakeOver) {
+                    loadValue(supplier);
+                }
             }
+        }
+    }
+
+    private void loadValue(Supplier<T> supplier) {
+        try {
+            value = supplier.get();
+        } finally {
+            lock.set(null);
         }
     }
 }
