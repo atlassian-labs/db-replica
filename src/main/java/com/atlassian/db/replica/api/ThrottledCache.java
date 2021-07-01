@@ -1,5 +1,6 @@
 package com.atlassian.db.replica.api;
 
+import com.atlassian.db.replica.internal.LockBasedThrottledCache;
 import com.atlassian.db.replica.internal.util.ThreadSafe;
 import com.atlassian.db.replica.spi.SuppliedCache;
 
@@ -17,58 +18,75 @@ import java.util.function.Supplier;
  */
 @ThreadSafe
 public final class ThrottledCache<T> implements SuppliedCache<T> {
-    private final AtomicReference<Instant> lock = new AtomicReference<>();
-    private final Clock clock;
-    private final Duration timeout;
-    private T value = null;
+    private final SuppliedCache<T> delegate;
 
     public ThrottledCache(Clock clock, Duration timeout) {
-        this.clock = clock;
-        this.timeout = timeout;
+        this.delegate = new ThrottledCacheWithTimeout<>(clock, timeout);
     }
 
     /**
-     * It may be dangerous to use ThrottledCache without any timeout. A single supplier can block the cache refreshes forever.
+     * @deprecated It may be dangerous to use ThrottledCache without any timeout. A single supplier can block the cache refreshes forever.
      * This constructor is available for compatibility only.
      */
     @Deprecated
     public ThrottledCache() {
-        this.clock = Clock.systemUTC();
-        this.timeout = Duration.ofDays(365);
+        this.delegate = new LockBasedThrottledCache<>();
     }
 
     @Override
     public Optional<T> get(Supplier<T> supplier) {
-        maybeRefresh(supplier);
-        return Optional.ofNullable(value);
+        return this.delegate.get(supplier);
     }
 
     @Override
     public Optional<T> get() {
-        return Optional.ofNullable(value);
+        return this.delegate.get();
     }
 
-    private void maybeRefresh(Supplier<T> supplier) {
-        final boolean hasLock = lock.compareAndSet(null, clock.instant().plus(timeout));
-        if (hasLock) {
-            loadValue(supplier);
-        } else {
-            final Instant instant = lock.get();
-            final boolean didLockExpire = instant != null && instant.isBefore(clock.instant());
-            if (didLockExpire) {
-                final boolean didLockTakeOver = lock.compareAndSet(instant, clock.instant().plus(timeout));
-                if (didLockTakeOver) {
-                    loadValue(supplier);
+    private static class ThrottledCacheWithTimeout<T> implements SuppliedCache<T> {
+        private final AtomicReference<Instant> lock = new AtomicReference<>();
+        private final Clock clock;
+        private final Duration timeout;
+        private T value = null;
+
+        private ThrottledCacheWithTimeout(Clock clock, Duration timeout) {
+            this.clock = clock;
+            this.timeout = timeout;
+        }
+
+        @Override
+        public Optional<T> get(Supplier<T> supplier) {
+            maybeRefresh(supplier);
+            return Optional.ofNullable(value);
+        }
+
+        @Override
+        public Optional<T> get() {
+            return Optional.ofNullable(value);
+        }
+
+        private void maybeRefresh(Supplier<T> supplier) {
+            final boolean hasLock = lock.compareAndSet(null, clock.instant().plus(timeout));
+            if (hasLock) {
+                loadValue(supplier);
+            } else {
+                final Instant instant = lock.get();
+                final boolean didLockExpire = instant != null && instant.isBefore(clock.instant());
+                if (didLockExpire) {
+                    final boolean didLockTakeOver = lock.compareAndSet(instant, clock.instant().plus(timeout));
+                    if (didLockTakeOver) {
+                        loadValue(supplier);
+                    }
                 }
             }
         }
-    }
 
-    private void loadValue(Supplier<T> supplier) {
-        try {
-            value = supplier.get();
-        } finally {
-            lock.set(null);
+        private void loadValue(Supplier<T> supplier) {
+            try {
+                value = supplier.get();
+            } finally {
+                lock.set(null);
+            }
         }
     }
 }
