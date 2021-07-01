@@ -1,10 +1,10 @@
 package com.atlassian.db.replica.api;
 
 import org.apache.commons.lang.NotImplementedException;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.time.Clock;
-import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.util.ConcurrentModificationException;
@@ -17,10 +17,12 @@ import static java.time.Duration.ofMillis;
 import static java.time.Duration.ofSeconds;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatNoException;
+import static org.assertj.core.api.Assertions.catchThrowable;
 
 public class ThrottledCacheTest {
     private final ExecutorService executor = Executors.newCachedThreadPool();
     private final TickingClock clock = new TickingClock();
+
     @Test
     public void staleWhileInvalidating() throws InterruptedException {
         ThrottledCache<Long> cache = new ThrottledCache<>(clock, ofSeconds(60));
@@ -74,7 +76,7 @@ public class ThrottledCacheTest {
     public void shouldSupplierBlockTheCacheUntilTimeout() throws InterruptedException {
         ThrottledCache<Long> cache = new ThrottledCache<>(clock, ofMillis(1500));
 
-        asyncPutWithSlowSupplier(cache, anyValue(), Duration.ofDays(365));
+        asyncPutWithSlowSupplier(cache, anyValue());
 
         clock.tick();
 
@@ -85,7 +87,7 @@ public class ThrottledCacheTest {
     public void shouldntSupplierBlockTheCacheForever() throws InterruptedException {
         ThrottledCache<Long> cache = new ThrottledCache<>(clock, ofMillis(1500));
 
-        asyncPutWithSlowSupplier(cache, anyValue(), Duration.ofDays(365));
+        asyncPutWithSlowSupplier(cache, anyValue());
 
         clock.tick();
         clock.tick();
@@ -94,28 +96,42 @@ public class ThrottledCacheTest {
 
     }
 
-    private void asyncPutWithSlowSupplier(ThrottledCache<Long> cache, long value) throws InterruptedException {
-        asyncPutWithSlowSupplier(cache, value, Duration.ofMillis(1000));
+    @Test
+    public void shouldNotRobbedThreadReleaseLock() throws InterruptedException {
+        ThrottledCache<Long> cache = new ThrottledCache<>(clock, ofMillis(1500));
+
+        final WaitingWork firstThreadWork = asyncPutWithSlowSupplier(cache, 1);
+        clock.tick();
+        clock.tick();
+        asyncPutWithSlowSupplier(cache, 2);
+        firstThreadWork.finish();
+
+        final Throwable throwable = catchThrowable(() -> cache.get(() -> {
+            throw new ConcurrentModificationException("Concurrent invalidation is not allowed");
+        }));
+
+        assertThat(throwable).doesNotThrowAnyException();
     }
 
-    private void asyncPutWithSlowSupplier(
+    private WaitingWork asyncPutWithSlowSupplier(
         ThrottledCache<Long> cache,
-        long value,
-        Duration duration
+        long value
     ) throws InterruptedException {
         final CountDownLatch asyncThreadStarted = new CountDownLatch(1);
+        final CountDownLatch threadWaiting = new CountDownLatch(1);
         executor.submit(() -> {
             cache.get(() -> {
+                asyncThreadStarted.countDown();
                 try {
-                    asyncThreadStarted.countDown();
-                    Thread.sleep(duration.toMillis());
+                    threadWaiting.await();
                 } catch (InterruptedException e) {
-                    e.printStackTrace();
+                    throw new RuntimeException(e);
                 }
                 return value;
             });
         });
         asyncThreadStarted.await();
+        return new WaitingWork(threadWaiting);
     }
 
     private Long anyValue() {
@@ -142,6 +158,18 @@ public class ThrottledCacheTest {
         @Override
         public Instant instant() {
             return instant;
+        }
+    }
+
+    private final static class WaitingWork {
+        private final CountDownLatch latch;
+
+        private WaitingWork(CountDownLatch latch) {
+            this.latch = latch;
+        }
+
+        public void finish() throws InterruptedException {
+            latch.countDown();
         }
     }
 }

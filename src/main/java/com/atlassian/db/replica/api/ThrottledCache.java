@@ -66,26 +66,27 @@ public final class ThrottledCache<T> implements SuppliedCache<T> {
         }
 
         private void maybeRefresh(Supplier<T> supplier) {
-            final boolean hasLock = lock.compareAndSet(null, clock.instant().plus(timeout));
+            final Instant deadline = clock.instant().plus(this.timeout);
+            final boolean hasLock = lock.compareAndSet(null, deadline);
             if (hasLock) {
-                loadValue(supplier);
+                loadValue(supplier, deadline);
             } else {
                 final Instant instant = lock.get();
                 final boolean didLockExpire = instant != null && instant.isBefore(clock.instant());
                 if (didLockExpire) {
-                    final boolean didLockTakeOver = lock.compareAndSet(instant, clock.instant().plus(timeout));
+                    final boolean didLockTakeOver = lock.compareAndSet(instant, deadline);
                     if (didLockTakeOver) {
-                        loadValue(supplier);
+                        loadValue(supplier, deadline);
                     }
                 }
             }
         }
 
-        private void loadValue(Supplier<T> supplier) {
+        private void loadValue(Supplier<T> supplier, Instant timeout) {
             try {
                 value = supplier.get();
             } finally {
-                lock.set(null);
+                lock.compareAndSet(timeout, null);
             }
         }
     }
