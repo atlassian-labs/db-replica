@@ -1,13 +1,14 @@
 package com.atlassian.db.replica.api;
 
 import org.apache.commons.lang.NotImplementedException;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneId;
+import java.util.ArrayList;
 import java.util.ConcurrentModificationException;
+import java.util.Optional;
 import java.util.Random;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
@@ -113,11 +114,55 @@ public class ThrottledCacheTest {
         assertThat(throwable).doesNotThrowAnyException();
     }
 
+    @Test
+    public void shouldntRobbedThreadUpdateValue() throws InterruptedException {
+        ThrottledCache<Long> cache = new ThrottledCache<>(clock, ofMillis(1500));
+
+        final WaitingWork firstThreadWork = asyncPutWithSlowSupplier(cache, 1);
+        clock.tick();
+        clock.tick();
+        cache.get(() -> 2L);
+        firstThreadWork.finish();
+        assertThat(cache.get()).isEqualTo(Optional.of(2L));
+    }
+
+    @Test
+    public void shouldFailingSupplierReleaseTheLock() {
+        ThrottledCache<Long> cache = new ThrottledCache<>(clock, ofMillis(1500));
+
+        cache.get(() -> 1L);
+        final Throwable throwable = catchThrowable(() -> {
+            cache.get(() -> {
+                throw new RuntimeException();
+            });
+        });
+
+        assertThat(throwable).isNotNull();
+        assertThat(cache.get()).isEqualTo(Optional.of(1L));
+        assertThat(cache.get(() -> 2L)).isEqualTo(Optional.of(2L));
+    }
+
+    @Test
+    public void shouldTimeoutLockMultipleTimes() throws InterruptedException {
+        ThrottledCache<Long> cache = new ThrottledCache<>(clock, ofMillis(500));
+
+        final ArrayList<WaitingWork> waitingWorks = new ArrayList<>();
+        for (int i = 0; i < 32; i++) {
+            final WaitingWork waitingWork = asyncPutWithSlowSupplier(cache, i);
+            waitingWorks.add(waitingWork);
+            clock.tick();
+        }
+        waitingWorks.forEach(WaitingWork::finish);
+
+        assertThat(cache.get()).isEqualTo(Optional.of(31L));
+    }
+
     private WaitingWork asyncPutWithSlowSupplier(
         ThrottledCache<Long> cache,
         long value
     ) throws InterruptedException {
         final CountDownLatch asyncThreadStarted = new CountDownLatch(1);
+        final CountDownLatch asyncThreadFinished = new CountDownLatch(1);
         final CountDownLatch threadWaiting = new CountDownLatch(1);
         executor.submit(() -> {
             cache.get(() -> {
@@ -129,9 +174,10 @@ public class ThrottledCacheTest {
                 }
                 return value;
             });
+            asyncThreadFinished.countDown();
         });
         asyncThreadStarted.await();
-        return new WaitingWork(threadWaiting);
+        return new WaitingWork(threadWaiting, asyncThreadFinished);
     }
 
     private Long anyValue() {
@@ -162,14 +208,21 @@ public class ThrottledCacheTest {
     }
 
     private final static class WaitingWork {
-        private final CountDownLatch latch;
+        private final CountDownLatch threadWaiting;
+        private final CountDownLatch asyncThreadFinished;
 
-        private WaitingWork(CountDownLatch latch) {
-            this.latch = latch;
+        private WaitingWork(CountDownLatch threadWaiting, CountDownLatch asyncThreadFinished) {
+            this.threadWaiting = threadWaiting;
+            this.asyncThreadFinished = asyncThreadFinished;
         }
 
-        public void finish() throws InterruptedException {
-            latch.countDown();
+        public void finish() {
+            threadWaiting.countDown();
+            try {
+                asyncThreadFinished.await();
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
         }
     }
 }

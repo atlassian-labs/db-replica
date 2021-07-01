@@ -7,6 +7,7 @@ import com.atlassian.db.replica.spi.SuppliedCache;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
@@ -44,10 +45,14 @@ public final class ThrottledCache<T> implements SuppliedCache<T> {
     }
 
     private static class ThrottledCacheWithTimeout<T> implements SuppliedCache<T> {
-        private final AtomicReference<Instant> lock = new AtomicReference<>();
         private final Clock clock;
         private final Duration timeout;
-        private T value = null;
+        private final AtomicReference<LockValuePair<T>> lockValuePair = new AtomicReference<>(
+            new LockValuePair<>(
+                null,
+                null
+            )
+        );
 
         private ThrottledCacheWithTimeout(Clock clock, Duration timeout) {
             this.clock = clock;
@@ -57,36 +62,106 @@ public final class ThrottledCache<T> implements SuppliedCache<T> {
         @Override
         public Optional<T> get(Supplier<T> supplier) {
             maybeRefresh(supplier);
-            return Optional.ofNullable(value);
+            return Optional.ofNullable(lockValuePair.get().getValue());
         }
 
         @Override
         public Optional<T> get() {
-            return Optional.ofNullable(value);
+            return Optional.ofNullable(lockValuePair.get().getValue());
         }
 
         private void maybeRefresh(Supplier<T> supplier) {
             final Instant deadline = clock.instant().plus(this.timeout);
-            final boolean hasLock = lock.compareAndSet(null, deadline);
+            final T currentValue = this.lockValuePair.get().getValue();
+            final LockValuePair<T> valueWithLock = new LockValuePair<>(
+                deadline,
+                currentValue
+            );
+            final LockValuePair<T> currentLockValuePair = this.lockValuePair.get();
+            final boolean hasLock = !currentLockValuePair.isLocked() && this.lockValuePair.compareAndSet(
+                currentLockValuePair,
+                valueWithLock
+            );
             if (hasLock) {
-                loadValue(supplier, deadline);
+                loadValue(supplier, valueWithLock);
             } else {
-                final Instant instant = lock.get();
-                final boolean didLockExpire = instant != null && instant.isBefore(clock.instant());
-                if (didLockExpire) {
-                    final boolean didLockTakeOver = lock.compareAndSet(instant, deadline);
+                final LockValuePair<T> oldLock = this.lockValuePair.get();
+                if (oldLock.didLockExpire(clock)) {
+                    final LockValuePair<T> newLock = new LockValuePair<>(
+                        deadline,
+                        oldLock.getValue()
+                    );
+                    final boolean didLockTakeOver = lockValuePair
+                        .compareAndSet(oldLock, newLock);
                     if (didLockTakeOver) {
-                        loadValue(supplier, deadline);
+                        loadValue(supplier, newLock);
                     }
                 }
             }
         }
 
-        private void loadValue(Supplier<T> supplier, Instant timeout) {
+        private void loadValue(Supplier<T> supplier, LockValuePair<T> currentLockValue) {
             try {
-                value = supplier.get();
-            } finally {
-                lock.compareAndSet(timeout, null);
+                final T newValue = supplier.get();
+                this.lockValuePair.compareAndSet(
+                    currentLockValue,
+                    new LockValuePair<>(
+                        null,
+                        newValue
+                    )
+                );
+            } catch (Exception e) {
+                this.lockValuePair.compareAndSet(
+                    currentLockValue,
+                    new LockValuePair<>(
+                        null,
+                        currentLockValue.getValue()
+                    )
+                );
+                throw e;
+            }
+        }
+
+        private static final class LockValuePair<T> {
+            private final Instant timeout;
+            private final T value;
+
+            private LockValuePair(Instant timeout, T value) {
+                this.timeout = timeout;
+                this.value = value;
+            }
+
+            @Override
+            public boolean equals(Object o) {
+                if (this == o) return true;
+                if (o == null || getClass() != o.getClass()) return false;
+                LockValuePair<?> that = (LockValuePair<?>) o;
+                return Objects.equals(timeout, that.timeout) && Objects.equals(value, that.value);
+            }
+
+            public T getValue() {
+                return value;
+            }
+
+            public boolean didLockExpire(Clock clock) {
+                return timeout != null && timeout.isBefore(clock.instant());
+            }
+
+            public boolean isLocked() {
+                return timeout != null;
+            }
+
+            @Override
+            public int hashCode() {
+                return Objects.hash(timeout, value);
+            }
+
+            @Override
+            public String toString() {
+                return "ValueWithLock{" +
+                    "timeout=" + timeout +
+                    ", value=" + value +
+                    '}';
             }
         }
     }
