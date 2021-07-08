@@ -122,6 +122,8 @@ public class ConnectionProviderMock implements ConnectionProvider {
         try {
             doCallRealMethod().when(connection).setAutoCommit(anyBoolean());
             doCallRealMethod().when(connection).getAutoCommit();
+            doCallRealMethod().when(connection).close();
+            doCallRealMethod().when(connection).isClosed();
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -224,6 +226,7 @@ public class ConnectionProviderMock implements ConnectionProvider {
 
     private static abstract class AutoCommitAwareConnection implements Connection {
         private Boolean isAutoCommitEnabled;
+        private Boolean isClosed;
 
         @Override
         public void setAutoCommit(boolean autoCommit) {
@@ -233,6 +236,16 @@ public class ConnectionProviderMock implements ConnectionProvider {
         @Override
         public boolean getAutoCommit() {
             return isAutoCommitEnabled == null || isAutoCommitEnabled;
+        }
+
+        @Override
+        public void close() throws SQLException {
+            this.isClosed = true;
+        }
+
+        @Override
+        public boolean isClosed() {
+            return isClosed != null ;
         }
     }
 }

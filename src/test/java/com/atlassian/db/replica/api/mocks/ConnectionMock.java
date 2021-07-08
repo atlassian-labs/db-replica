@@ -77,7 +77,7 @@ public class ConnectionMock implements Connection {
 
     @Override
     public boolean isClosed() throws SQLException {
-        throw new RuntimeException();
+        return isClosed;
     }
 
     @Override
