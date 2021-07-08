@@ -60,6 +60,9 @@ Dropping a requirement of a major version of a dependency is a new contract.
 - Add `NoCacheSuppliedCache#get`
 - Add `ThrottledCache#get`
 
+### Added
+- `AuroraReplicasDiscoverer`
+
 ## [1.3.0] - 2021-04-21
 [1.3.0]: https://github.com/atlassian-labs/db-replica/compare/release-1.2.6...release-1.3.0
 
