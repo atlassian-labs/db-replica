@@ -1,6 +1,7 @@
 package com.atlassian.db.replica.internal.circuitbreaker;
 
 import com.atlassian.db.replica.api.SqlCall;
+import com.atlassian.db.replica.internal.SqlRunnable;
 
 import java.io.InputStream;
 import java.io.Reader;
@@ -152,7 +153,7 @@ public class BreakerPreparedStatement extends BreakerStatement implements Prepar
 
     @Override
     public void addBatch() throws SQLException {
-        breakerHandler.handle((BreakerHandler.SqlRunnable) delegate::addBatch);
+        breakerHandler.handle((SqlRunnable) delegate::addBatch);
     }
 
     @Override

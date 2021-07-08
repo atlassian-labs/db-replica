@@ -4,6 +4,7 @@ import com.atlassian.db.replica.api.reason.RouteDecision;
 import com.atlassian.db.replica.internal.ConnectionParameters;
 import com.atlassian.db.replica.internal.DecisionAwareReference;
 import com.atlassian.db.replica.internal.RouteDecisionBuilder;
+import com.atlassian.db.replica.internal.SqlRunnable;
 import com.atlassian.db.replica.internal.Warnings;
 import com.atlassian.db.replica.spi.ConnectionProvider;
 import com.atlassian.db.replica.spi.ReplicaConsistency;
@@ -33,6 +34,7 @@ public final class ConnectionState {
     private final Warnings warnings;
     private final StateListener stateListener;
     private volatile boolean replicaConsistent = true;
+    private final boolean compatibleWithPreviousVersion;
 
     private final DecisionAwareReference<Connection> readConnection = new DecisionAwareReference<Connection>() {
         @Override
@@ -61,13 +63,15 @@ public final class ConnectionState {
         ReplicaConsistency consistency,
         ConnectionParameters parameters,
         Warnings warnings,
-        StateListener stateListener
+        StateListener stateListener,
+        boolean compatibleWithPreviousVersion
     ) {
         this.connectionProvider = connectionProvider;
         this.consistency = consistency;
         this.parameters = parameters;
         this.warnings = warnings;
         this.stateListener = stateListener;
+        this.compatibleWithPreviousVersion = compatibleWithPreviousVersion;
     }
 
     public State getState() {
@@ -128,6 +132,26 @@ public final class ConnectionState {
     }
 
     private Connection prepareMainConnection(RouteDecisionBuilder decisionBuilder) throws SQLException {
+        if (compatibleWithPreviousVersion) {
+            return prepareMainConnection_old(decisionBuilder);
+        } else {
+            return prepareMainConnection_new(decisionBuilder);
+        }
+    }
+
+    private Connection prepareMainConnection_new(RouteDecisionBuilder decisionBuilder) throws SQLException {
+        final Connection mainDatabaseConnection = this.writeConnection.get(decisionBuilder);
+        if (readConnection.isInitialized()) {
+            if (readConnection.get(decisionBuilder).equals(mainDatabaseConnection)) {
+                readConnection.reset(); // We can release the reference. We still can close it via `writeConnection`
+            } else {
+                closeConnection(readConnection, decisionBuilder);
+            }
+        }
+        return mainDatabaseConnection;
+    }
+
+    private Connection prepareMainConnection_old(RouteDecisionBuilder decisionBuilder) throws SQLException {
         if (hasWriteConnection()) {
             return writeConnection.get(decisionBuilder);
         }
@@ -154,6 +178,32 @@ public final class ConnectionState {
     }
 
     public void close() throws SQLException {
+        if (compatibleWithPreviousVersion) {
+            close_old();
+        } else {
+            close_new();
+        }
+    }
+
+    public void close_new() throws SQLException {
+        final State state = getState();
+        isClosed = true;
+        final Optional<SQLException> mainConnectionCloseException = catchException(() -> closeConnection(
+            writeConnection,
+            new RouteDecisionBuilder(RW_API_CALL)
+        ));
+        final Optional<SQLException> replicaConnectionCloseException = catchException(() -> closeConnection(
+            readConnection,
+            new RouteDecisionBuilder(RO_API_CALL)
+        ));
+        final State stateAfter = getState();
+        if (!stateAfter.equals(state)) {
+            stateListener.transition(state, stateAfter);
+        }
+        throwExceptions(mainConnectionCloseException, replicaConnectionCloseException);
+    }
+
+    public void close_old() throws SQLException {
         final State state = getState();
         final boolean haWriteConnection = hasWriteConnection();
         isClosed = true;
@@ -165,6 +215,29 @@ public final class ConnectionState {
         final State stateAfter = getState();
         if (!stateAfter.equals(state)) {
             stateListener.transition(state, stateAfter);
+        }
+    }
+
+    private Optional<SQLException> catchException(SqlRunnable runnable) {
+        try {
+            runnable.run();
+            return Optional.empty();
+        } catch (SQLException e) {
+            return Optional.of(e);
+        }
+    }
+
+    private void throwExceptions(
+        Optional<SQLException> mainException,
+        Optional<SQLException> replicaException
+    ) throws SQLException {
+        if (mainException.isPresent() && replicaException.isPresent()) {
+            mainException.get().addSuppressed(replicaException.get());
+            throw mainException.get();
+        } else if (mainException.isPresent()) {
+            throw mainException.get();
+        } else if (replicaException.isPresent()) {
+            throw replicaException.get();
         }
     }
 
@@ -204,6 +277,45 @@ public final class ConnectionState {
     }
 
     private void closeConnection(
+        DecisionAwareReference<Connection> connectionReference,
+        RouteDecisionBuilder decisionBuilder
+    ) throws SQLException {
+        if (compatibleWithPreviousVersion) {
+            closeConnection_old(connectionReference, decisionBuilder);
+        } else {
+            closeConnection_new(connectionReference, decisionBuilder);
+        }
+    }
+
+    private void closeConnection_new(
+        DecisionAwareReference<Connection> connectionReference,
+        RouteDecisionBuilder decisionBuilder
+    ) throws SQLException {
+        if (!connectionReference.isInitialized()) {
+            return;
+        }
+        final Connection connection = connectionReference.get(decisionBuilder);
+        if (connection.isClosed()) {
+            connectionReference.reset();
+            return;
+        }
+        try {
+            try {
+                warnings.saveWarning(connection.getWarnings());
+            } catch (Exception e) {
+                warnings.saveWarning(new SQLWarning(e));
+            }
+            if (connection.isReadOnly()) {
+                connection.setAutoCommit(true);
+                connection.setReadOnly(false);
+            }
+        } finally {
+            connectionReference.reset();
+            connection.close();
+        }
+    }
+
+    private void closeConnection_old(
         DecisionAwareReference<Connection> connectionReference,
         RouteDecisionBuilder decisionBuilder
     ) throws SQLException {

@@ -1,6 +1,7 @@
 package com.atlassian.db.replica.internal.circuitbreaker;
 
 import com.atlassian.db.replica.api.SqlCall;
+import com.atlassian.db.replica.internal.SqlRunnable;
 
 import java.sql.SQLException;
 
@@ -29,7 +30,4 @@ public class BreakerHandler {
         }
     }
 
-    public interface SqlRunnable {
-        void run() throws SQLException;
-    }
 }

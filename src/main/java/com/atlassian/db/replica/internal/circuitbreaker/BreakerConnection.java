@@ -1,6 +1,7 @@
 package com.atlassian.db.replica.internal.circuitbreaker;
 
 import com.atlassian.db.replica.api.SqlCall;
+import com.atlassian.db.replica.internal.SqlRunnable;
 
 import java.sql.Array;
 import java.sql.Blob;
@@ -72,7 +73,7 @@ public class BreakerConnection implements Connection {
 
     @Override
     public void rollback() throws SQLException {
-        breakerHandler.handle((BreakerHandler.SqlRunnable) delegate::rollback);
+        breakerHandler.handle((SqlRunnable) delegate::rollback);
     }
 
     @Override
