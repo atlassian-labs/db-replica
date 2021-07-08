@@ -34,7 +34,6 @@ public final class ConnectionState {
     private final Warnings warnings;
     private final StateListener stateListener;
     private volatile boolean replicaConsistent = true;
-    private final boolean compatibleWithPreviousVersion;
     private final DecisionAwareReference<Connection> readConnection;
     private final DecisionAwareReference<Connection> writeConnection;
 
@@ -43,15 +42,14 @@ public final class ConnectionState {
         ReplicaConsistency consistency,
         ConnectionParameters parameters,
         Warnings warnings,
-        StateListener stateListener,
-        boolean compatibleWithPreviousVersion
+        StateListener stateListener
     ) {
         this.connectionProvider = connectionProvider;
         this.consistency = consistency;
         this.parameters = parameters;
         this.warnings = warnings;
         this.stateListener = stateListener;
-        this.readConnection = new DecisionAwareReference<Connection>(compatibleWithPreviousVersion) {
+        this.readConnection = new DecisionAwareReference<Connection>() {
             @Override
             public Connection create() throws SQLException {
                 if (connectionProvider.isReplicaAvailable()) {
@@ -63,7 +61,7 @@ public final class ConnectionState {
                 }
             }
         };
-        this.writeConnection = new DecisionAwareReference<Connection>(compatibleWithPreviousVersion) {
+        this.writeConnection = new DecisionAwareReference<Connection>() {
             @Override
             public Connection create() throws SQLException {
                 final Connection mainConnection = connectionProvider.getMainConnection();
@@ -71,7 +69,6 @@ public final class ConnectionState {
                 return mainConnection;
             }
         };
-        this.compatibleWithPreviousVersion = compatibleWithPreviousVersion;
     }
 
     public State getState() {
@@ -132,14 +129,6 @@ public final class ConnectionState {
     }
 
     private Connection prepareMainConnection(RouteDecisionBuilder decisionBuilder) throws SQLException {
-        if (compatibleWithPreviousVersion) {
-            return prepareMainConnection_old(decisionBuilder);
-        } else {
-            return prepareMainConnection_new(decisionBuilder);
-        }
-    }
-
-    private Connection prepareMainConnection_new(RouteDecisionBuilder decisionBuilder) throws SQLException {
         final Connection mainDatabaseConnection = this.writeConnection.get(decisionBuilder);
         if (readConnection.isInitialized()) {
             if (readConnection.get(decisionBuilder).equals(mainDatabaseConnection)) {
@@ -149,19 +138,6 @@ public final class ConnectionState {
             }
         }
         return mainDatabaseConnection;
-    }
-
-    private Connection prepareMainConnection_old(RouteDecisionBuilder decisionBuilder) throws SQLException {
-        if (hasWriteConnection()) {
-            return writeConnection.get(decisionBuilder);
-        }
-        final Optional<Connection> connection = getConnection();
-        if (connection.isPresent() && connection.get().equals(writeConnection.get(decisionBuilder))) {
-            readConnection.reset();
-        } else {
-            closeConnection(readConnection, decisionBuilder);
-        }
-        return writeConnection.get(decisionBuilder);
     }
 
     public Optional<RouteDecision> getDecision() {
@@ -178,14 +154,6 @@ public final class ConnectionState {
     }
 
     public void close() throws SQLException {
-        if (compatibleWithPreviousVersion) {
-            close_old();
-        } else {
-            close_new();
-        }
-    }
-
-    public void close_new() throws SQLException {
         final State state = getState();
         isClosed = true;
         final Optional<SQLException> mainConnectionCloseException = catchException(() -> closeConnection(
@@ -201,21 +169,6 @@ public final class ConnectionState {
             stateListener.transition(state, stateAfter);
         }
         throwExceptions(mainConnectionCloseException, replicaConnectionCloseException);
-    }
-
-    public void close_old() throws SQLException {
-        final State state = getState();
-        final boolean haWriteConnection = hasWriteConnection();
-        isClosed = true;
-        if (haWriteConnection) {
-            closeConnection(writeConnection, new RouteDecisionBuilder(RW_API_CALL));
-        } else if (state.equals(REPLICA)) {
-            closeConnection(readConnection, new RouteDecisionBuilder(RO_API_CALL));
-        }
-        final State stateAfter = getState();
-        if (!stateAfter.equals(state)) {
-            stateListener.transition(state, stateAfter);
-        }
     }
 
     private Optional<SQLException> catchException(SqlRunnable runnable) {
@@ -266,9 +219,7 @@ public final class ConnectionState {
         try {
             isConsistent = consistency.isConsistent(() -> readConnection.get(decisionBuilder));
         } catch (Exception e) {
-            if (!compatibleWithPreviousVersion) {
-                closeConnection(readConnection, decisionBuilder);
-            }
+            closeConnection(readConnection, decisionBuilder);
             throw e;
         }
         if (isConsistent) {
@@ -286,17 +237,6 @@ public final class ConnectionState {
     }
 
     private void closeConnection(
-        DecisionAwareReference<Connection> connectionReference,
-        RouteDecisionBuilder decisionBuilder
-    ) throws SQLException {
-        if (compatibleWithPreviousVersion) {
-            closeConnection_old(connectionReference, decisionBuilder);
-        } else {
-            closeConnection_new(connectionReference, decisionBuilder);
-        }
-    }
-
-    private void closeConnection_new(
         DecisionAwareReference<Connection> connectionReference,
         RouteDecisionBuilder decisionBuilder
     ) throws SQLException {
@@ -323,28 +263,5 @@ public final class ConnectionState {
             connection.close();
         }
     }
-
-    private void closeConnection_old(
-        DecisionAwareReference<Connection> connectionReference,
-        RouteDecisionBuilder decisionBuilder
-    ) throws SQLException {
-        try {
-            if (!connectionReference.isInitialized()) {
-                return;
-            }
-            final Connection connection = connectionReference.get(decisionBuilder);
-            try {
-                warnings.saveWarning(connection.getWarnings());
-            } catch (Exception e) {
-                warnings.saveWarning(new SQLWarning(e));
-            }
-            if (connection.isReadOnly()) {
-                connection.setAutoCommit(true);
-                connection.setReadOnly(false);
-            }
-            connection.close();
-        } finally {
-            connectionReference.reset();
-        }
-    }
+    
 }

@@ -28,8 +28,7 @@ public class ReplicaConnectionProvider implements AutoCloseable {
     public ReplicaConnectionProvider(
         ConnectionProvider connectionProvider,
         ReplicaConsistency consistency,
-        StateListener stateListener,
-        boolean compatibleWithPreviousVersion
+        StateListener stateListener
     ) {
         this.parameters = new ConnectionParameters();
         this.warnings = new Warnings();
@@ -38,8 +37,7 @@ public class ReplicaConnectionProvider implements AutoCloseable {
             consistency,
             parameters,
             warnings,
-            stateListener,
-            compatibleWithPreviousVersion
+            stateListener
         );
         this.consistency = consistency;
     }

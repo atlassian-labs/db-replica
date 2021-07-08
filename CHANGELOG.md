@@ -22,7 +22,10 @@ Dropping a requirement of a major version of a dependency is a new contract.
 
 
 ## [Unreleased]
-[Unreleased]: https://github.com/atlassian-labs/db-replica/compare/release-2.1.2...master
+[Unreleased]: https://github.com/atlassian-labs/db-replica/compare/release-2.1.4...master
+
+## [2.1.4] - 2021-07-08
+[2.1.4]: https://github.com/atlassian-labs/db-replica/compare/release-2.1.2...release-2.1.4
 
 ### Fixed
 - Only one thread can update `Throttled Cache` values

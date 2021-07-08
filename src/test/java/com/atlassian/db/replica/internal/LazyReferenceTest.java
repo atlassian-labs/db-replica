@@ -14,7 +14,7 @@ public class LazyReferenceTest {
 
     @Test
     public void shouldCreateValueOnce() {
-        final CountingReference countingReference = new CountingReference(false);
+        final CountingReference countingReference = new CountingReference();
 
         countingReference.get();
         countingReference.get();
@@ -25,7 +25,7 @@ public class LazyReferenceTest {
 
     @Test
     public void shouldCreateValueOnceWhileAccessedConcurrently() throws InterruptedException {
-        final CountingReference countingReference = new CountingReference(false);
+        final CountingReference countingReference = new CountingReference();
         final int threads = 128;
         final ExecutorService executor = Executors.newFixedThreadPool(threads);
         final CountDownLatch start = new CountDownLatch(threads);
@@ -54,8 +54,8 @@ public class LazyReferenceTest {
     private static class CountingReference extends LazyReference<Integer> {
         final AtomicInteger counter = new AtomicInteger();
 
-        private CountingReference(boolean compatibleWithPreviousVersion) {
-            super(compatibleWithPreviousVersion);
+        private CountingReference() {
+            super();
         }
 
         @Override
