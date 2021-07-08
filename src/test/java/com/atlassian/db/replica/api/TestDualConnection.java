@@ -15,6 +15,7 @@ import com.atlassian.db.replica.spi.DatabaseCall;
 import com.atlassian.db.replica.spi.ReplicaConsistency;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import org.apache.commons.lang.NotImplementedException;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -26,6 +27,7 @@ import java.sql.Savepoint;
 import java.sql.Statement;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Supplier;
 
 import static com.atlassian.db.replica.api.Queries.LARGE_SQL_QUERY;
 import static com.atlassian.db.replica.api.Queries.SELECT_FOR_UPDATE;
@@ -1400,6 +1402,34 @@ public class TestDualConnection {
         connection.prepareStatement(SIMPLE_QUERY).executeQuery();
 
         verify(connectionProvider.singleProvidedConnection(), never()).close();
+    }
+
+    @Test
+    public void shouldCloseReplicaConnectionWhenConsistencyCheckThrowsException() throws SQLException {
+        final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
+        final Connection mock = connectionProvider.getReplicaConnection();
+        final SingleConnectionProvider singleConnectionProvider = new SingleConnectionProvider(mock);
+        final String exceptionMessage = "Can't check replica consistency";
+        final Connection connection = DualConnection.builder(
+            singleConnectionProvider,
+            new ReplicaConsistency() {
+                @Override
+                public void write(Connection main) {
+                    throw new NotImplementedException();
+                }
+
+                @Override
+                public boolean isConsistent(Supplier<Connection> replica) {
+                    replica.get();
+                    throw new RuntimeException(exceptionMessage);
+                }
+            }
+        ).build();
+
+        final Throwable throwable = catchThrowable(() -> connection.prepareStatement(SIMPLE_QUERY).executeQuery());
+
+        assertThat(throwable).hasMessageContaining(exceptionMessage);
+        verify(connectionProvider.singleProvidedConnection()).close();
     }
 
     @Test

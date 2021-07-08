@@ -262,7 +262,16 @@ public final class ConnectionState {
             decisionBuilder.cause(writeConnection.getFirstCause().build());
             return writeConnection.get(decisionBuilder);
         }
-        if (consistency.isConsistent(() -> readConnection.get(decisionBuilder))) {
+        boolean isConsistent;
+        try {
+            isConsistent = consistency.isConsistent(() -> readConnection.get(decisionBuilder));
+        } catch (Exception e) {
+            if (!compatibleWithPreviousVersion) {
+                closeConnection(readConnection, decisionBuilder);
+            }
+            throw e;
+        }
+        if (isConsistent) {
             if (getState().equals(COMMITED_MAIN)) {
                 closeConnection(writeConnection, decisionBuilder);
             }
