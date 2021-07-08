@@ -5,8 +5,8 @@ import java.util.concurrent.atomic.AtomicReference;
 public abstract class DecisionAwareReference<T> extends LazyReference<T> {
     private final AtomicReference<RouteDecisionBuilder> firstCause = new AtomicReference<>();
 
-    public DecisionAwareReference(boolean compatibleWithPreviousVersion) {
-        super(compatibleWithPreviousVersion);
+    public DecisionAwareReference() {
+        super();
     }
 
     public T get(RouteDecisionBuilder currentCause) {

@@ -47,8 +47,7 @@ public class ReplicaStatement implements Statement {
         Integer resultSetType,
         Integer resultSetConcurrency,
         Integer resultSetHoldability,
-        Set<String> readOnlyFunctions,
-        boolean compatibleWithPreviousVersion
+        Set<String> readOnlyFunctions
     ) {
         this.consistency = consistency;
         this.connectionProvider = connectionProvider;
@@ -57,13 +56,13 @@ public class ReplicaStatement implements Statement {
         this.resultSetConcurrency = resultSetConcurrency;
         this.resultSetHoldability = resultSetHoldability;
         this.sqlFunction = new SqlFunction(readOnlyFunctions);
-        readStatement = new DecisionAwareReference<Statement>(compatibleWithPreviousVersion) {
+        readStatement = new DecisionAwareReference<Statement>() {
             @Override
             public Statement create() throws Exception {
                 return createStatement(connectionProvider.getReadConnection(getFirstCause()));
             }
         };
-        writeStatement = new DecisionAwareReference<Statement>(compatibleWithPreviousVersion) {
+        writeStatement = new DecisionAwareReference<Statement>() {
             @Override
             public Statement create() throws Exception {
                 return createStatement(connectionProvider.getWriteConnection(getFirstCause()));
@@ -551,15 +550,13 @@ public class ReplicaStatement implements Statement {
         ReplicaConnectionProvider connectionProvider,
         ReplicaConsistency consistency,
         DatabaseCall databaseCall,
-        Set<String> readOnlyFunctions,
-        boolean compatibleWithPreviousVersion
+        Set<String> readOnlyFunctions
     ) {
         return new Builder(
             connectionProvider,
             consistency,
             databaseCall,
-            readOnlyFunctions,
-            compatibleWithPreviousVersion
+            readOnlyFunctions
         );
     }
 
@@ -629,7 +626,6 @@ public class ReplicaStatement implements Statement {
         private final ReplicaConsistency consistency;
         private final DatabaseCall databaseCall;
         private final Set<String> readOnlyFunctions;
-        private final boolean compatibleWithPreviousVersion;
         private Integer resultSetType;
         private Integer resultSetConcurrency;
         private Integer resultSetHoldability;
@@ -638,14 +634,12 @@ public class ReplicaStatement implements Statement {
             ReplicaConnectionProvider connectionProvider,
             ReplicaConsistency consistency,
             DatabaseCall databaseCall,
-            Set<String> readOnlyFunctions,
-            boolean compatibleWithPreviousVersion
+            Set<String> readOnlyFunctions
         ) {
             this.connectionProvider = connectionProvider;
             this.consistency = consistency;
             this.databaseCall = databaseCall;
             this.readOnlyFunctions = readOnlyFunctions;
-            this.compatibleWithPreviousVersion = compatibleWithPreviousVersion;
         }
 
         public Builder resultSetType(int resultSetType) {
@@ -671,8 +665,7 @@ public class ReplicaStatement implements Statement {
                 resultSetType,
                 resultSetConcurrency,
                 resultSetHoldability,
-                readOnlyFunctions,
-                compatibleWithPreviousVersion
+                readOnlyFunctions
             );
         }
     }

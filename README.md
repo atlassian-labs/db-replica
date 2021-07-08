@@ -46,7 +46,7 @@ Maven:
 <dependency>
     <groupId>com.atlassian.db.replica</groupId>
     <artifactId>db-replica</artifactId>
-    <version>2.0.0</version>
+    <version>2.1.4</version>
 </dependency>
 ```
 
