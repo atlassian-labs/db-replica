@@ -1,6 +1,7 @@
 package com.atlassian.db.replica.api;
 
 import com.atlassian.db.replica.api.reason.Reason;
+import com.atlassian.db.replica.api.strategy.PropagateReplicaFailure;
 import com.atlassian.db.replica.internal.ClientInfo;
 import com.atlassian.db.replica.internal.ForwardCall;
 import com.atlassian.db.replica.internal.ReplicaCallableStatement;
@@ -13,6 +14,7 @@ import com.atlassian.db.replica.internal.state.StateListener;
 import com.atlassian.db.replica.spi.ConnectionProvider;
 import com.atlassian.db.replica.spi.DatabaseCall;
 import com.atlassian.db.replica.spi.ReplicaConsistency;
+import com.atlassian.db.replica.spi.ReplicaFailureStrategy;
 
 import java.sql.Array;
 import java.sql.Blob;
@@ -56,12 +58,14 @@ public final class DualConnection implements Connection {
         DatabaseCall databaseCall,
         StateListener stateListener,
         Set<String> readOnlyFunctions,
+        ReplicaFailureStrategy replicaFailureStrategy,
         boolean compatibleWithPreviousVersion
     ) {
         this.connectionProvider = new ReplicaConnectionProvider(
             connectionProvider,
             consistency,
-            stateListener
+            stateListener,
+            replicaFailureStrategy
         );
         this.consistency = consistency;
         this.databaseCall = databaseCall;
@@ -551,6 +555,7 @@ public final class DualConnection implements Connection {
         private DatabaseCall databaseCall = new ForwardCall();
         private StateListener stateListener = new NoOpStateListener();
         private Set<String> readOnlyFunctions = new HashSet<>();
+        private ReplicaFailureStrategy replicaFailureStrategy = new PropagateReplicaFailure();
         private boolean compatibleWithPreviousVersion = false;
 
         private Builder(
@@ -582,6 +587,15 @@ public final class DualConnection implements Connection {
         }
 
         /**
+         * {@link ReplicaFailureStrategy} handles {@link SQLException} when {@link DualConnection} fails to get replica connection
+         * from {@link ConnectionProvider}. By default it propagates the exception. {@see com.atlassian.db.replica.api.strategy.PropagateReplicaFailure}.
+         */
+        DualConnection.Builder replicaFailureStrategy(ReplicaFailureStrategy replicaFailureStrategy) {
+            this.replicaFailureStrategy = replicaFailureStrategy;
+            return this;
+        }
+
+        /**
          * Puts this connection in compatibility mode with a previous version. Developers can use this method to
          * roll out the new version of the library with a feature flag.
          * <p>
@@ -600,6 +614,7 @@ public final class DualConnection implements Connection {
                 databaseCall,
                 stateListener,
                 readOnlyFunctions,
+                replicaFailureStrategy,
                 compatibleWithPreviousVersion
             );
         }

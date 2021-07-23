@@ -8,6 +8,7 @@ import com.atlassian.db.replica.api.mocks.NoOpConnectionProvider;
 import com.atlassian.db.replica.api.mocks.ReadOnlyAwareConnection;
 import com.atlassian.db.replica.api.mocks.SingleConnectionProvider;
 import com.atlassian.db.replica.api.reason.Reason;
+import com.atlassian.db.replica.api.strategy.FallBackToMain;
 import com.atlassian.db.replica.internal.RouteDecisionBuilder;
 import com.atlassian.db.replica.internal.state.State;
 import com.atlassian.db.replica.internal.state.StateListener;
@@ -189,6 +190,51 @@ public class TestDualConnection {
 
         assertThat(connectionProvider.getProvidedConnectionTypes())
             .containsExactly(REPLICA, MAIN);
+    }
+
+    @Test
+    public void shouldFailWhenCantUseReplica() throws SQLException {
+        final ConnectionProviderMock connectionProvider = new ConnectionProviderMock() {
+            @Override
+            public Connection getReplicaConnection() throws SQLException {
+                throw new SQLException("Can't connect to the replica");
+            }
+        };
+        final Connection connection = DualConnection.builder(
+            connectionProvider,
+            permanentConsistency().build()
+        ).build();
+
+
+        final Throwable throwable = catchThrowable(() -> connection.prepareStatement(SIMPLE_QUERY).executeQuery());
+
+        assertThat(throwable).hasMessageContaining("Can't connect to the replica");
+    }
+
+    @Test
+    public void shouldFallbackToMainWhenCantUseReplica() throws SQLException {
+        final ConnectionProviderMock connectionProvider = new ConnectionProviderMock() {
+            @Override
+            public Connection getReplicaConnection() throws SQLException {
+                throw new SQLException("Can't connect to the replica");
+            }
+        };
+        final DatabaseCall databaseCall = mock(DatabaseCall.class);
+        final Connection connection = DualConnection.builder(
+            connectionProvider,
+            permanentConsistency().build()
+        ).databaseCall(databaseCall)
+            .replicaFailureStrategy(new FallBackToMain())
+            .build();
+
+        connection.prepareStatement(SIMPLE_QUERY).executeQuery();
+
+        assertThat(connectionProvider.getProvidedConnectionTypes())
+            .containsExactly(MAIN);
+        verify(databaseCall).call(
+            any(),
+            eq(new RouteDecisionBuilder(Reason.REPLICA_GET_FAILURE).sql(SIMPLE_QUERY).build())
+        );
     }
 
     @Test

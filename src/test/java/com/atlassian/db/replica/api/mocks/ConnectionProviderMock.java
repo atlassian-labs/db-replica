@@ -96,7 +96,7 @@ public class ConnectionProviderMock implements ConnectionProvider {
     }
 
     @Override
-    public Connection getReplicaConnection() {
+    public Connection getReplicaConnection() throws SQLException {
         providedConnectionTypes.add(ConnectionType.REPLICA);
         final Connection connection = getConnection();
         setWarning(connection, replicaWarning);

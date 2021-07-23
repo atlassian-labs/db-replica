@@ -7,6 +7,7 @@ import com.atlassian.db.replica.internal.state.State;
 import com.atlassian.db.replica.internal.state.StateListener;
 import com.atlassian.db.replica.spi.ConnectionProvider;
 import com.atlassian.db.replica.spi.ReplicaConsistency;
+import com.atlassian.db.replica.spi.ReplicaFailureStrategy;
 
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -28,7 +29,8 @@ public class ReplicaConnectionProvider implements AutoCloseable {
     public ReplicaConnectionProvider(
         ConnectionProvider connectionProvider,
         ReplicaConsistency consistency,
-        StateListener stateListener
+        StateListener stateListener,
+        ReplicaFailureStrategy replicaFailureStrategy
     ) {
         this.parameters = new ConnectionParameters();
         this.warnings = new Warnings();
@@ -37,8 +39,8 @@ public class ReplicaConnectionProvider implements AutoCloseable {
             consistency,
             parameters,
             warnings,
-            stateListener
-        );
+            stateListener,
+            replicaFailureStrategy);
         this.consistency = consistency;
     }
 

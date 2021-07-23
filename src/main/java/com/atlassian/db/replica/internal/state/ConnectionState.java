@@ -8,6 +8,7 @@ import com.atlassian.db.replica.internal.SqlRunnable;
 import com.atlassian.db.replica.internal.Warnings;
 import com.atlassian.db.replica.spi.ConnectionProvider;
 import com.atlassian.db.replica.spi.ReplicaConsistency;
+import com.atlassian.db.replica.spi.ReplicaFailureStrategy;
 
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -17,6 +18,7 @@ import java.util.concurrent.Executor;
 
 import static com.atlassian.db.replica.api.reason.Reason.HIGH_TRANSACTION_ISOLATION_LEVEL;
 import static com.atlassian.db.replica.api.reason.Reason.MAIN_CONNECTION_REUSE;
+import static com.atlassian.db.replica.api.reason.Reason.REPLICA_GET_FAILURE;
 import static com.atlassian.db.replica.api.reason.Reason.REPLICA_INCONSISTENT;
 import static com.atlassian.db.replica.api.reason.Reason.RO_API_CALL;
 import static com.atlassian.db.replica.api.reason.Reason.RW_API_CALL;
@@ -27,7 +29,6 @@ import static com.atlassian.db.replica.internal.state.State.NOT_INITIALISED;
 import static com.atlassian.db.replica.internal.state.State.REPLICA;
 
 public final class ConnectionState {
-    private final ConnectionProvider connectionProvider;
     private final ReplicaConsistency consistency;
     private volatile Boolean isClosed = false;
     private final ConnectionParameters parameters;
@@ -42,9 +43,9 @@ public final class ConnectionState {
         ReplicaConsistency consistency,
         ConnectionParameters parameters,
         Warnings warnings,
-        StateListener stateListener
+        StateListener stateListener,
+        ReplicaFailureStrategy replicaFailureStrategy
     ) {
-        this.connectionProvider = connectionProvider;
         this.consistency = consistency;
         this.parameters = parameters;
         this.warnings = warnings;
@@ -53,9 +54,16 @@ public final class ConnectionState {
             @Override
             public Connection create() throws SQLException {
                 if (connectionProvider.isReplicaAvailable()) {
-                    final Connection replicaConnection = connectionProvider.getReplicaConnection();
-                    parameters.initialize(replicaConnection);
-                    return replicaConnection;
+                    try {
+                        final Connection replicaConnection = connectionProvider.getReplicaConnection();
+                        parameters.initialize(replicaConnection);
+                        return replicaConnection;
+                    } catch (SQLException e) {
+                        return replicaFailureStrategy.onFailure(
+                            e,
+                            () -> getWriteConnection(getFirstCause().reason(REPLICA_GET_FAILURE))
+                        );
+                    }
                 } else {
                     return getWriteConnection(getFirstCause());
                 }
@@ -263,5 +271,5 @@ public final class ConnectionState {
             connection.close();
         }
     }
-    
+
 }
