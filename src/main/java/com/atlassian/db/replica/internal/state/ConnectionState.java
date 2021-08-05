@@ -18,6 +18,7 @@ import java.util.concurrent.Executor;
 import static com.atlassian.db.replica.api.reason.Reason.HIGH_TRANSACTION_ISOLATION_LEVEL;
 import static com.atlassian.db.replica.api.reason.Reason.MAIN_CONNECTION_REUSE;
 import static com.atlassian.db.replica.api.reason.Reason.REPLICA_INCONSISTENT;
+import static com.atlassian.db.replica.api.reason.Reason.REPLICA_NOT_AVAILABLE;
 import static com.atlassian.db.replica.api.reason.Reason.RO_API_CALL;
 import static com.atlassian.db.replica.api.reason.Reason.RW_API_CALL;
 import static com.atlassian.db.replica.internal.state.State.CLOSED;
@@ -36,22 +37,35 @@ public final class ConnectionState {
     private volatile boolean replicaConsistent = true;
     private final DecisionAwareReference<Connection> readConnection;
     private final DecisionAwareReference<Connection> writeConnection;
+    private final boolean compatibleWithPreviousVersion;
 
     public ConnectionState(
         ConnectionProvider connectionProvider,
         ReplicaConsistency consistency,
         ConnectionParameters parameters,
         Warnings warnings,
-        StateListener stateListener
+        StateListener stateListener,
+        boolean compatibleWithPreviousVersion
     ) {
         this.connectionProvider = connectionProvider;
         this.consistency = consistency;
         this.parameters = parameters;
         this.warnings = warnings;
         this.stateListener = stateListener;
+        this.compatibleWithPreviousVersion = compatibleWithPreviousVersion;
         this.readConnection = new DecisionAwareReference<Connection>() {
             @Override
             public Connection create() throws SQLException {
+                return ConnectionState.this.compatibleWithPreviousVersion ? createOld() : createNew();
+            }
+
+            private Connection createNew() throws SQLException {
+                final Connection replicaConnection = connectionProvider.getReplicaConnection();
+                parameters.initialize(replicaConnection);
+                return replicaConnection;
+            }
+
+            private Connection createOld() throws SQLException {
                 if (connectionProvider.isReplicaAvailable()) {
                     final Connection replicaConnection = connectionProvider.getReplicaConnection();
                     parameters.initialize(replicaConnection);
@@ -215,6 +229,12 @@ public final class ConnectionState {
             decisionBuilder.cause(writeConnection.getFirstCause().build());
             return writeConnection.get(decisionBuilder);
         }
+        if (!compatibleWithPreviousVersion) {
+            if (!connectionProvider.isReplicaAvailable()) {
+                decisionBuilder.reason(REPLICA_NOT_AVAILABLE);
+                return writeConnection.get(decisionBuilder);
+            }
+        }
         boolean isConsistent;
         try {
             isConsistent = consistency.isConsistent(() -> readConnection.get(decisionBuilder));
@@ -263,5 +283,5 @@ public final class ConnectionState {
             connection.close();
         }
     }
-    
+
 }

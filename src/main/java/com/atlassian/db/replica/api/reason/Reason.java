@@ -32,6 +32,8 @@ public final class Reason {
             new ReasonBuilder("HIGH_TRANSACTION_ISOLATION_LEVEL").isRunOnMain(true).isWrite(false).build();
     public static final Reason RO_API_CALL =
             new ReasonBuilder("RO_API_CALL").isRunOnMain(false).isWrite(false).build();
+    public static final Reason REPLICA_NOT_AVAILABLE =
+        new ReasonBuilder("REPLICA_NOT_AVAILABLE").isRunOnMain(false).isWrite(false).build();
 
     public String getName() {
         return name;
@@ -75,7 +77,7 @@ public final class Reason {
         ReasonBuilder(final String name) {
             this.name = name;
         }
-        
+
         ReasonBuilder isRunOnMain(boolean isRunOnMain) {
             this.isRunOnMain = isRunOnMain;
             return this;

@@ -11,7 +11,9 @@ import org.mockito.Mockito;
 import java.sql.Connection;
 import java.sql.SQLException;
 
-import static com.atlassian.db.replica.api.Queries.*;
+import static com.atlassian.db.replica.api.Queries.SELECT_FOR_UPDATE;
+import static com.atlassian.db.replica.api.Queries.SELECT_FOR_UPDATE_SKIP_LOCKED;
+import static com.atlassian.db.replica.api.Queries.SIMPLE_QUERY;
 import static com.atlassian.db.replica.api.mocks.CircularConsistency.permanentConsistency;
 import static com.atlassian.db.replica.api.mocks.CircularConsistency.permanentInconsistency;
 import static com.atlassian.db.replica.internal.state.State.CLOSED;
@@ -20,6 +22,7 @@ import static com.atlassian.db.replica.internal.state.State.MAIN;
 import static com.atlassian.db.replica.internal.state.State.NOT_INITIALISED;
 import static com.atlassian.db.replica.internal.state.State.REPLICA;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
 
 public class ConnectionStateTest {
@@ -108,9 +111,11 @@ public class ConnectionStateTest {
 
         connection.prepareStatement(SIMPLE_QUERY).executeQuery();
         verify(stateListener).transition(NOT_INITIALISED, REPLICA);
-        Mockito.reset(stateListener);
+        reset(stateListener);
         connection.prepareStatement(SIMPLE_QUERY).executeUpdate();
         verify(stateListener).transition(REPLICA, MAIN);
+                final Connection replicaConnection = connectionProvider.getProvidedConnections().get(0);
+        verify(replicaConnection).close();
     }
 
     @Test
@@ -150,7 +155,7 @@ public class ConnectionStateTest {
         ).stateListener(stateListener)
             .build();
         connection.prepareStatement(SIMPLE_QUERY).executeQuery();
-        Mockito.reset(stateListener);
+        reset(stateListener);
 
         connection.close();
 
@@ -165,7 +170,7 @@ public class ConnectionStateTest {
         ).stateListener(stateListener)
             .build();
         connection.prepareStatement(SIMPLE_QUERY).executeQuery();
-        Mockito.reset(stateListener);
+        reset(stateListener);
 
         connection.close();
 
@@ -193,7 +198,7 @@ public class ConnectionStateTest {
         ).stateListener(stateListener)
             .build();
         connection.prepareStatement(SIMPLE_QUERY).executeQuery();
-        Mockito.reset(stateListener);
+        reset(stateListener);
 
         connection.prepareStatement(SIMPLE_QUERY).executeQuery();
 
@@ -208,7 +213,7 @@ public class ConnectionStateTest {
         ).stateListener(stateListener)
             .build();
         connection.prepareStatement(SIMPLE_QUERY).executeQuery();
-        Mockito.reset(stateListener);
+        reset(stateListener);
 
         connection.prepareStatement(SIMPLE_QUERY).executeQuery();
 
@@ -223,7 +228,7 @@ public class ConnectionStateTest {
         ).stateListener(stateListener)
             .build();
         connection.prepareStatement(SIMPLE_QUERY).executeQuery();
-        Mockito.reset(stateListener);
+        reset(stateListener);
 
         connection.prepareStatement(SIMPLE_QUERY).executeUpdate();
 
@@ -244,5 +249,82 @@ public class ConnectionStateTest {
         connection.prepareStatement(SIMPLE_QUERY).executeQuery();
 
         verify(stateListener).transition(NOT_INITIALISED, COMMITED_MAIN);
+    }
+
+    @Test
+    public void shouldInitialiseReplicaConnection() throws SQLException {
+        final Connection connection = DualConnection.builder(
+            connectionProvider,
+            permanentConsistency().build()
+        ).stateListener(stateListener)
+            .build();
+
+        connection.setReadOnly(true);
+        connection.prepareStatement(SIMPLE_QUERY).executeQuery();
+
+        verify(connectionProvider.getProvidedConnections().get(0)).setReadOnly(true);
+        verify(stateListener).transition(NOT_INITIALISED, REPLICA);
+    }
+
+    @Test
+    public void shouldInitialiseMainConnection() throws SQLException {
+        final Connection connection = DualConnection.builder(
+            connectionProvider,
+            permanentConsistency().build()
+        ).stateListener(stateListener)
+            .build();
+
+        connection.setReadOnly(false);
+        connection.prepareStatement(SIMPLE_QUERY).executeUpdate();
+
+        verify(connectionProvider.getProvidedConnections().get(0)).setReadOnly(false);
+        verify(stateListener).transition(NOT_INITIALISED, MAIN);
+    }
+
+    @Test
+    public void shouldChangeStateToMainWhenReplicaNotAvailable() throws SQLException {
+        final Connection connection = DualConnection.builder(
+            new ConnectionProviderMock(false),
+            permanentConsistency().build()
+        ).stateListener(stateListener)
+            .build();
+
+        connection.prepareStatement(SIMPLE_QUERY).executeQuery();
+
+        verify(stateListener).transition(NOT_INITIALISED, MAIN);
+    }
+
+    @Test
+    public void shouldChangeStateFromReplciaToMainWhenReplicaNotAvailable() throws SQLException {
+        final ConnectionProviderMock connectionProvider = new ConnectionProviderMock(true);
+        final Connection connection = DualConnection.builder(
+            connectionProvider,
+            permanentConsistency().build()
+        ).stateListener(stateListener)
+            .build();
+
+        connection.prepareStatement(SIMPLE_QUERY).executeQuery();
+        connectionProvider.setAvailable(false);
+        reset(stateListener);
+
+        connection.prepareStatement(SIMPLE_QUERY).executeQuery();
+
+        verify(stateListener).transition(REPLICA, MAIN);
+    }
+
+    @Test
+    public void shouldInitialiseBothConnection() throws SQLException {
+        final Connection connection = DualConnection.builder(
+            connectionProvider,
+            permanentConsistency().build()
+        ).stateListener(stateListener)
+            .build();
+
+        connection.prepareStatement(SIMPLE_QUERY).executeQuery();
+        connection.setReadOnly(false);
+        connection.prepareStatement(SIMPLE_QUERY).executeUpdate();
+
+        verify(connectionProvider.getProvidedConnections().get(0)).setReadOnly(false);
+        verify(connectionProvider.getProvidedConnections().get(1)).setReadOnly(false);
     }
 }

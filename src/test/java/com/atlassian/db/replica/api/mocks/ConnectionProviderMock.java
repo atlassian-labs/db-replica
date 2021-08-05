@@ -25,7 +25,7 @@ import static org.mockito.Mockito.when;
 
 @SuppressWarnings("MagicConstant")
 public class ConnectionProviderMock implements ConnectionProvider {
-    private final boolean isAvailable;
+    private boolean isAvailable;
     private final SQLWarning mainWarning;
     private final SQLWarning replicaWarning;
 
@@ -85,6 +85,10 @@ public class ConnectionProviderMock implements ConnectionProvider {
     @Override
     public boolean isReplicaAvailable() {
         return isAvailable;
+    }
+
+    public void setAvailable(boolean available) {
+        isAvailable = available;
     }
 
     @Override
