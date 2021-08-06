@@ -17,6 +17,7 @@ dependencies {
     testImplementation("org.threeten:threeten-extra:1.5.0")
     testImplementation("com.github.docker-java:docker-java-core:3.2.6")
     testImplementation("com.github.docker-java:docker-java-transport-httpclient5:3.2.6")
+    testImplementation("com.h2database:h2:1.4.200")
 }
 
 configurations.all {
