@@ -23,15 +23,15 @@ public final class AuroraCluster implements DatabaseCluster {
 
     @Override
     public Collection<Database> getReplicas() throws SQLException {
-        return discoverer.fetchReplicasServerIds().stream().map(it -> new Database() {
+        return discoverer.fetchReplicasServerIds().stream().map(replicaId -> new Database() {
             @Override
-            public String getUuid() {
-                return it;
+            public String getId() {
+                return replicaId;
             }
 
             @Override
             public SqlCall<Connection> getConnection() {
-                return () -> replicaNode.mark(getConnection(it));//TODO log failures
+                return () -> replicaNode.mark(getConnection(replicaId), replicaId);//TODO log failures
             }
 
             private Connection getConnection(String databaseId) throws SQLException {
@@ -39,8 +39,7 @@ public final class AuroraCluster implements DatabaseCluster {
                 final Properties props = new Properties();
                 props.setProperty("user", "postgres");
                 props.setProperty("password", System.getenv("password"));
-                Connection conn = DriverManager.getConnection(url, props);
-                return conn;
+                return DriverManager.getConnection(url, props);
             }
         }).collect(Collectors.toList());
     }
