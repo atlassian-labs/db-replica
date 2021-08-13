@@ -41,7 +41,7 @@ public final class AuroraReplicasDiscoverer {
         LinkedList<String> ids = new LinkedList<>();
         try (ResultSet rs =
                  connection.prepareStatement(
-                     "SELECT server_id,last_update_timestamp FROM aurora_replica_status() WHERE session_id != 'MASTER_SESSION_ID'")
+                     "SELECT server_id FROM aurora_replica_status() WHERE session_id != 'MASTER_SESSION_ID'")
                      .executeQuery()) {
             while (rs.next()) {
                 ids.add(rs.getString("server_id"));
