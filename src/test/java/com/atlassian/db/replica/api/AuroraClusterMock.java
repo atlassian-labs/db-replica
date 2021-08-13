@@ -25,7 +25,7 @@ public class AuroraClusterMock {
         try (Statement statement = getMainConnection().createStatement()) {
             //noinspection SqlNoDataSourceInspection
             statement.executeUpdate(
-                "CREATE ALIAS IF NOT EXISTS aurora_global_db_instance_status FOR \"com.atlassian.db.replica.api.AuroraClusterMock.auroraGlobalDbInstanceStatus\";");
+                "CREATE ALIAS IF NOT EXISTS aurora_replica_status FOR \"com.atlassian.db.replica.api.AuroraClusterMock.auroraGlobalDbInstanceStatus\";");
         }
     }
 
@@ -48,13 +48,6 @@ public class AuroraClusterMock {
         return this;
     }
 
-    //example:
-    //server_id                                   |              session_id              | aws_region | durable_lsn | highest_lsn_rcvd | feedback_epoch | feedback_xmin | oldest_read_view_lsn | visibility_lag_in_msec
-    //--------------------------------------------+--------------------------------------+------------+-------------+------------------+----------------+---------------+----------------------+------------------------
-    //apg-global-db-rpo-mammothrw-elephantro-1-n1 | MASTER_SESSION_ID                    | us-east-1  | 93763985102 |                  |                |               |                      |
-    //apg-global-db-rpo-mammothrw-elephantro-1-n2 | f38430cf-6576-479a-b296-dc06b1b1964a | us-east-1  | 93763985099 |      93763985102 |              2 |    3315479243 |          93763985095 |                     10
-    //apg-global-db-rpo-elephantro-mammothrw-n1   | 0d9f1d98-04ad-4aa4-8fdd-e08674cbbbfe | us-west-2  | 93763985095 |      93763985099 |              2 |    3315479243 |          93763985089 |                   1017
-    //(3 rows)
     public static ResultSet auroraGlobalDbInstanceStatus() {
         SimpleResultSet rs = new SimpleResultSet();
         rs.addColumn("SERVER_ID", Types.VARCHAR, 255, 0);

@@ -17,6 +17,7 @@ import com.atlassian.db.replica.spi.ConnectionProvider;
 import com.atlassian.db.replica.spi.DatabaseCall;
 import com.atlassian.db.replica.spi.DatabaseCluster;
 import com.atlassian.db.replica.spi.ReplicaConsistency;
+import jdk.nashorn.internal.ir.annotations.Ignore;
 import org.junit.jupiter.api.Test;
 
 import java.sql.Connection;
@@ -35,6 +36,7 @@ public class AuroraClusterTest {
 
     //TODO simplify API
     @Test
+    @Ignore
     public void shouldUtilizeReplicaForReadQueriesForSynchronisedWrites() throws SQLException {
         final DecisionLog decisionLog = new DecisionLog();
         final SqlCall<Connection> connectionPool = initializeConnectionPool(decisionLog);
