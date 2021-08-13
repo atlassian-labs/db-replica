@@ -30,8 +30,14 @@ public final class AuroraCluster implements DatabaseCluster {
             }
 
             @Override
-            public SqlCall<Connection> getConnection() {
-                return () -> replicaNode.mark(getConnection(replicaId), replicaId);//TODO log failures
+            public SqlCall<Connection> getConnectionSupplier() {
+                return () -> {
+                    try {
+                        return replicaNode.mark(getConnection(replicaId), replicaId);
+                    } catch (SQLException throwables) {
+                        throw new RuntimeException("TODO");
+                    }
+                };
             }
 
             private Connection getConnection(String databaseId) throws SQLException {

@@ -1,16 +1,12 @@
 package com.atlassian.db.replica.spi;
 
-import com.atlassian.db.replica.internal.util.ThreadSafe;
+import com.atlassian.db.replica.api.Database;
 
 import java.sql.Connection;
-import java.util.function.Supplier;
+import java.sql.SQLException;
+import java.util.Collection;
 
-/**
- * Tracks data consistency between replica and main databases.
- */
-@ThreadSafe
-@Deprecated // TODO add deprecated docs
-public interface ReplicaConsistency {
+public interface ClusterConsistency {
 
     /**
      * Informs that {@code main} received an UPDATE, INSERT or DELETE or transaction commit
@@ -18,24 +14,23 @@ public interface ReplicaConsistency {
      *
      * @param main connects to the main database
      */
-    void write(Connection main);
+    void write(Connection main) throws SQLException;
 
     /**
      * Invoked just before transaction commit.
-     *
+     * <p>
      * Notice: The method will not handle all writes. Writes done outside of a transaction
      * needs to be handled in `ReplicaConnection#write`.
      *
      * @param main connects to the main database
      */
-    default void preCommit(Connection main){
+    default void preCommit(Connection main) throws SQLException {
     }
 
     /**
      * Judges if {@code replica} is ready to be queried.
      *
-     * @param replica connects to the replica database
      * @return true if {@code replica} is consistent with main
      */
-    boolean isConsistent(Supplier<Connection> replica);
+    boolean isConsistent(Collection<Database> replicas) throws SQLException;
 }
