@@ -1,15 +1,15 @@
 package com.atlassian.db.replica.it.example.aurora;
 
-import com.atlassian.db.replica.api.aurora.AuroraCluster;
 import com.atlassian.db.replica.api.DualConnection;
 import com.atlassian.db.replica.api.SqlCall;
+import com.atlassian.db.replica.api.aurora.AuroraCluster;
+import com.atlassian.db.replica.api.aurora.ReplicaNode;
 import com.atlassian.db.replica.api.reason.Reason;
 import com.atlassian.db.replica.api.reason.RouteDecision;
 import com.atlassian.db.replica.it.example.aurora.app.User;
 import com.atlassian.db.replica.it.example.aurora.app.Users;
 import com.atlassian.db.replica.it.example.aurora.replica.AuroraConnectionProvider;
 import com.atlassian.db.replica.it.example.aurora.replica.ConsistencyFactory;
-import com.atlassian.db.replica.api.aurora.ReplicaNode;
 import com.atlassian.db.replica.it.example.aurora.replica.api.ReplicaNodeAwareConnectionProvider;
 import com.atlassian.db.replica.it.example.aurora.utils.DecisionLog;
 import com.atlassian.db.replica.it.example.aurora.utils.ReplicationLag;
@@ -63,8 +63,7 @@ public class AuroraClusterTest {
             writerEndpoint
         );
         final ReplicaNodeAwareConnectionProvider multiReplicaConnectionProvider = new ReplicaNodeAwareConnectionProvider(
-            connectionProvider,
-            replicaNode
+            connectionProvider
         );
         final DatabaseCluster cluster = new AuroraCluster(connectionProvider::getMainConnection, replicaNode);
         final ReplicaConsistency replicaConsistency = new ConsistencyFactory(
