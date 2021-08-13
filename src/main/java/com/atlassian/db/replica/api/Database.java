@@ -5,5 +5,5 @@ import java.sql.Connection;
 public interface Database {
     String getId();
 
-    SqlCall<Connection> getConnection();
+    SqlCall<Connection> getConnectionSupplier();
 }

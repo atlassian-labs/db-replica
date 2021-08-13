@@ -1,8 +1,8 @@
 package com.atlassian.db.replica.internal;
 
 import com.atlassian.db.replica.api.reason.Reason;
+import com.atlassian.db.replica.spi.ClusterConsistency;
 import com.atlassian.db.replica.spi.DatabaseCall;
-import com.atlassian.db.replica.spi.ReplicaConsistency;
 
 import java.io.InputStream;
 import java.io.Reader;
@@ -40,7 +40,7 @@ public class ReplicaPreparedStatement extends ReplicaStatement implements Prepar
 
     protected ReplicaPreparedStatement(
         ReplicaConnectionProvider connectionProvider,
-        ReplicaConsistency consistency,
+        ClusterConsistency consistency,
         DatabaseCall databaseCall,
         String sql,
         Integer resultSetType,
@@ -71,7 +71,7 @@ public class ReplicaPreparedStatement extends ReplicaStatement implements Prepar
 
     protected ReplicaPreparedStatement(
         ReplicaConnectionProvider connectionProvider,
-        ReplicaConsistency consistency,
+        ClusterConsistency consistency,
         DatabaseCall databaseCall,
         String sql,
         Integer resultSetType,
@@ -597,7 +597,7 @@ public class ReplicaPreparedStatement extends ReplicaStatement implements Prepar
 
     public static class Builder {
         private final ReplicaConnectionProvider connectionProvider;
-        private final ReplicaConsistency consistency;
+        private final ClusterConsistency consistency;
         private final DatabaseCall databaseCall;
         private final String sql;
         private final Set<String> readOnlyFunctions;
@@ -610,7 +610,7 @@ public class ReplicaPreparedStatement extends ReplicaStatement implements Prepar
 
         public Builder(
             ReplicaConnectionProvider connectionProvider,
-            ReplicaConsistency consistency,
+            ClusterConsistency consistency,
             DatabaseCall databaseCall,
             String sql,
             Set<String> readOnlyFunctions

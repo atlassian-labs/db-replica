@@ -5,8 +5,9 @@ import com.atlassian.db.replica.api.reason.RouteDecision;
 import com.atlassian.db.replica.internal.state.ConnectionState;
 import com.atlassian.db.replica.internal.state.State;
 import com.atlassian.db.replica.internal.state.StateListener;
+import com.atlassian.db.replica.spi.ClusterConsistency;
 import com.atlassian.db.replica.spi.ConnectionProvider;
-import com.atlassian.db.replica.spi.ReplicaConsistency;
+import com.atlassian.db.replica.spi.DatabaseCluster;
 
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -20,14 +21,15 @@ import static com.atlassian.db.replica.internal.state.State.CLOSED;
 import static com.atlassian.db.replica.internal.state.State.MAIN;
 
 public class ReplicaConnectionProvider implements AutoCloseable {
-    private final ReplicaConsistency consistency;
+    private final ClusterConsistency consistency;
     private final ConnectionState state;
     private final ConnectionParameters parameters;
     private final Warnings warnings;
 
     public ReplicaConnectionProvider(
         ConnectionProvider connectionProvider,
-        ReplicaConsistency consistency,
+        ClusterConsistency consistency,
+        DatabaseCluster databaseCluster,
         StateListener stateListener
     ) {
         this.parameters = new ConnectionParameters();
@@ -37,7 +39,8 @@ public class ReplicaConnectionProvider implements AutoCloseable {
             consistency,
             parameters,
             warnings,
-            stateListener
+            stateListener,
+            databaseCluster
         );
         this.consistency = consistency;
     }

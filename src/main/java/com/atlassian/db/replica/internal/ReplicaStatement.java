@@ -3,8 +3,8 @@ package com.atlassian.db.replica.internal;
 import com.atlassian.db.replica.api.SqlCall;
 import com.atlassian.db.replica.api.reason.Reason;
 import com.atlassian.db.replica.api.reason.RouteDecision;
+import com.atlassian.db.replica.spi.ClusterConsistency;
 import com.atlassian.db.replica.spi.DatabaseCall;
-import com.atlassian.db.replica.spi.ReplicaConsistency;
 
 import java.sql.Connection;
 import java.sql.ResultSet;
@@ -34,14 +34,14 @@ public class ReplicaStatement implements Statement {
     @SuppressWarnings("rawtypes")
     private final List<StatementOperation> operations = new ArrayList<>();
     private final List<StatementOperation<Statement>> batches = new ArrayList<>();
-    private final ReplicaConsistency consistency;
+    private final ClusterConsistency consistency;
     private final DatabaseCall databaseCall;
     private final SqlFunction sqlFunction;
     private final DecisionAwareReference<Statement> readStatement;
     private final DecisionAwareReference<Statement> writeStatement;
 
     public ReplicaStatement(
-        ReplicaConsistency consistency,
+        ClusterConsistency consistency,
         ReplicaConnectionProvider connectionProvider,
         DatabaseCall databaseCall,
         Integer resultSetType,
@@ -548,7 +548,7 @@ public class ReplicaStatement implements Statement {
 
     public static Builder builder(
         ReplicaConnectionProvider connectionProvider,
-        ReplicaConsistency consistency,
+        ClusterConsistency consistency,
         DatabaseCall databaseCall,
         Set<String> readOnlyFunctions
     ) {
@@ -623,7 +623,7 @@ public class ReplicaStatement implements Statement {
 
     public static class Builder {
         private final ReplicaConnectionProvider connectionProvider;
-        private final ReplicaConsistency consistency;
+        private final ClusterConsistency consistency;
         private final DatabaseCall databaseCall;
         private final Set<String> readOnlyFunctions;
         private Integer resultSetType;
@@ -632,7 +632,7 @@ public class ReplicaStatement implements Statement {
 
         private Builder(
             ReplicaConnectionProvider connectionProvider,
-            ReplicaConsistency consistency,
+            ClusterConsistency consistency,
             DatabaseCall databaseCall,
             Set<String> readOnlyFunctions
         ) {
