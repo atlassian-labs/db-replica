@@ -8,12 +8,12 @@ import java.sql.SQLException;
 import java.util.Properties;
 
 public final class AuroraConnectionProvider implements ConnectionProvider {
-    private final String readerEndpoint;
-    private final String writerEndpoint;
+    private final String readerUrl;
+    private final String writerUrl;
 
-    public AuroraConnectionProvider(String readerEndpoint, String writerEndpoint) {
-        this.readerEndpoint = readerEndpoint;
-        this.writerEndpoint = writerEndpoint;
+    public AuroraConnectionProvider(String readerUrl, String writerUrl) {
+        this.readerUrl = readerUrl;
+        this.writerUrl = writerUrl;
     }
 
     @Override
@@ -23,12 +23,12 @@ public final class AuroraConnectionProvider implements ConnectionProvider {
 
     @Override
     public Connection getMainConnection() throws SQLException {
-        return getConnection(writerEndpoint);
+        return getConnection(writerUrl);
     }
 
     @Override
     public Connection getReplicaConnection() throws SQLException {
-        return getConnection(readerEndpoint);
+        return getConnection(readerUrl);
     }
 
     private Connection getConnection(String url) throws SQLException {

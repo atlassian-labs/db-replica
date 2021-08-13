@@ -10,11 +10,10 @@ public class AuroraEndpoints {
     /**
      * Transforms reader endpoint to instance endpoint
      */
-    public static AuroraEndpoint instanceEndpoint(String readerEndpoint, String serverId) {
-        AuroraEndpoint endpoint = AuroraEndpoint.parse(readerEndpoint);
-        return anAuroraEndpoint(endpoint)
+    public static AuroraEndpoint instanceEndpoint(AuroraEndpoint readerEndpoint, String serverId) {
+        return anAuroraEndpoint(readerEndpoint)
             .serverId(serverId)
-            .cluster(anAuroraCluster(endpoint.getCluster().getClusterName()).clusterPrefix(null).build())
+            .cluster(anAuroraCluster(readerEndpoint.getCluster().getClusterName()).clusterPrefix(null).build())
             .build();
     }
 }
