@@ -30,16 +30,13 @@ public class MultiReplicaConsistency implements ReplicaConsistency {
     @Override
     public boolean isConsistent(Supplier<Connection> replicaSupplier) {
         try {
-            return cluster.getReplicas().stream().allMatch(replica -> {
-                final boolean isConsistent = replicaConsistency.isConsistent(() -> {
-                    try {
-                        return replica.getConnection().call();
-                    } catch (SQLException throwables) {
-                        throw new RuntimeException("TODO", throwables);
-                    }
-                });
-                return isConsistent;
-            });
+            return cluster.getReplicas().stream().allMatch(replica -> replicaConsistency.isConsistent(() -> {
+                try {
+                    return replica.getConnectionSupplier().call();
+                } catch (SQLException throwables) {
+                    throw new RuntimeException("TODO");
+                }
+            }));
         } catch (SQLException throwables) {
             throw new RuntimeException(throwables);// TODO
         }

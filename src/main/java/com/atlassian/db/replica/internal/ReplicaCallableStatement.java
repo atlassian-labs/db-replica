@@ -1,5 +1,6 @@
 package com.atlassian.db.replica.internal;
 
+import com.atlassian.db.replica.spi.ClusterConsistency;
 import com.atlassian.db.replica.spi.DatabaseCall;
 import com.atlassian.db.replica.spi.ReplicaConsistency;
 
@@ -32,7 +33,7 @@ public class ReplicaCallableStatement extends ReplicaPreparedStatement implement
 
     public ReplicaCallableStatement(
         ReplicaConnectionProvider connectionProvider,
-        ReplicaConsistency consistency,
+        ClusterConsistency consistency,
         DatabaseCall databaseCall,
         String sql,
         Integer resultSetType,
@@ -633,7 +634,7 @@ public class ReplicaCallableStatement extends ReplicaPreparedStatement implement
 
     public static class Builder {
         private final ReplicaConnectionProvider connectionProvider;
-        private final ReplicaConsistency consistency;
+        private final ClusterConsistency consistency;
         private final DatabaseCall databaseCall;
         private final String sql;
         private final Set<String> readOnlyFunctions;
@@ -643,7 +644,7 @@ public class ReplicaCallableStatement extends ReplicaPreparedStatement implement
 
         public Builder(
             ReplicaConnectionProvider connectionProvider,
-            ReplicaConsistency consistency,
+            ClusterConsistency consistency,
             DatabaseCall databaseCall,
             String sql,
             Set<String> readOnlyFunctions
