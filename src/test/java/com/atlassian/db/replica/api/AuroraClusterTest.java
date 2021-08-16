@@ -16,7 +16,7 @@ class AuroraClusterTest {
         auroraClusterMock
             .scaleUp()
             .scaleUp();
-        final DatabaseCluster auroraCluster = new AuroraCluster(auroraClusterMock::getMainConnection, null);
+        final DatabaseCluster auroraCluster = new AuroraCluster(auroraClusterMock::getMainConnection);
 
         Assertions.assertThat(auroraCluster.getReplicas().size()).isEqualTo(2);
     }
@@ -28,7 +28,7 @@ class AuroraClusterTest {
             .scaleUp()
             .scaleDown()
             .scaleUp();
-        final DatabaseCluster auroraCluster = new AuroraCluster(auroraClusterMock::getMainConnection, null);
+        final DatabaseCluster auroraCluster = new AuroraCluster(auroraClusterMock::getMainConnection);
 
         Assertions.assertThat(auroraCluster.getReplicas().size()).isEqualTo(1);
     }

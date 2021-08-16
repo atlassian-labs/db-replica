@@ -3,7 +3,6 @@ package com.atlassian.db.replica.it.example.aurora;
 import com.atlassian.db.replica.api.DualConnection;
 import com.atlassian.db.replica.api.SqlCall;
 import com.atlassian.db.replica.api.aurora.AuroraCluster;
-import com.atlassian.db.replica.api.aurora.ReplicaNode;
 import com.atlassian.db.replica.api.reason.Reason;
 import com.atlassian.db.replica.api.reason.RouteDecision;
 import com.atlassian.db.replica.it.example.aurora.app.User;
@@ -59,7 +58,6 @@ public class AuroraClusterTest {
     }
 
     private SqlCall<Connection> initializeConnectionPool(final DatabaseCall decisionLog) throws SQLException {
-        final ReplicaNode replicaNode = new ReplicaNode();
         final ConnectionProvider connectionProvider = new AuroraConnectionProvider(
             readerEndpoint,
             writerEndpoint
@@ -67,7 +65,7 @@ public class AuroraClusterTest {
         final ReplicaNodeAwareConnectionProvider multiReplicaConnectionProvider = new ReplicaNodeAwareConnectionProvider(
             connectionProvider
         );
-        final DatabaseCluster cluster = new AuroraCluster(connectionProvider::getMainConnection, replicaNode);
+        final DatabaseCluster cluster = new AuroraCluster(connectionProvider::getMainConnection);
         final ReplicaConsistency replicaConsistency = new ConsistencyFactory(
             connectionProvider::getMainConnection,
             connectionProvider,
