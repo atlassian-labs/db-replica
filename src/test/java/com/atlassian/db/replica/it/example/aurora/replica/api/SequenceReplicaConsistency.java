@@ -1,7 +1,7 @@
 package com.atlassian.db.replica.it.example.aurora.replica.api;
 
 import com.atlassian.db.replica.api.ThrottledCache;
-import com.atlassian.db.replica.api.aurora.ReplicaNode;
+import com.atlassian.db.replica.internal.aurora.ReplicaNode;
 import com.atlassian.db.replica.internal.MonotonicMemoryCache;
 import com.atlassian.db.replica.spi.Cache;
 import com.atlassian.db.replica.spi.ReplicaConsistency;

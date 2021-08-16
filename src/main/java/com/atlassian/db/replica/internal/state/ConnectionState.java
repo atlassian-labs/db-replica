@@ -19,6 +19,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Optional;
 import java.util.concurrent.Executor;
+import java.util.function.Supplier;
 
 import static com.atlassian.db.replica.api.reason.Reason.HIGH_TRANSACTION_ISOLATION_LEVEL;
 import static com.atlassian.db.replica.api.reason.Reason.MAIN_CONNECTION_REUSE;
@@ -223,7 +224,7 @@ public final class ConnectionState {
             decisionBuilder.cause(writeConnection.getFirstCause().build());
             return writeConnection.get(decisionBuilder);
         }
-        boolean isConsistent;
+        final Optional<Database> consistentReplica;
         try {
             final Collection<Database> replicas = cluster != null ?
                 cluster.getReplicas() :
@@ -234,20 +235,21 @@ public final class ConnectionState {
                     }
 
                     @Override
-                    public SqlCall<Connection> getConnectionSupplier() {
+                    public Supplier<Connection> getConnectionSupplier() {
                         return () -> readConnection.get(decisionBuilder);
                     }
                 });
-            isConsistent = consistency.isConsistent(replicas);
+            consistentReplica = consistency.getConsistent(replicas);
         } catch (Exception e) {
             closeConnection(readConnection, decisionBuilder);
             throw e;
         }
-        if (isConsistent) {
+        if (consistentReplica.isPresent()) {
             if (getState().equals(COMMITED_MAIN)) {
                 closeConnection(writeConnection, decisionBuilder);
             }
-            final Connection connection = readConnection.get(decisionBuilder);
+            final Connection connection = consistentReplica.get().getConnectionSupplier().get();
+            this.readConnection.set(connection);
             replicaConsistent = true;
             return connection;
         } else {

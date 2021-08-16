@@ -3,6 +3,7 @@ package com.atlassian.db.replica.api.aurora;
 import com.atlassian.db.replica.api.Database;
 import com.atlassian.db.replica.api.SqlCall;
 import com.atlassian.db.replica.internal.aurora.AuroraReplicasDiscoverer;
+import com.atlassian.db.replica.internal.aurora.ReplicaNode;
 import com.atlassian.db.replica.spi.DatabaseCluster;
 
 import java.sql.Connection;
@@ -10,15 +11,16 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.Collection;
 import java.util.Properties;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 public final class AuroraCluster implements DatabaseCluster {
     private final AuroraReplicasDiscoverer discoverer;
     private final ReplicaNode replicaNode;
 
-    public AuroraCluster(SqlCall<Connection> connection, ReplicaNode replicaNode) throws SQLException {
+    public AuroraCluster(SqlCall<Connection> connection) throws SQLException {
         discoverer = new AuroraReplicasDiscoverer((connection.call()));
-        this.replicaNode = replicaNode;
+        this.replicaNode = new ReplicaNode();
     }
 
     @Override
@@ -30,7 +32,7 @@ public final class AuroraCluster implements DatabaseCluster {
             }
 
             @Override
-            public SqlCall<Connection> getConnectionSupplier() {
+            public Supplier<Connection> getConnectionSupplier() {
                 return () -> {
                     try {
                         return replicaNode.mark(getConnection(replicaId), replicaId);

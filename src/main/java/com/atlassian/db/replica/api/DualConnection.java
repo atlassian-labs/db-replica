@@ -543,7 +543,6 @@ public final class DualConnection implements Connection {
         return connectionProvider.isWrapperFor(iface);
     }
 
-    @Deprecated //TODO javadoc
     public static Builder builder(
         ConnectionProvider connectionProvider,
         ReplicaConsistency consistency

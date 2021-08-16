@@ -1,15 +1,13 @@
-package com.atlassian.db.replica.api.aurora;
+package com.atlassian.db.replica.internal.aurora;
 
 import java.sql.Connection;
 import java.sql.SQLException;
 
 
-//TODO: promote to API?
-//TODO: convert to an interface?
 public class ReplicaNode {
     private static final String AURORA_REPLICA_ID = "replicaId";
 
-    public Connection mark(final Connection connection, final String repliacId)  {
+    public Connection mark(final Connection connection, final String repliacId) {
         try {
             connection.getClientInfo().setProperty(AURORA_REPLICA_ID, repliacId);
         } catch (SQLException throwables) {
