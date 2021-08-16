@@ -20,6 +20,11 @@ public abstract class DecisionAwareReference<T> extends LazyReference<T> {
         firstCause.set(null);
     }
 
+    public void set(T reference) {
+        super.set(reference);
+        firstCause.set(null);
+    }
+
     public RouteDecisionBuilder getFirstCause() {
         if (firstCause.get() == null) {
             throw new IllegalStateException("The decision builder is not initialized");

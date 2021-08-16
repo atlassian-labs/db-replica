@@ -9,7 +9,6 @@ import java.util.function.Supplier;
  * Tracks data consistency between replica and main databases.
  */
 @ThreadSafe
-@Deprecated // TODO add deprecated docs
 public interface ReplicaConsistency {
 
     /**
@@ -22,13 +21,13 @@ public interface ReplicaConsistency {
 
     /**
      * Invoked just before transaction commit.
-     *
+     * <p>
      * Notice: The method will not handle all writes. Writes done outside of a transaction
      * needs to be handled in `ReplicaConnection#write`.
      *
      * @param main connects to the main database
      */
-    default void preCommit(Connection main){
+    default void preCommit(Connection main) {
     }
 
     /**

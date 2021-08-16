@@ -5,6 +5,7 @@ import com.atlassian.db.replica.api.Database;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Collection;
+import java.util.Optional;
 
 public interface ClusterConsistency {
 
@@ -28,9 +29,9 @@ public interface ClusterConsistency {
     }
 
     /**
-     * Judges if {@code replica} is ready to be queried.
+     * Provide consistent replica.
      *
      * @return true if {@code replica} is consistent with main
      */
-    boolean isConsistent(Collection<Database> replicas) throws SQLException;
+    Optional<Database> getConsistent(Collection<Database> replicas) throws SQLException;
 }
