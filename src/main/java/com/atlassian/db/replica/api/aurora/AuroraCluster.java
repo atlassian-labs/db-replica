@@ -2,6 +2,8 @@ package com.atlassian.db.replica.api.aurora;
 
 import com.atlassian.db.replica.api.Database;
 import com.atlassian.db.replica.api.SqlCall;
+import com.atlassian.db.replica.internal.aurora.AuroraEndpoint;
+import com.atlassian.db.replica.internal.aurora.AuroraJdbcUrl;
 import com.atlassian.db.replica.internal.aurora.AuroraReplicasDiscoverer;
 import com.atlassian.db.replica.internal.aurora.ReplicaNode;
 import com.atlassian.db.replica.spi.DatabaseCluster;
@@ -14,42 +16,53 @@ import java.util.Properties;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
+import static java.util.stream.Collectors.toList;
+
 public final class AuroraCluster implements DatabaseCluster {
     private final AuroraReplicasDiscoverer discoverer;
     private final ReplicaNode replicaNode;
 
-    public AuroraCluster(SqlCall<Connection> connection) throws SQLException {
-        discoverer = new AuroraReplicasDiscoverer((connection.call()));
+    public AuroraCluster(
+        SqlCall<Connection> connection,
+        String readerEndpoint,
+        String databaseName
+    ) throws SQLException {
+        discoverer = new AuroraReplicasDiscoverer(
+            connection.call(),
+            new AuroraJdbcUrl(AuroraEndpoint.parse(readerEndpoint), databaseName)
+        );
         this.replicaNode = new ReplicaNode();
     }
 
     @Override
     public Collection<Database> getReplicas() throws SQLException {
-        return discoverer.fetchReplicasServerIds().stream().map(replicaId -> new Database() {
+        return discoverer.fetchReplicasUrl().stream().map(auroraUrl -> new Database() {
             @Override
             public String getId() {
-                return replicaId;
+                return auroraUrl.getEndpoint().getServerId();
             }
 
             @Override
             public Supplier<Connection> getConnectionSupplier() {
                 return () -> {
                     try {
-                        return replicaNode.mark(getConnection(replicaId), replicaId);
+                        return replicaNode.mark(
+                            getConnection(auroraUrl),
+                            auroraUrl.getEndpoint().getServerId()
+                        );
                     } catch (SQLException throwables) {
                         throw new RuntimeException("TODO");
                     }
                 };
             }
 
-            private Connection getConnection(String databaseId) throws SQLException {
-                final String url = "jdbc:postgresql://" + databaseId + ".crmnlihjxqlm.eu-central-1.rds.amazonaws.com:5432/newdb"; //TODO remove hardcoded values
+            private Connection getConnection(AuroraJdbcUrl url) throws SQLException {
                 final Properties props = new Properties();
                 props.setProperty("user", "postgres");
                 props.setProperty("password", System.getenv("password"));
-                return DriverManager.getConnection(url, props);
+                return DriverManager.getConnection(url.toString(), props);
             }
-        }).collect(Collectors.toList());
+        }).collect(toList());
     }
 
 }

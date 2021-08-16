@@ -10,38 +10,39 @@ import static com.atlassian.db.replica.internal.aurora.AuroraEndpoints.instanceE
 import static java.util.stream.Collectors.toList;
 
 /**
- * It allows to pull Aurora Replicas cluster information
+ * Allows discovery of Aurora Replicas cluster information
  */
 public final class AuroraReplicasDiscoverer {
     private final Connection connection;
+    private final AuroraJdbcUrl readerUrl;
 
-    public AuroraReplicasDiscoverer(Connection connection) {
+    public AuroraReplicasDiscoverer(Connection connection, AuroraJdbcUrl readerUrl) {
         this.connection = connection;
+        this.readerUrl = readerUrl;
     }
 
     /**
-     * It provides list of replica endpoints based on reader endpoint and server ids
-     * @param readerEndpoint - Aurora reader endpoint
-     * @return list of replicas endpoints
-     * @throws SQLException
+     * Provides jdbc url for discovered replicas
+     *
+     * @return list of jdbc urls
      */
-    public List<AuroraEndpoint> fetchReplicasEndpoints(String readerEndpoint) throws SQLException {
+    public List<AuroraJdbcUrl> fetchReplicasUrl() throws SQLException {
         return fetchReplicasServerIds()
             .stream()
-            .map(serverId -> instanceEndpoint(readerEndpoint, serverId))
+            .map(serverId ->
+                new AuroraJdbcUrl(
+                    instanceEndpoint(readerUrl.getEndpoint(), serverId),
+                    readerUrl.getDatabaseName()
+                )
+            )
             .collect(toList());
     }
 
-    /**
-     * Asks Aurora about the list of server ids
-     * @return server ids
-     * @throws SQLException
-     */
-    public List<String> fetchReplicasServerIds() throws SQLException {
+    private List<String> fetchReplicasServerIds() throws SQLException {
         LinkedList<String> ids = new LinkedList<>();
         try (ResultSet rs =
                  connection.prepareStatement(
-                     "SELECT server_id FROM aurora_replica_status() WHERE session_id != 'MASTER_SESSION_ID'")
+                         "SELECT server_id FROM aurora_replica_status() WHERE session_id != 'MASTER_SESSION_ID'")
                      .executeQuery()) {
             while (rs.next()) {
                 ids.add(rs.getString("server_id"));
