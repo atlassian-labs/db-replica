@@ -30,9 +30,10 @@ import static com.atlassian.db.replica.api.reason.Reason.REPLICA_INCONSISTENT;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class AuroraClusterTest {
-    final String writerUrl = "database-1.cluster-crmnlihjxqlm.eu-central-1.rds.amazonaws.com:5432";
-    final String readerUrl = "database-1.cluster-ro-crmnlihjxqlm.eu-central-1.rds.amazonaws.com:5432";
     final String databaseName = "newdb";
+    final String readerEndpoint = "database-1.cluster-ro-crmnlihjxqlm.eu-central-1.rds.amazonaws.com:5432";
+    final String readerJdbcUrl = "jdbc:postgresql://" + readerEndpoint + "/" + databaseName;
+    final String writerJdbcUrl = "jdbc:postgresql://database-1.cluster-crmnlihjxqlm.eu-central-1.rds.amazonaws.com:5432" + "/" + databaseName;
 
     //TODO simplify API
     @Test
@@ -60,15 +61,15 @@ class AuroraClusterTest {
 
     private SqlCall<Connection> initializeConnectionPool(final DatabaseCall decisionLog) throws SQLException {
         final ConnectionProvider connectionProvider = new AuroraConnectionProvider(
-            readerUrl,
-            writerUrl
+            readerJdbcUrl,
+            writerJdbcUrl
         );
         final ReplicaNodeAwareConnectionProvider multiReplicaConnectionProvider = new ReplicaNodeAwareConnectionProvider(
             connectionProvider
         );
         final DatabaseCluster cluster = new AuroraCluster(
             connectionProvider::getMainConnection,
-            readerUrl,
+            readerEndpoint,
             databaseName
         );
         final ReplicaConsistency replicaConsistency = new ConsistencyFactory(
