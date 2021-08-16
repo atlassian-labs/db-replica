@@ -29,14 +29,15 @@ import static com.atlassian.db.replica.api.reason.Reason.READ_OPERATION;
 import static com.atlassian.db.replica.api.reason.Reason.REPLICA_INCONSISTENT;
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class AuroraClusterTest {
-    final String writerEndpoint = "jdbc:postgresql://database-1.cluster-crmnlihjxqlm.eu-central-1.rds.amazonaws.com:5432/newdb";
-    final String readerEndpoint = "jdbc:postgresql://database-1.cluster-ro-crmnlihjxqlm.eu-central-1.rds.amazonaws.com:5432/newdb";
+class AuroraClusterTest {
+    final String writerUrl = "database-1.cluster-crmnlihjxqlm.eu-central-1.rds.amazonaws.com:5432";
+    final String readerUrl = "database-1.cluster-ro-crmnlihjxqlm.eu-central-1.rds.amazonaws.com:5432";
+    final String databaseName = "newdb";
 
     //TODO simplify API
     @Test
     @Disabled
-    public void shouldUtilizeReplicaForReadQueriesForSynchronisedWrites() throws SQLException {
+    void shouldUtilizeReplicaForReadQueriesForSynchronisedWrites() throws SQLException {
         final DecisionLog decisionLog = new DecisionLog();
         final SqlCall<Connection> connectionPool = initializeConnectionPool(decisionLog);
 
@@ -59,13 +60,17 @@ public class AuroraClusterTest {
 
     private SqlCall<Connection> initializeConnectionPool(final DatabaseCall decisionLog) throws SQLException {
         final ConnectionProvider connectionProvider = new AuroraConnectionProvider(
-            readerEndpoint,
-            writerEndpoint
+            readerUrl,
+            writerUrl
         );
         final ReplicaNodeAwareConnectionProvider multiReplicaConnectionProvider = new ReplicaNodeAwareConnectionProvider(
             connectionProvider
         );
-        final DatabaseCluster cluster = new AuroraCluster(connectionProvider::getMainConnection);
+        final DatabaseCluster cluster = new AuroraCluster(
+            connectionProvider::getMainConnection,
+            readerUrl,
+            databaseName
+        );
         final ReplicaConsistency replicaConsistency = new ConsistencyFactory(
             connectionProvider::getMainConnection,
             connectionProvider,

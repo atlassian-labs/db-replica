@@ -7,28 +7,36 @@ import org.junit.jupiter.api.Test;
 
 import java.sql.SQLException;
 
-
 class AuroraClusterTest {
+    final String readerEndpoint = "database-1.cluster-xxxxxxxxxxxxx.xx-xxxxxx-1.rds.amazonaws.com:5432";
+    final String dbName = "dbname";
 
     @Test
-    public void shouldDiscoverReplicaConnectionsWhenScaledUp() throws SQLException {
+    void shouldDiscoverReplicaConnectionsWhenScaledUp() throws SQLException {
         final AuroraClusterMock auroraClusterMock = new AuroraClusterMock();
         auroraClusterMock
             .scaleUp()
             .scaleUp();
-        final DatabaseCluster auroraCluster = new AuroraCluster(auroraClusterMock::getMainConnection);
+        final DatabaseCluster auroraCluster = new AuroraCluster(
+            auroraClusterMock::getMainConnection,
+            readerEndpoint,
+            dbName
+        );
 
         Assertions.assertThat(auroraCluster.getReplicas().size()).isEqualTo(2);
     }
 
     @Test
-    public void shouldDiscoverReplicaConnectionsWhenScaledDown() throws SQLException {
+    void shouldDiscoverReplicaConnectionsWhenScaledDown() throws SQLException {
         final AuroraClusterMock auroraClusterMock = new AuroraClusterMock();
         auroraClusterMock
             .scaleUp()
             .scaleDown()
             .scaleUp();
-        final DatabaseCluster auroraCluster = new AuroraCluster(auroraClusterMock::getMainConnection);
+        final DatabaseCluster auroraCluster = new AuroraCluster(auroraClusterMock::getMainConnection,
+            readerEndpoint,
+            dbName
+        );
 
         Assertions.assertThat(auroraCluster.getReplicas().size()).isEqualTo(1);
     }
