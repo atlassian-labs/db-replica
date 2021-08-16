@@ -26,7 +26,7 @@ public class MultiReplicaConsistency implements ReplicaConsistency {
     }
 
     // TODO: currently it ignores the provided supplier and uses cluster. We could change the API to provide all
-    // connections
+    //    // connections
     @Override
     public boolean isConsistent(Supplier<Connection> replicaSupplier) {
         try {

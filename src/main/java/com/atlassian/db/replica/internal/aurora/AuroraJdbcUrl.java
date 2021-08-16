@@ -20,6 +20,6 @@ public class AuroraJdbcUrl {
 
     @Override
     public String toString() {
-        return String.format("%s/%s/%s", prefix, endpoint, databaseName);
+        return String.format("%s%s/%s", prefix, endpoint, databaseName);
     }
 }
