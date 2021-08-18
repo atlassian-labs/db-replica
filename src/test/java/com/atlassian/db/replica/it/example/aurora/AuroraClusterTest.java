@@ -9,7 +9,6 @@ import com.atlassian.db.replica.it.example.aurora.app.User;
 import com.atlassian.db.replica.it.example.aurora.app.Users;
 import com.atlassian.db.replica.it.example.aurora.replica.AuroraConnectionProvider;
 import com.atlassian.db.replica.it.example.aurora.replica.ConsistencyFactory;
-import com.atlassian.db.replica.it.example.aurora.replica.api.ReplicaNodeAwareConnectionProvider;
 import com.atlassian.db.replica.it.example.aurora.utils.DecisionLog;
 import com.atlassian.db.replica.it.example.aurora.utils.ReplicationLag;
 import com.atlassian.db.replica.spi.ConnectionProvider;
@@ -64,9 +63,6 @@ class AuroraClusterTest {
             readerJdbcUrl,
             writerJdbcUrl
         );
-        final ReplicaNodeAwareConnectionProvider multiReplicaConnectionProvider = new ReplicaNodeAwareConnectionProvider(
-            connectionProvider
-        );
         final DatabaseCluster cluster = new AuroraCluster(
             connectionProvider::getMainConnection,
             readerEndpoint,
@@ -78,7 +74,7 @@ class AuroraClusterTest {
             cluster
         ).create();
         final SqlCall<Connection> connectionPool = () -> DualConnection.builder(
-            multiReplicaConnectionProvider,
+            connectionProvider,
             replicaConsistency
         ).databaseCall(decisionLog)
             .build();
