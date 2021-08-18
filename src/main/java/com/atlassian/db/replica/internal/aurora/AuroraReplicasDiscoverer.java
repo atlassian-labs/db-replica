@@ -13,11 +13,9 @@ import static java.util.stream.Collectors.toList;
  * Allows discovery of Aurora Replicas cluster information
  */
 public final class AuroraReplicasDiscoverer {
-    private final Connection connection;
     private final AuroraJdbcUrl readerUrl;
 
-    public AuroraReplicasDiscoverer(Connection connection, AuroraJdbcUrl readerUrl) {
-        this.connection = connection;
+    public AuroraReplicasDiscoverer(AuroraJdbcUrl readerUrl) {
         this.readerUrl = readerUrl;
     }
 
@@ -26,8 +24,8 @@ public final class AuroraReplicasDiscoverer {
      *
      * @return list of jdbc urls
      */
-    public List<AuroraJdbcUrl> fetchReplicasUrl() throws SQLException {
-        return fetchReplicasServerIds()
+    public List<AuroraJdbcUrl> fetchReplicasUrl(Connection connection) throws SQLException {
+        return fetchReplicasServerIds(connection)
             .stream()
             .map(serverId ->
                 new AuroraJdbcUrl(
@@ -38,11 +36,11 @@ public final class AuroraReplicasDiscoverer {
             .collect(toList());
     }
 
-    private List<String> fetchReplicasServerIds() throws SQLException {
+    private List<String> fetchReplicasServerIds(Connection connection) throws SQLException {
         LinkedList<String> ids = new LinkedList<>();
         try (ResultSet rs =
                  connection.prepareStatement(
-                         "SELECT server_id FROM aurora_replica_status() WHERE session_id != 'MASTER_SESSION_ID'")
+                     "SELECT server_id FROM aurora_replica_status() WHERE session_id != 'MASTER_SESSION_ID'")
                      .executeQuery()) {
             while (rs.next()) {
                 ids.add(rs.getString("server_id"));

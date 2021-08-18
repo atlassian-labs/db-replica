@@ -2,7 +2,6 @@ package com.atlassian.db.replica.it.example.aurora;
 
 import com.atlassian.db.replica.api.DualConnection;
 import com.atlassian.db.replica.api.SqlCall;
-import com.atlassian.db.replica.api.aurora.AuroraCluster;
 import com.atlassian.db.replica.api.reason.Reason;
 import com.atlassian.db.replica.api.reason.RouteDecision;
 import com.atlassian.db.replica.it.example.aurora.app.User;
@@ -13,7 +12,6 @@ import com.atlassian.db.replica.it.example.aurora.utils.DecisionLog;
 import com.atlassian.db.replica.it.example.aurora.utils.ReplicationLag;
 import com.atlassian.db.replica.spi.ConnectionProvider;
 import com.atlassian.db.replica.spi.DatabaseCall;
-import com.atlassian.db.replica.spi.DatabaseCluster;
 import com.atlassian.db.replica.spi.ReplicaConsistency;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -63,21 +61,18 @@ class AuroraClusterTest {
             readerJdbcUrl,
             writerJdbcUrl
         );
-        final DatabaseCluster cluster = new AuroraCluster(
-            connectionProvider::getMainConnection,
-            readerEndpoint,
-            databaseName
-        );
         final ReplicaConsistency replicaConsistency = new ConsistencyFactory(
             connectionProvider::getMainConnection,
             connectionProvider,
-            cluster
+            readerEndpoint,   // TODO: I added the params here, but I'm sure databaseName can be discovered, not sure about readerEndpoint.
+            databaseName
         ).create();
         final SqlCall<Connection> connectionPool = () -> DualConnection.builder(
             connectionProvider,
             replicaConsistency
         ).databaseCall(decisionLog)
             .build();
+
         new ReplicationLag(connectionPool).set(10);
         return connectionPool;
     }

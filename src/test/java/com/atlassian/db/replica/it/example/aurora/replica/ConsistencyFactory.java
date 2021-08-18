@@ -5,7 +5,6 @@ import com.atlassian.db.replica.it.example.aurora.replica.api.MultiReplicaConsis
 import com.atlassian.db.replica.it.example.aurora.replica.api.SequenceReplicaConsistency;
 import com.atlassian.db.replica.it.example.aurora.replica.api.SynchronousWriteConsistency;
 import com.atlassian.db.replica.spi.ConnectionProvider;
-import com.atlassian.db.replica.spi.DatabaseCluster;
 import com.atlassian.db.replica.spi.ReplicaConsistency;
 
 import java.sql.Connection;
@@ -15,16 +14,19 @@ import java.sql.SQLException;
 public class ConsistencyFactory {
     private final SqlCall<Connection> mainConnectionSupplier;
     private final ConnectionProvider connectionProvider; // TODO: IMO it's not a good dependency. Need to refactor later
-    private final DatabaseCluster cluster;
+    private final String readerEndpoint;
+    private final String databaseName;
 
     public ConsistencyFactory(
         SqlCall<Connection> mainConnectionSupplier,
         ConnectionProvider connectionProvider,
-        DatabaseCluster cluster
+        String readerEndpoint,
+        String databaseName
     ) {
         this.mainConnectionSupplier = mainConnectionSupplier;
         this.connectionProvider = connectionProvider;
-        this.cluster = cluster;
+        this.readerEndpoint = readerEndpoint;
+        this.databaseName = databaseName;
     }
 
     public ReplicaConsistency create() throws SQLException {
@@ -34,7 +36,8 @@ public class ConsistencyFactory {
         );
         final MultiReplicaConsistency multiReplicaConsistency = new MultiReplicaConsistency(
             sequenceReplicaConsistency,
-            cluster
+            readerEndpoint,
+            databaseName
         );
         return new SynchronousWriteConsistency(multiReplicaConsistency, connectionProvider, runnable -> {
         });
