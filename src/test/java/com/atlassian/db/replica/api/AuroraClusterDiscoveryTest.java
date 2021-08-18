@@ -1,13 +1,12 @@
 package com.atlassian.db.replica.api;
 
-import com.atlassian.db.replica.api.aurora.AuroraCluster;
-import com.atlassian.db.replica.spi.DatabaseCluster;
+import com.atlassian.db.replica.internal.aurora.AuroraClusterDiscovery;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.sql.SQLException;
 
-class AuroraClusterTest {
+class AuroraClusterDiscoveryTest {
     final String readerEndpoint = "database-1.cluster-xxxxxxxxxxxxx.xx-xxxxxx-1.rds.amazonaws.com:5432";
     final String dbName = "dbname";
 
@@ -17,13 +16,12 @@ class AuroraClusterTest {
         auroraClusterMock
             .scaleUp()
             .scaleUp();
-        final DatabaseCluster auroraCluster = new AuroraCluster(
-            auroraClusterMock::getMainConnection,
+        final AuroraClusterDiscovery auroraCluster = new AuroraClusterDiscovery(
             readerEndpoint,
             dbName
         );
 
-        Assertions.assertThat(auroraCluster.getReplicas().size()).isEqualTo(2);
+        Assertions.assertThat(auroraCluster.getReplicas(auroraClusterMock::getMainConnection).size()).isEqualTo(2);
     }
 
     @Test
@@ -33,11 +31,11 @@ class AuroraClusterTest {
             .scaleUp()
             .scaleDown()
             .scaleUp();
-        final DatabaseCluster auroraCluster = new AuroraCluster(auroraClusterMock::getMainConnection,
+        final AuroraClusterDiscovery auroraCluster = new AuroraClusterDiscovery(
             readerEndpoint,
             dbName
         );
 
-        Assertions.assertThat(auroraCluster.getReplicas().size()).isEqualTo(1);
+        Assertions.assertThat(auroraCluster.getReplicas(auroraClusterMock::getMainConnection).size()).isEqualTo(1);
     }
 }

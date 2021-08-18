@@ -2,7 +2,6 @@ package com.atlassian.db.replica.api;
 
 import com.atlassian.db.replica.api.reason.Reason;
 import com.atlassian.db.replica.internal.ClientInfo;
-import com.atlassian.db.replica.internal.ConsistencyAdapter;
 import com.atlassian.db.replica.internal.ForwardCall;
 import com.atlassian.db.replica.internal.ReplicaCallableStatement;
 import com.atlassian.db.replica.internal.ReplicaConnectionProvider;
@@ -11,10 +10,8 @@ import com.atlassian.db.replica.internal.ReplicaStatement;
 import com.atlassian.db.replica.internal.RouteDecisionBuilder;
 import com.atlassian.db.replica.internal.state.NoOpStateListener;
 import com.atlassian.db.replica.internal.state.StateListener;
-import com.atlassian.db.replica.spi.ClusterConsistency;
 import com.atlassian.db.replica.spi.ConnectionProvider;
 import com.atlassian.db.replica.spi.DatabaseCall;
-import com.atlassian.db.replica.spi.DatabaseCluster;
 import com.atlassian.db.replica.spi.ReplicaConsistency;
 
 import java.sql.Array;
@@ -49,23 +46,21 @@ import java.util.concurrent.Executor;
 public final class DualConnection implements Connection {
     private static final String CONNECTION_CLOSED_MESSAGE = "This connection has been closed.";
     private final ReplicaConnectionProvider connectionProvider;
-    private final ClusterConsistency consistency;
+    private final ReplicaConsistency consistency;
     private final DatabaseCall databaseCall;
     private final Set<String> readOnlyFunctions;
 
     private DualConnection(
         ConnectionProvider connectionProvider,
-        ClusterConsistency consistency,
+        ReplicaConsistency consistency,
         DatabaseCall databaseCall,
         StateListener stateListener,
         Set<String> readOnlyFunctions,
-        DatabaseCluster cluster,
         boolean compatibleWithPreviousVersion
     ) {
         this.connectionProvider = new ReplicaConnectionProvider(
             connectionProvider,
             consistency,
-            cluster,
             stateListener
         );
         this.consistency = consistency;
@@ -550,18 +545,9 @@ public final class DualConnection implements Connection {
         return new Builder(connectionProvider, consistency);
     }
 
-    public static Builder builder(
-        ConnectionProvider connectionProvider,
-        DatabaseCluster cluster,
-        ClusterConsistency consistency
-    ) {
-        return new Builder(connectionProvider, cluster, consistency);
-    }
-
     public static class Builder {
         private final ConnectionProvider connectionProvider;
-        private final ClusterConsistency consistency;
-        private final DatabaseCluster cluster;
+        private final ReplicaConsistency consistency;
         private DatabaseCall databaseCall = new ForwardCall();
         private StateListener stateListener = new NoOpStateListener();
         private Set<String> readOnlyFunctions = new HashSet<>();
@@ -569,21 +555,10 @@ public final class DualConnection implements Connection {
 
         private Builder(
             ConnectionProvider connectionProvider,
-            DatabaseCluster cluster,
-            ClusterConsistency consistency
-        ) {
-            this.connectionProvider = connectionProvider;
-            this.cluster = cluster;
-            this.consistency = consistency;
-        }
-
-        private Builder(
-            ConnectionProvider connectionProvider,
             ReplicaConsistency consistency
         ) {
             this.connectionProvider = connectionProvider;
-            this.cluster = null;
-            this.consistency = new ConsistencyAdapter(consistency);
+            this.consistency = consistency;
         }
 
         /**
@@ -625,7 +600,6 @@ public final class DualConnection implements Connection {
                 databaseCall,
                 stateListener,
                 readOnlyFunctions,
-                cluster,
                 compatibleWithPreviousVersion
             );
         }

@@ -1,25 +1,19 @@
 package com.atlassian.db.replica.internal.state;
 
-import com.atlassian.db.replica.api.Database;
-import com.atlassian.db.replica.api.SqlCall;
 import com.atlassian.db.replica.api.reason.RouteDecision;
 import com.atlassian.db.replica.internal.ConnectionParameters;
 import com.atlassian.db.replica.internal.DecisionAwareReference;
 import com.atlassian.db.replica.internal.RouteDecisionBuilder;
 import com.atlassian.db.replica.internal.SqlRunnable;
 import com.atlassian.db.replica.internal.Warnings;
-import com.atlassian.db.replica.spi.ClusterConsistency;
 import com.atlassian.db.replica.spi.ConnectionProvider;
-import com.atlassian.db.replica.spi.DatabaseCluster;
+import com.atlassian.db.replica.spi.ReplicaConsistency;
 
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.SQLWarning;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.Optional;
 import java.util.concurrent.Executor;
-import java.util.function.Supplier;
 
 import static com.atlassian.db.replica.api.reason.Reason.HIGH_TRANSACTION_ISOLATION_LEVEL;
 import static com.atlassian.db.replica.api.reason.Reason.MAIN_CONNECTION_REUSE;
@@ -34,7 +28,7 @@ import static com.atlassian.db.replica.internal.state.State.REPLICA;
 
 public final class ConnectionState {
     private final ConnectionProvider connectionProvider;
-    private final ClusterConsistency consistency;
+    private final ReplicaConsistency consistency;
     private volatile Boolean isClosed = false;
     private final ConnectionParameters parameters;
     private final Warnings warnings;
@@ -42,22 +36,19 @@ public final class ConnectionState {
     private volatile boolean replicaConsistent = true;
     private final DecisionAwareReference<Connection> readConnection;
     private final DecisionAwareReference<Connection> writeConnection;
-    private final DatabaseCluster cluster;
 
     public ConnectionState(
         ConnectionProvider connectionProvider,
-        ClusterConsistency consistency,
+        ReplicaConsistency consistency,
         ConnectionParameters parameters,
         Warnings warnings,
-        StateListener stateListener,
-        DatabaseCluster cluster
+        StateListener stateListener
     ) {
         this.connectionProvider = connectionProvider;
         this.consistency = consistency;
         this.parameters = parameters;
         this.warnings = warnings;
         this.stateListener = stateListener;
-        this.cluster = cluster;
         this.readConnection = new DecisionAwareReference<Connection>() {
             @Override
             public Connection create() throws SQLException {
@@ -224,32 +215,18 @@ public final class ConnectionState {
             decisionBuilder.cause(writeConnection.getFirstCause().build());
             return writeConnection.get(decisionBuilder);
         }
-        final Optional<Database> consistentReplica;
+        boolean isConsistent;
         try {
-            final Collection<Database> replicas = cluster != null ?
-                cluster.getReplicas() :
-                Collections.singleton(new Database() {
-                    @Override
-                    public String getId() {
-                        return null;
-                    }
-
-                    @Override
-                    public Supplier<Connection> getConnectionSupplier() {
-                        return () -> readConnection.get(decisionBuilder);
-                    }
-                });
-            consistentReplica = consistency.getConsistent(replicas);
+            isConsistent = consistency.isConsistent(() -> readConnection.get(decisionBuilder));
         } catch (Exception e) {
             closeConnection(readConnection, decisionBuilder);
             throw e;
         }
-        if (consistentReplica.isPresent()) {
+        if (isConsistent) {
             if (getState().equals(COMMITED_MAIN)) {
                 closeConnection(writeConnection, decisionBuilder);
             }
-            final Connection connection = consistentReplica.get().getConnectionSupplier().get();
-            this.readConnection.set(connection);
+            final Connection connection = readConnection.get(decisionBuilder);
             replicaConsistent = true;
             return connection;
         } else {
