@@ -1,7 +1,6 @@
 package com.atlassian.db.replica.it.example.aurora.replica;
 
-import com.atlassian.db.replica.api.SqlCall;
-import com.atlassian.db.replica.it.example.aurora.replica.api.MultiReplicaConsistency;
+import com.atlassian.db.replica.it.example.aurora.replica.api.AuroraMultiReplicaConsistency;
 import com.atlassian.db.replica.it.example.aurora.replica.api.SequenceReplicaConsistency;
 import com.atlassian.db.replica.it.example.aurora.replica.api.SynchronousWriteConsistency;
 import com.atlassian.db.replica.spi.ConnectionProvider;
@@ -12,21 +11,12 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
 public class ConsistencyFactory {
-    private final SqlCall<Connection> mainConnectionSupplier;
-    private final ConnectionProvider connectionProvider; // TODO: IMO it's not a good dependency. Need to refactor later
-    private final String readerEndpoint;
-    private final String databaseName;
+    private final ConnectionProvider connectionProvider;
 
     public ConsistencyFactory(
-        SqlCall<Connection> mainConnectionSupplier,
-        ConnectionProvider connectionProvider,
-        String readerEndpoint,
-        String databaseName
+        ConnectionProvider connectionProvider
     ) {
-        this.mainConnectionSupplier = mainConnectionSupplier;
         this.connectionProvider = connectionProvider;
-        this.readerEndpoint = readerEndpoint;
-        this.databaseName = databaseName;
     }
 
     public ReplicaConsistency create() throws SQLException {
@@ -34,17 +24,12 @@ public class ConsistencyFactory {
         final SequenceReplicaConsistency sequenceReplicaConsistency = new SequenceReplicaConsistency.Builder().build(
             "read_replica_replication"
         );
-        final MultiReplicaConsistency multiReplicaConsistency = new MultiReplicaConsistency(
-            sequenceReplicaConsistency,
-            readerEndpoint,
-            databaseName
-        );
-        return new SynchronousWriteConsistency(multiReplicaConsistency, connectionProvider, runnable -> {
-        });
+        final AuroraMultiReplicaConsistency multiReplicaConsistency = new AuroraMultiReplicaConsistency(sequenceReplicaConsistency);
+        return new SynchronousWriteConsistency(multiReplicaConsistency, connectionProvider, runnable -> { });
     }
 
     private void initialize() throws SQLException {
-        try (final Connection connection = mainConnectionSupplier.call()) {
+        try (final Connection connection = connectionProvider.getMainConnection()) {
             try (final PreparedStatement preparedStatement = connection.prepareStatement(
                 "CREATE TABLE IF NOT EXISTS read_replica_replication\n" +
                     "    (\n" +
