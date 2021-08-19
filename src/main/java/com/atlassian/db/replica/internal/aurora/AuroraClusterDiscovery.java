@@ -12,22 +12,12 @@ import java.util.function.Supplier;
 import static java.util.stream.Collectors.toList;
 
 public final class AuroraClusterDiscovery {
-    private final ReplicaNode replicaNode;
-    private final AuroraReplicasDiscoverer discoverer;
-
-    public AuroraClusterDiscovery(
-        String readerEndpoint,
-        String databaseName
-    ) {
-        this.replicaNode = new ReplicaNode();
-        this.discoverer = new AuroraReplicasDiscoverer(
-            new AuroraJdbcUrl(AuroraEndpoint.parse(readerEndpoint), databaseName)
-        );
-    }
+    private final ReplicaNode replicaNode = new ReplicaNode();
 
     public Collection<Database> getReplicas(Supplier<Connection> connectionSupplier) {
         try {
             final Connection connection = connectionSupplier.get();
+            final AuroraReplicasDiscoverer discoverer = createDiscoverer(connection);
             return discoverer.fetchReplicasUrl(connection).stream().map(auroraUrl -> new Database() {
                 @Override
                 public String getId() {
@@ -58,7 +48,20 @@ public final class AuroraClusterDiscovery {
         } catch (SQLException throwables) {
             throw new RuntimeException("TODO");
         }
+    }
 
+    private AuroraReplicasDiscoverer createDiscoverer(Connection connection) {
+        try {
+            final String dbUrl = connection.getMetaData().getURL();
+            final String[] split = dbUrl.split("/");
+            final String readerEndpoint = split[2];
+            final String databaseName = split[3];
+            return new AuroraReplicasDiscoverer(
+                new AuroraJdbcUrl(AuroraEndpoint.parse(readerEndpoint), databaseName)
+            );
+        } catch (SQLException throwables) {
+            throw new RuntimeException("TODO", throwables);
+        }
     }
 
 }

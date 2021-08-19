@@ -32,13 +32,12 @@ class AuroraClusterTest {
     final String readerJdbcUrl = "jdbc:postgresql://" + readerEndpoint + "/" + databaseName;
     final String writerJdbcUrl = "jdbc:postgresql://database-1.cluster-crmnlihjxqlm.eu-central-1.rds.amazonaws.com:5432" + "/" + databaseName;
 
-    //TODO simplify API
     @Test
     @Disabled
     void shouldUtilizeReplicaForReadQueriesForSynchronisedWrites() throws SQLException {
         final DecisionLog decisionLog = new DecisionLog();
         final SqlCall<Connection> connectionPool = initializeConnectionPool(decisionLog);
-
+        new ReplicationLag(connectionPool).set(10);
         final Users users = new Users(connectionPool);
         final User newUser = new User();
 
@@ -53,7 +52,8 @@ class AuroraClusterTest {
             READ_OPERATION,
             null
         ));
-        assertThat(reasons).doesNotContain(REPLICA_INCONSISTENT);
+
+        assertThat(reasons).isNotEmpty().doesNotContain(REPLICA_INCONSISTENT);
     }
 
     private SqlCall<Connection> initializeConnectionPool(final DatabaseCall decisionLog) throws SQLException {
@@ -61,20 +61,13 @@ class AuroraClusterTest {
             readerJdbcUrl,
             writerJdbcUrl
         );
-        final ReplicaConsistency replicaConsistency = new ConsistencyFactory(
-            connectionProvider::getMainConnection,
-            connectionProvider,
-            readerEndpoint,   // TODO: I added the params here, but I'm sure databaseName can be discovered, not sure about readerEndpoint.
-            databaseName
-        ).create();
-        final SqlCall<Connection> connectionPool = () -> DualConnection.builder(
+        final ReplicaConsistency replicaConsistency = new ConsistencyFactory(connectionProvider).create();
+
+        return () -> DualConnection.builder(
             connectionProvider,
             replicaConsistency
         ).databaseCall(decisionLog)
             .build();
-
-        new ReplicationLag(connectionPool).set(10);
-        return connectionPool;
     }
 
 }

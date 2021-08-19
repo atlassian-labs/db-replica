@@ -7,17 +7,15 @@ import java.sql.Connection;
 import java.util.function.Supplier;
 
 //TODO: promote to API?
-public class MultiReplicaConsistency implements ReplicaConsistency {
+public class AuroraMultiReplicaConsistency implements ReplicaConsistency {
     private final ReplicaConsistency replicaConsistency;
     private final AuroraClusterDiscovery cluster;
 
-    public MultiReplicaConsistency(
-        ReplicaConsistency replicaConsistency,
-        String readerEndpoint,
-        String databaseName  // TODO: can the database name be discovered?
+    public AuroraMultiReplicaConsistency(
+        ReplicaConsistency replicaConsistency
     ) {
         this.replicaConsistency = replicaConsistency;
-        this.cluster = new AuroraClusterDiscovery(readerEndpoint, databaseName);
+        this.cluster = new AuroraClusterDiscovery();
     }
 
     @Override
