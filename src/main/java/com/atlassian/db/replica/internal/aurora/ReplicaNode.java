@@ -7,12 +7,11 @@ import java.sql.SQLException;
 public class ReplicaNode {
     private static final String AURORA_REPLICA_ID = "replicaId";
 
-    public Connection mark(final Connection connection, final String repliacId) {
+    public Connection mark(final Connection connection, final String replicaId) {
         try {
-            connection.getClientInfo().setProperty(AURORA_REPLICA_ID, repliacId);
-        } catch (SQLException throwables) {
-            //TODO:            log.withoutCustomerData().error("Failed to label a connection", e);
-
+            connection.getClientInfo().setProperty(AURORA_REPLICA_ID, replicaId);
+        } catch (SQLException exception) {
+            throw new ReadReplicaNodeLabelingOperationException(replicaId, exception);
         }
         return connection;
     }

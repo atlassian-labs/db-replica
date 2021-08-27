@@ -1,7 +1,6 @@
 package com.atlassian.db.replica.api;
 
 import com.atlassian.db.replica.internal.aurora.AuroraClusterDiscovery;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -26,21 +25,28 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.Executor;
 
+import static com.atlassian.db.replica.api.AuroraConnectionDetails.Builder.anAuroraConnectionDetailsBuilder;
+import static org.assertj.core.api.Assertions.assertThat;
+
 class AuroraClusterDiscoveryTest {
     private final String readerEndpoint = "database-1.cluster-xxxxxxxxxxxxx.xx-xxxxxx-1.rds.amazonaws.com:5432";
-    private final String dbName = "dbname";
+    private final String databaseName = "dbname";
+    private final String jdbcUsername = "postgres";
+    private final String jdbcPassword = "password";
+
     private AuroraClusterMock auroraClusterMock;
-    private AuroraClusterDiscovery auroraCluster;
     private PostgresConnectionMock postgresConnectionMock;
+    private AuroraClusterDiscovery auroraClusterDiscovery;
 
     @BeforeEach
     public void before() throws SQLException {
         auroraClusterMock = new AuroraClusterMock();
-        auroraCluster = new AuroraClusterDiscovery();
-        final Connection mainConnection = auroraClusterMock.getMainConnection();
         postgresConnectionMock = new PostgresConnectionMock(
-            mainConnection,
-            "jdbc:postgresql://database-1.cluster-xxxxxxxxxxxxx.xx-xxxxxx-1.rds.amazonaws.com:5432/dbname"
+            auroraClusterMock.getMainConnection(),
+            "jdbc:postgresql://" + readerEndpoint + "/" + databaseName
+        );
+        auroraClusterDiscovery = new AuroraClusterDiscovery(
+            anAuroraConnectionDetailsBuilder().username(jdbcUsername).password(jdbcPassword).build()
         );
     }
 
@@ -50,9 +56,9 @@ class AuroraClusterDiscoveryTest {
             .scaleUp()
             .scaleUp();
 
-        final Collection<Database> replicas = auroraCluster.getReplicas(() -> postgresConnectionMock);
+        final Collection<Database> replicas = auroraClusterDiscovery.getReplicas(() -> postgresConnectionMock);
 
-        Assertions.assertThat(replicas).hasSize(2);
+        assertThat(replicas).hasSize(2);
     }
 
     @Test
@@ -62,12 +68,12 @@ class AuroraClusterDiscoveryTest {
             .scaleDown()
             .scaleUp();
 
-        final Collection<Database> replicas = auroraCluster.getReplicas(() -> postgresConnectionMock);
+        final Collection<Database> replicas = auroraClusterDiscovery.getReplicas(() -> postgresConnectionMock);
 
-        Assertions.assertThat(replicas).hasSize(1);
+        assertThat(replicas).hasSize(1);
     }
 
-    private final class PostgresConnectionMock implements Connection {
+    private static final class PostgresConnectionMock implements Connection {
         private final Connection connection;
         private final String uri;
 
