@@ -5,7 +5,11 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public final class AuroraEndpoint {
-    private static final Pattern ENDPOINT_PATTERN = Pattern.compile("([^.]+).([^.]+).(.*)");
+    private static final String SERVER_ID_PATTERN = "([^.]+)";
+    private static final String CLUSTER_PATTERN = "([^.]+)";
+    private static final String DNS_PATTERN = "(.*)";
+    private static final Pattern ENDPOINT_PATTERN = Pattern.compile(SERVER_ID_PATTERN + "." + CLUSTER_PATTERN + "." + DNS_PATTERN);
+
     private final String serverId;
     private final AuroraCluster cluster;
     private final RdsDns dns;

@@ -20,11 +20,11 @@ public final class AuroraReplicasDiscoverer {
     }
 
     /**
-     * Provides jdbc url for discovered replicas
+     * Provides jdbc urls for discovered replicas
      *
      * @return list of jdbc urls
      */
-    public List<AuroraJdbcUrl> fetchReplicasUrl(Connection connection) throws SQLException {
+    public List<AuroraJdbcUrl> fetchReplicasUrls(Connection connection) throws SQLException {
         return fetchReplicasServerIds(connection)
             .stream()
             .map(serverId ->
@@ -37,7 +37,7 @@ public final class AuroraReplicasDiscoverer {
     }
 
     private List<String> fetchReplicasServerIds(Connection connection) throws SQLException {
-        LinkedList<String> ids = new LinkedList<>();
+        List<String> ids = new LinkedList<>();
         try (ResultSet rs =
                  connection.prepareStatement(
                      "SELECT server_id FROM aurora_replica_status() WHERE session_id != 'MASTER_SESSION_ID'")

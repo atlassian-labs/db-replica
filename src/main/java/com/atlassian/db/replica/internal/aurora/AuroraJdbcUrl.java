@@ -1,7 +1,8 @@
 package com.atlassian.db.replica.internal.aurora;
 
 public class AuroraJdbcUrl {
-    private static final String prefix = "jdbc:postgresql://";
+    private static final String PREFIX = "jdbc:postgresql://";
+
     private final AuroraEndpoint endpoint;
     private final String databaseName;
 
@@ -20,6 +21,6 @@ public class AuroraJdbcUrl {
 
     @Override
     public String toString() {
-        return String.format("%s%s/%s", prefix, endpoint, databaseName);
+        return String.format("%s%s/%s", PREFIX, endpoint, databaseName);
     }
 }
