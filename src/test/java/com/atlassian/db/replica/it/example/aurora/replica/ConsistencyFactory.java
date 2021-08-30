@@ -1,6 +1,6 @@
 package com.atlassian.db.replica.it.example.aurora.replica;
 
-import com.atlassian.db.replica.it.example.aurora.replica.api.AuroraMultiReplicaConsistency;
+import com.atlassian.db.replica.api.AuroraConnectionDetails;
 import com.atlassian.db.replica.it.example.aurora.replica.api.SequenceReplicaConsistency;
 import com.atlassian.db.replica.it.example.aurora.replica.api.SynchronousWriteConsistency;
 import com.atlassian.db.replica.spi.ConnectionProvider;
@@ -10,13 +10,18 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
+import static com.atlassian.db.replica.api.AuroraMultiReplicaConsistency.Builder.anAuroraMultiReplicaConsistencyBuilder;
+
 public class ConsistencyFactory {
     private final ConnectionProvider connectionProvider;
+    private final AuroraConnectionDetails auroraConnectionDetails;
 
     public ConsistencyFactory(
-        ConnectionProvider connectionProvider
+        ConnectionProvider connectionProvider,
+        AuroraConnectionDetails auroraConnectionDetails
     ) {
         this.connectionProvider = connectionProvider;
+        this.auroraConnectionDetails = auroraConnectionDetails;
     }
 
     public ReplicaConsistency create() throws SQLException {
@@ -24,7 +29,10 @@ public class ConsistencyFactory {
         final SequenceReplicaConsistency sequenceReplicaConsistency = new SequenceReplicaConsistency.Builder().build(
             "read_replica_replication"
         );
-        final AuroraMultiReplicaConsistency multiReplicaConsistency = new AuroraMultiReplicaConsistency(sequenceReplicaConsistency);
+        final ReplicaConsistency multiReplicaConsistency = anAuroraMultiReplicaConsistencyBuilder()
+            .replicaConsistency(sequenceReplicaConsistency)
+            .auroraConnectionDetails(auroraConnectionDetails)
+            .build();
         return new SynchronousWriteConsistency(multiReplicaConsistency, connectionProvider, runnable -> { });
     }
 

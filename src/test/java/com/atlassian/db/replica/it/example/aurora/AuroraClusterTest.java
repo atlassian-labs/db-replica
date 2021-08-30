@@ -1,5 +1,6 @@
 package com.atlassian.db.replica.it.example.aurora;
 
+import com.atlassian.db.replica.api.AuroraConnectionDetails;
 import com.atlassian.db.replica.api.DualConnection;
 import com.atlassian.db.replica.api.SqlCall;
 import com.atlassian.db.replica.api.reason.Reason;
@@ -22,6 +23,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static com.atlassian.db.replica.api.AuroraConnectionDetails.Builder.anAuroraConnectionDetailsBuilder;
 import static com.atlassian.db.replica.api.reason.Reason.READ_OPERATION;
 import static com.atlassian.db.replica.api.reason.Reason.REPLICA_INCONSISTENT;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -31,6 +33,8 @@ class AuroraClusterTest {
     final String readerEndpoint = "database-1.cluster-ro-crmnlihjxqlm.eu-central-1.rds.amazonaws.com:5432";
     final String readerJdbcUrl = "jdbc:postgresql://" + readerEndpoint + "/" + databaseName;
     final String writerJdbcUrl = "jdbc:postgresql://database-1.cluster-crmnlihjxqlm.eu-central-1.rds.amazonaws.com:5432" + "/" + databaseName;
+    final String jdbcUsername = "postgres";
+    final String jdbcPassword = System.getenv("password");
 
     @Test
     @Disabled
@@ -61,7 +65,13 @@ class AuroraClusterTest {
             readerJdbcUrl,
             writerJdbcUrl
         );
-        final ReplicaConsistency replicaConsistency = new ConsistencyFactory(connectionProvider).create();
+
+        AuroraConnectionDetails auroraConnectionDetails = anAuroraConnectionDetailsBuilder()
+            .username(jdbcUsername)
+            .password(jdbcPassword)
+            .build();
+
+        final ReplicaConsistency replicaConsistency = new ConsistencyFactory(connectionProvider, auroraConnectionDetails).create();
 
         return () -> DualConnection.builder(
             connectionProvider,
