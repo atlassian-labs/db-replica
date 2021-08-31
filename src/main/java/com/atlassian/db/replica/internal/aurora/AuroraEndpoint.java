@@ -24,7 +24,9 @@ public final class AuroraEndpoint {
         Objects.requireNonNull(readerEndpoint);
 
         Matcher matcher = ENDPOINT_PATTERN.matcher(readerEndpoint);
-        matcher.matches();
+        if (!matcher.matches()) {
+            throw new IllegalArgumentException(String.format("Can't parse %s.", readerEndpoint));
+        }
         return new AuroraEndpoint(
             matcher.group(1),
             AuroraCluster.parse(matcher.group(2)),
