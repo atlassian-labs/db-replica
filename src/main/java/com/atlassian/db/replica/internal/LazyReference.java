@@ -33,12 +33,6 @@ public abstract class LazyReference<T> implements Supplier<T> {
         return reference;
     }
 
-    protected void set(T reference) {
-        synchronized (lock) {
-            this.reference = reference;
-        }
-    }
-
     public void reset() {
         reference = null;
     }
