@@ -33,7 +33,7 @@ public class ConsistencyFactory {
             .replicaConsistency(sequenceReplicaConsistency)
             .auroraConnectionDetails(auroraConnectionDetails)
             .build();
-        return new SynchronousWriteConsistency(multiReplicaConsistency, connectionProvider, runnable -> { });
+        return new SynchronousWriteConsistency(multiReplicaConsistency, connectionProvider);
     }
 
     private void initialize() throws SQLException {
