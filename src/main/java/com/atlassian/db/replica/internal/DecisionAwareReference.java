@@ -5,7 +5,7 @@ import java.util.concurrent.atomic.AtomicReference;
 public abstract class DecisionAwareReference<T> extends LazyReference<T> {
     private final AtomicReference<RouteDecisionBuilder> firstCause = new AtomicReference<>();
 
-    public DecisionAwareReference() {
+    protected DecisionAwareReference() {
         super();
     }
 
@@ -17,11 +17,6 @@ public abstract class DecisionAwareReference<T> extends LazyReference<T> {
     @Override
     public void reset() {
         super.reset();
-        firstCause.set(null);
-    }
-
-    public void set(T reference) {
-        super.set(reference);
         firstCause.set(null);
     }
 
