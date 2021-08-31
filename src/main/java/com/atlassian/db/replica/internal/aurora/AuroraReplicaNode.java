@@ -1,7 +1,7 @@
 package com.atlassian.db.replica.internal.aurora;
 
 import com.atlassian.db.replica.api.AuroraConnectionDetails;
-import com.atlassian.db.replica.api.Database;
+import com.atlassian.db.replica.internal.Database;
 
 import java.sql.Connection;
 import java.sql.DriverManager;

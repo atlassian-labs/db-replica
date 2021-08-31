@@ -1,4 +1,4 @@
-package com.atlassian.db.replica.api;
+package com.atlassian.db.replica.internal;
 
 import java.sql.Connection;
 import java.util.function.Supplier;
