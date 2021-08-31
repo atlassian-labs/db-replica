@@ -4,6 +4,8 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 
+import static java.lang.String.format;
+
 public final class AuroraSequence {
     private final String sequenceName;
 
@@ -20,22 +22,19 @@ public final class AuroraSequence {
                 connection.commit();
             }
         } catch (Exception e) {
-//            LOG.withoutCustomerData().error("error occurred during bumping sequence {}", sequenceName, e);
-            throw new RuntimeException(e);
+            throw new RuntimeException(format("Can't bump sequence %s", sequenceName), e);
         }
     }
 
     public Long fetch(Connection connection) {
         try (PreparedStatement query = prepareFetchSequenceValueQuery(connection)) {
-            query.setQueryTimeout(1);  //TODO parametrise
+            query.setQueryTimeout(1);
             try (ResultSet results = query.executeQuery()) {
                 results.next();
-                final long lsn = results.getLong("lsn");
-                return lsn;
+                return results.getLong("lsn");
             }
         } catch (Exception e) {
-//            LOG.withoutCustomerData().error("error occurred during sequence[{}] value fetching", sequenceName, e);
-            throw new RuntimeException(e);
+            throw new RuntimeException(format("error occurred during sequence[%s] value fetching", sequenceName), e);
         }
     }
 
