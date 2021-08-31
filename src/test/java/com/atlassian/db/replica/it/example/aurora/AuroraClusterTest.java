@@ -37,7 +37,6 @@ class AuroraClusterTest {
     final String jdbcPassword = System.getenv("password");
 
     @Test
-    @Disabled
     void shouldUtilizeReplicaForReadQueriesForSynchronisedWrites() throws SQLException {
         final DecisionLog decisionLog = new DecisionLog();
         final SqlCall<Connection> connectionPool = initializeConnectionPool(decisionLog);

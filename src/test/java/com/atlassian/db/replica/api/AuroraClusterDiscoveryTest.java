@@ -1,5 +1,6 @@
 package com.atlassian.db.replica.api;
 
+import com.atlassian.db.replica.internal.Database;
 import com.atlassian.db.replica.internal.aurora.AuroraClusterDiscovery;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
