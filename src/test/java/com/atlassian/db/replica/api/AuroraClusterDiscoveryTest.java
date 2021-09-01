@@ -74,6 +74,19 @@ class AuroraClusterDiscoveryTest {
         assertThat(replicas).hasSize(1);
     }
 
+    @Test
+    void shouldCloseDatabaseConnectionAfterDiscoveryReplicaConnections() throws SQLException {
+        auroraClusterMock
+            .scaleUp()
+            .scaleUp()
+            .scaleDown();
+
+        final Collection<Database> replicas = auroraClusterDiscovery.getReplicas(() -> postgresConnectionMock);
+
+        assertThat(replicas).hasSize(1);
+        assertThat(postgresConnectionMock.isClosed()).isTrue();
+    }
+
     private static final class PostgresConnectionMock implements Connection {
         private final Connection connection;
         private final String uri;
