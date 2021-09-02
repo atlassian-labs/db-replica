@@ -26,7 +26,7 @@ public final class AuroraMultiReplicaConsistency implements ReplicaConsistency {
     @Override
     public boolean isConsistent(Supplier<Connection> replicaSupplier) {
         return cluster.getReplicas(replicaSupplier).stream()
-            .allMatch(replica -> replicaConsistency.isConsistent(replica.getConnectionSupplier()));
+            .allMatch(replica -> replicaConsistency.isConsistent(() -> replica.getConnectionSupplier().get()));
     }
 
     public static final class Builder {
