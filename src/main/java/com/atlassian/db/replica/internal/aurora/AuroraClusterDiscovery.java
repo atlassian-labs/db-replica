@@ -18,7 +18,8 @@ public final class AuroraClusterDiscovery {
     }
 
     public Collection<Database> getReplicas(Supplier<Connection> connectionSupplier) {
-        try (final Connection connection = connectionSupplier.get()) {
+        try {
+            final Connection connection = connectionSupplier.get();
             final AuroraReplicasDiscoverer discoverer = createDiscoverer(connection);
             return discoverer.fetchReplicasUrls(connection).stream()
                 .map(auroraUrl -> new AuroraReplicaNode(auroraUrl, auroraConnectionDetails))
