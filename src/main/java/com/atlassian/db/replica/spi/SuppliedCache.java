@@ -14,9 +14,7 @@ public interface SuppliedCache<T> {
     Optional<T> get(Supplier<T> supplier);
 
     /**
-     * Returns the cached value
-     *
-     * @return
+     * @return the cached value
      */
     Optional<T> get();
 }

@@ -10,7 +10,6 @@ import com.atlassian.db.replica.spi.SuppliedCache;
 import java.sql.Connection;
 import java.time.Clock;
 import java.time.Duration;
-import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 
@@ -26,24 +25,7 @@ public class SequenceReplicaConsistency implements ReplicaConsistency {
     private final ConcurrentHashMap<String, SuppliedCache<Long>> multiReplicaLsnCache;
     private final ReplicaNode replicaNode;
 
-    public static final class Builder {
-        private Cache<Long> lastWrite = new MonotonicMemoryCache<>();
-        private boolean unknownWritesFallback = false;
-        private ConcurrentHashMap<String, SuppliedCache<Long>> lsnCache = new ConcurrentHashMap<>();
-        private ReplicaNode replicaNode = new ReplicaNode();
-
-        public SequenceReplicaConsistency build(String sequenceName) {
-            return new SequenceReplicaConsistency(
-                sequenceName,
-                lastWrite,
-                unknownWritesFallback,
-                lsnCache,
-                replicaNode
-            );
-        }
-    }
-
-    private SequenceReplicaConsistency(
+    SequenceReplicaConsistency(
         String sequenceName,
         Cache<Long> lastWrite,
         boolean unknownWritesFallback,
@@ -55,6 +37,10 @@ public class SequenceReplicaConsistency implements ReplicaConsistency {
         this.unknownWritesFallback = unknownWritesFallback;
         this.multiReplicaLsnCache = multiReplicaLsnCache;
         this.replicaNode = replicaNode;
+    }
+
+    public static Builder builder() {
+        return new Builder();
     }
 
     @Override
@@ -71,8 +57,7 @@ public class SequenceReplicaConsistency implements ReplicaConsistency {
     @Override
     public boolean isConsistent(Supplier<Connection> replica) {
         try {
-            Optional<Long> lastWriteSequenceValue = lastWrite.get();
-            return lastWriteSequenceValue
+            return lastWrite.get()
                 .map(lastWrite1 -> computeReplicasConsistency(replica.get(), lastWrite1))
                 .orElse(unknownWritesFallback);
         } catch (Exception e) {
@@ -89,9 +74,9 @@ public class SequenceReplicaConsistency implements ReplicaConsistency {
         String replicaId = replicaNode.get(replica);
         if (replicaId != null) {
             multiReplicaLsnCache.computeIfAbsent(
-                replicaId,
-                x -> new ThrottledCache<>(Clock.systemUTC(), LSN_CHECK_LOCK_TIMEOUT)
-            )
+                    replicaId,
+                    x -> new ThrottledCache<>(Clock.systemUTC(), LSN_CHECK_LOCK_TIMEOUT)
+                )
                 .get(() -> sequence.fetch(replica));
         }
     }
@@ -101,4 +86,54 @@ public class SequenceReplicaConsistency implements ReplicaConsistency {
         return lsn >= lastWrite;
     }
 
+    public static class Builder {
+        private String sequenceName;
+        private Cache<Long> lastWrite = new MonotonicMemoryCache<>();
+        private boolean unknownWritesFallback = false;
+        private ConcurrentHashMap<String, SuppliedCache<Long>> multiReplicaLsnCache = new ConcurrentHashMap<>();
+        private ReplicaNode replicaNode = new ReplicaNode();
+
+        public Builder sequenceName(String sequenceName) {
+            this.sequenceName = sequenceName;
+            return this;
+        }
+
+        public Builder lastWrite(Cache<Long> lastWrite) {
+            this.lastWrite = lastWrite;
+            return this;
+        }
+
+        public Builder unknownWritesFallback(boolean unknownWritesFallback) {
+            this.unknownWritesFallback = unknownWritesFallback;
+            return this;
+        }
+
+        public Builder multiReplicaLsnCache(ConcurrentHashMap<String, SuppliedCache<Long>> multiReplicaLsnCache) {
+            this.multiReplicaLsnCache = multiReplicaLsnCache;
+            return this;
+        }
+
+        public Builder replicaNode(ReplicaNode replicaNode) {
+            this.replicaNode = replicaNode;
+            return this;
+        }
+
+        /**
+         * @deprecated use {@link Builder#sequenceName(String)}{@code .}{@link Builder#build()} instead.
+         */
+        @Deprecated
+        public SequenceReplicaConsistency build(String sequenceName) {
+            return sequenceName(sequenceName).build();
+        }
+
+        public SequenceReplicaConsistency build() {
+            return new SequenceReplicaConsistency(
+                sequenceName,
+                lastWrite,
+                unknownWritesFallback,
+                multiReplicaLsnCache,
+                replicaNode
+            );
+        }
+    }
 }

@@ -1,7 +1,23 @@
 package com.atlassian.db.replica.api;
 
-public final class AuroraConnectionDetails {
+import com.atlassian.db.replica.spi.ReplicaConnectionPerUrlProvider;
 
+import java.sql.DriverManager;
+
+/**
+ * @deprecated use {@link ReplicaConnectionPerUrlProvider} instead. example usage:
+ * <pre>
+ *     {@code
+ *          url -> () -> DriverManager.getConnection(
+ *              url.toString(),
+ *              username,
+ *              password
+ *          )
+ *     }
+ * </pre>
+ */
+@Deprecated
+public final class AuroraConnectionDetails {
     private final String username;
     private final String password;
 
@@ -10,21 +26,33 @@ public final class AuroraConnectionDetails {
         this.password = password;
     }
 
+    public static Builder builder() {
+        return new Builder();
+    }
+
     public String getUsername() {
-        return username;
+        return this.username;
     }
 
     public String getPassword() {
-        return password;
+        return this.password;
     }
 
+    public ReplicaConnectionPerUrlProvider convert() {
+        return replicaUrl -> () -> DriverManager.getConnection(
+            replicaUrl.toString(),
+            username,
+            password
+        );
+    }
+
+    /**
+     * @deprecated see {@link AuroraConnectionDetails}.
+     */
+    @Deprecated
     public static final class Builder {
         private String username;
         private String password;
-
-        public static Builder anAuroraConnectionDetailsBuilder() {
-            return new Builder();
-        }
 
         public Builder username(String username) {
             this.username = username;
@@ -36,9 +64,16 @@ public final class AuroraConnectionDetails {
             return this;
         }
 
+        /**
+         * @deprecated see {@link AuroraConnectionDetails}.
+         */
+        @Deprecated
+        public static Builder anAuroraConnectionDetailsBuilder() {
+            return new Builder();
+        }
+
         public AuroraConnectionDetails build() {
             return new AuroraConnectionDetails(username, password);
         }
     }
-
 }

@@ -3,6 +3,7 @@ package com.atlassian.db.replica.api;
 import com.atlassian.db.replica.internal.Database;
 import com.atlassian.db.replica.internal.NoCacheSuppliedCache;
 import com.atlassian.db.replica.internal.aurora.AuroraClusterDiscovery;
+import com.atlassian.db.replica.spi.ReplicaConnectionPerUrlProvider;
 import com.atlassian.db.replica.spi.ReplicaConsistency;
 import com.atlassian.db.replica.spi.SuppliedCache;
 
@@ -16,13 +17,18 @@ public final class AuroraMultiReplicaConsistency implements ReplicaConsistency {
 
     private AuroraMultiReplicaConsistency(
         ReplicaConsistency replicaConsistency,
-        AuroraConnectionDetails auroraConnectionDetails,
+        ReplicaConnectionPerUrlProvider replicaConnectionPerUrlProvider,
         SuppliedCache<Collection<Database>> discoveredReplicasCache
     ) {
         this.replicaConsistency = replicaConsistency;
         this.cluster = AuroraClusterDiscovery.builder()
+            .replicaConnectionPerUrlProvider(replicaConnectionPerUrlProvider)
             .discoveredReplicasCache(discoveredReplicasCache)
-            .build(auroraConnectionDetails);
+            .build();
+    }
+
+    public static Builder builder() {
+        return new Builder();
     }
 
     @Override
@@ -44,20 +50,16 @@ public final class AuroraMultiReplicaConsistency implements ReplicaConsistency {
 
     public static final class Builder {
         private ReplicaConsistency replicaConsistency;
-        private AuroraConnectionDetails auroraConnectionDetails;
+        private ReplicaConnectionPerUrlProvider replicaConnectionPerUrlProvider;
         private SuppliedCache<Collection<Database>> discoveredReplicasCache = new NoCacheSuppliedCache<>();
-
-        public static Builder anAuroraMultiReplicaConsistencyBuilder() {
-            return new Builder();
-        }
 
         public Builder replicaConsistency(ReplicaConsistency replicaConsistency) {
             this.replicaConsistency = replicaConsistency;
             return this;
         }
 
-        public Builder auroraConnectionDetails(AuroraConnectionDetails auroraConnectionDetails) {
-            this.auroraConnectionDetails = auroraConnectionDetails;
+        public Builder replicaConnectionPerUrlProvider(ReplicaConnectionPerUrlProvider replicaConnectionPerUrlProvider) {
+            this.replicaConnectionPerUrlProvider = replicaConnectionPerUrlProvider;
             return this;
         }
 
@@ -71,13 +73,28 @@ public final class AuroraMultiReplicaConsistency implements ReplicaConsistency {
             return this;
         }
 
-        public ReplicaConsistency build() {
+        /**
+         * @deprecated see {@link AuroraConnectionDetails}.
+         */
+        @Deprecated
+        public Builder auroraConnectionDetails(AuroraConnectionDetails auroraConnectionDetails) {
+            return replicaConnectionPerUrlProvider(auroraConnectionDetails.convert());
+        }
+
+        /**
+         * @deprecated use {@link AuroraMultiReplicaConsistency#builder()} instead.
+         */
+        @Deprecated
+        public static Builder anAuroraMultiReplicaConsistencyBuilder() {
+            return new Builder();
+        }
+
+        public AuroraMultiReplicaConsistency build() {
             return new AuroraMultiReplicaConsistency(
                 replicaConsistency,
-                auroraConnectionDetails,
+                replicaConnectionPerUrlProvider,
                 discoveredReplicasCache
             );
         }
     }
-
 }

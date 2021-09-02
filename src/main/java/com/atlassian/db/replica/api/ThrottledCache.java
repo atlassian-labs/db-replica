@@ -62,7 +62,7 @@ public final class ThrottledCache<T> implements SuppliedCache<T> {
         @Override
         public Optional<T> get(Supplier<T> supplier) {
             maybeRefresh(supplier);
-            return Optional.ofNullable(lockValuePair.get().getValue());
+            return get();
         }
 
         @Override
