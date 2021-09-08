@@ -82,7 +82,7 @@ tasks.withType<Test> {
 tasks.test {
     useJUnitPlatform()
     filter {
-        exclude("**/*IT.class")
+        exclude("**/*IT.class", "**/*E2ETest.class")
     }
 }
 
@@ -90,6 +90,15 @@ val testIntegration = task<Test>("testIntegration") {
     useJUnitPlatform()
     filter {
         include("**/*IT.class")
+    }
+    setForkEvery(1)
+    maxParallelForks = 1
+}
+
+val testE2E = task<Test>("testE2E") {
+    useJUnitPlatform()
+    filter {
+        include("**/*E2ETest.class")
     }
     setForkEvery(1)
     maxParallelForks = 1

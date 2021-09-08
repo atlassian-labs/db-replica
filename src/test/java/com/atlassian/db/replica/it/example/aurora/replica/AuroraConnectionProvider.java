@@ -32,9 +32,13 @@ public final class AuroraConnectionProvider implements ConnectionProvider {
     }
 
     private Connection getConnection(String url) throws SQLException {
+        final String[] urlSplit = url.replace("postgresql://", "").split("@");
+        final String userPassword = urlSplit[0];
+        final String[] userPasswordSplit = userPassword.split(":");
         final Properties props = new Properties();
-        props.setProperty("user", "postgres");
-        props.setProperty("password", System.getenv("password"));
-        return DriverManager.getConnection(url, props);
+        props.setProperty("user", userPasswordSplit[0]);
+        props.setProperty("password", userPasswordSplit[1]);
+        final String hostDatabase = urlSplit[1];
+        return DriverManager.getConnection("jdbc:postgresql://" + hostDatabase, props);
     }
 }

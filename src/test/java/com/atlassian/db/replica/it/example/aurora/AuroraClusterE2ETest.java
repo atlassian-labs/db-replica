@@ -10,11 +10,9 @@ import com.atlassian.db.replica.it.example.aurora.app.Users;
 import com.atlassian.db.replica.it.example.aurora.replica.AuroraConnectionProvider;
 import com.atlassian.db.replica.it.example.aurora.replica.ConsistencyFactory;
 import com.atlassian.db.replica.it.example.aurora.utils.DecisionLog;
-import com.atlassian.db.replica.it.example.aurora.utils.ReplicationLag;
 import com.atlassian.db.replica.spi.ConnectionProvider;
 import com.atlassian.db.replica.spi.DatabaseCall;
 import com.atlassian.db.replica.spi.ReplicaConsistency;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.sql.Connection;
@@ -28,20 +26,14 @@ import static com.atlassian.db.replica.api.reason.Reason.READ_OPERATION;
 import static com.atlassian.db.replica.api.reason.Reason.REPLICA_INCONSISTENT;
 import static org.assertj.core.api.Assertions.assertThat;
 
-class AuroraClusterTest {
-    final String databaseName = "newdb";
-    final String readerEndpoint = "database-1.cluster-ro-crmnlihjxqlm.eu-central-1.rds.amazonaws.com:5432";
-    final String readerJdbcUrl = "jdbc:postgresql://" + readerEndpoint + "/" + databaseName;
-    final String writerJdbcUrl = "jdbc:postgresql://database-1.cluster-crmnlihjxqlm.eu-central-1.rds.amazonaws.com:5432" + "/" + databaseName;
-    final String jdbcUsername = "postgres";
-    final String jdbcPassword = System.getenv("password");
+class AuroraClusterE2ETest {
+    final String readerJdbcUrl = System.getenv("PG_AURORA_TESTS_DB_URL_READ");
+    final String writerJdbcUrl = System.getenv("PG_AURORA_TESTS_DB_URL");
 
     @Test
-    @Disabled
     void shouldUtilizeReplicaForReadQueriesForSynchronisedWrites() throws SQLException {
         final DecisionLog decisionLog = new DecisionLog();
         final SqlCall<Connection> connectionPool = initializeConnectionPool(decisionLog);
-        new ReplicationLag(connectionPool).set(10);
         final Users users = new Users(connectionPool);
         final User newUser = new User();
 
@@ -67,16 +59,17 @@ class AuroraClusterTest {
         );
 
         AuroraConnectionDetails auroraConnectionDetails = anAuroraConnectionDetailsBuilder()
-            .username(jdbcUsername)
-            .password(jdbcPassword)
             .build();
 
-        final ReplicaConsistency replicaConsistency = new ConsistencyFactory(connectionProvider, auroraConnectionDetails).create();
+        final ReplicaConsistency replicaConsistency = new ConsistencyFactory(
+            connectionProvider,
+            auroraConnectionDetails
+        ).create();
 
         return () -> DualConnection.builder(
-            connectionProvider,
-            replicaConsistency
-        ).databaseCall(decisionLog)
+                connectionProvider,
+                replicaConsistency
+            ).databaseCall(decisionLog)
             .build();
     }
 

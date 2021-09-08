@@ -33,7 +33,7 @@ public class AuroraReplicaNode implements Database {
         return () -> {
             try {
                 return replicaNode.mark(
-                    getConnection(auroraUrl),
+                    getConnection(auroraUrl.toString()),
                     auroraUrl.getEndpoint().getServerId()
                 );
             } catch (SQLException exception) {
@@ -42,10 +42,14 @@ public class AuroraReplicaNode implements Database {
         };
     }
 
-    private Connection getConnection(AuroraJdbcUrl url) throws SQLException {
-        Properties properties = new Properties();
-        properties.setProperty("user", auroraConnectionDetails.getUsername());
-        properties.setProperty("password", auroraConnectionDetails.getPassword());
-        return DriverManager.getConnection(url.toString(), properties);
+    private Connection getConnection(String url) throws SQLException {
+        final String[] urlSplit = url.replace("postgresql://", "").split("@");
+        final String userPassword = urlSplit[0];
+        final String[] userPasswordSplit = userPassword.split(":");
+        final Properties props = new Properties();
+        props.setProperty("user", userPasswordSplit[0]);
+        props.setProperty("password", userPasswordSplit[1]);
+        final String hostDatabase = urlSplit[1];
+        return DriverManager.getConnection("jdbc:postgresql://" + hostDatabase, props);
     }
 }
