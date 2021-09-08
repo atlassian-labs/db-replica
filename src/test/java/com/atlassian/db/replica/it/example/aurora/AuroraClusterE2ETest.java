@@ -27,8 +27,8 @@ import static com.atlassian.db.replica.api.reason.Reason.REPLICA_INCONSISTENT;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class AuroraClusterE2ETest {
-    final String readerJdbcUrl = System.getenv("PG_AURORA_TESTS_DB_URL_READ");
-    final String writerJdbcUrl = System.getenv("PG_AURORA_TESTS_DB_URL");
+    final String readerJdbcUrl = System.getenv("bamboo_PG_AURORA_TESTS_DB_URL_READ");
+    final String writerJdbcUrl = System.getenv("bamboo_PG_AURORA_TESTS_DB_URL");
 
     @Test
     void shouldUtilizeReplicaForReadQueriesForSynchronisedWrites() throws SQLException {
