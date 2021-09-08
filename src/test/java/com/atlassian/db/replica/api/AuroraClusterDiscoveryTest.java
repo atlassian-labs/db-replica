@@ -1,6 +1,5 @@
 package com.atlassian.db.replica.api;
 
-import com.atlassian.db.replica.internal.Database;
 import com.atlassian.db.replica.internal.DefaultReplicaConnectionPerUrlProvider;
 import com.atlassian.db.replica.internal.aurora.AuroraClusterDiscovery;
 import com.atlassian.db.replica.spi.ReplicaConnectionPerUrlProvider;
