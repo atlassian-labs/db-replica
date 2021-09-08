@@ -46,7 +46,7 @@ class AuroraClusterDiscoveryTest {
             auroraClusterMock.getMainConnection(),
             "jdbc:postgresql://" + readerEndpoint + "/" + databaseName
         );
-        auroraClusterDiscovery = new AuroraClusterDiscovery(
+        auroraClusterDiscovery = AuroraClusterDiscovery.builder().build(
             anAuroraConnectionDetailsBuilder().username(jdbcUsername).password(jdbcPassword).build()
         );
     }
