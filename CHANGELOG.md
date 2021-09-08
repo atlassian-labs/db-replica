@@ -22,7 +22,14 @@ Dropping a requirement of a major version of a dependency is a new contract.
 
 
 ## [Unreleased]
-[Unreleased]: https://github.com/atlassian-labs/db-replica/compare/release-2.2.6...master
+[Unreleased]: https://github.com/atlassian-labs/db-replica/compare/release-2.3.0...master
+
+## [2.3.0] - 2021-09-08
+[2.3.0]: https://github.com/atlassian-labs/db-replica/compare/release-2.2.6...release-2.3.0
+
+### Added
+- Add `Database`
+- Add `ReplicaConnectionPerUrlProvider`
 
 ## [2.2.6] - 2021-09-08
 [2.2.6]: https://github.com/atlassian-labs/db-replica/compare/release-2.2.4...release-2.2.6
