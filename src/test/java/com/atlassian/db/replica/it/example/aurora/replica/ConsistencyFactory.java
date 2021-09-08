@@ -1,37 +1,36 @@
 package com.atlassian.db.replica.it.example.aurora.replica;
 
-import com.atlassian.db.replica.api.AuroraConnectionDetails;
+import com.atlassian.db.replica.api.AuroraMultiReplicaConsistency;
 import com.atlassian.db.replica.it.example.aurora.replica.api.SequenceReplicaConsistency;
 import com.atlassian.db.replica.it.example.aurora.replica.api.SynchronousWriteConsistency;
 import com.atlassian.db.replica.spi.ConnectionProvider;
+import com.atlassian.db.replica.spi.ReplicaConnectionPerUrlProvider;
 import com.atlassian.db.replica.spi.ReplicaConsistency;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
-import static com.atlassian.db.replica.api.AuroraMultiReplicaConsistency.Builder.anAuroraMultiReplicaConsistencyBuilder;
-
 public class ConsistencyFactory {
     private final ConnectionProvider connectionProvider;
-    private final AuroraConnectionDetails auroraConnectionDetails;
+    private final ReplicaConnectionPerUrlProvider replicaConnectionPerUrlProvider;
 
     public ConsistencyFactory(
         ConnectionProvider connectionProvider,
-        AuroraConnectionDetails auroraConnectionDetails
+        ReplicaConnectionPerUrlProvider replicaConnectionPerUrlProvider
     ) {
         this.connectionProvider = connectionProvider;
-        this.auroraConnectionDetails = auroraConnectionDetails;
+        this.replicaConnectionPerUrlProvider = replicaConnectionPerUrlProvider;
     }
 
     public ReplicaConsistency create() throws SQLException {
         initialize();
-        final SequenceReplicaConsistency sequenceReplicaConsistency = new SequenceReplicaConsistency.Builder().build(
-            "read_replica_replication"
-        );
-        final ReplicaConsistency multiReplicaConsistency = anAuroraMultiReplicaConsistencyBuilder()
+        final SequenceReplicaConsistency sequenceReplicaConsistency = SequenceReplicaConsistency.builder()
+            .sequenceName("read_replica_replication")
+            .build();
+        final ReplicaConsistency multiReplicaConsistency = AuroraMultiReplicaConsistency.builder()
             .replicaConsistency(sequenceReplicaConsistency)
-            .auroraConnectionDetails(auroraConnectionDetails)
+            .replicaConnectionPerUrlProvider(replicaConnectionPerUrlProvider)
             .build();
         return new SynchronousWriteConsistency(multiReplicaConsistency, connectionProvider);
     }

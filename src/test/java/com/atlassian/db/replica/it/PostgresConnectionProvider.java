@@ -1,17 +1,21 @@
 package com.atlassian.db.replica.it;
 
-import com.atlassian.db.replica.spi.*;
-import com.github.dockerjava.api.*;
-import com.github.dockerjava.api.command.*;
-import com.github.dockerjava.api.model.*;
-import com.github.dockerjava.core.*;
-import com.github.dockerjava.httpclient5.*;
-import com.github.dockerjava.transport.*;
-import com.google.common.collect.*;
+import com.atlassian.db.replica.spi.ConnectionProvider;
+import com.github.dockerjava.api.DockerClient;
+import com.github.dockerjava.api.command.CreateContainerResponse;
+import com.github.dockerjava.api.model.ExposedPort;
+import com.github.dockerjava.api.model.Link;
+import com.github.dockerjava.api.model.PortBinding;
+import com.github.dockerjava.core.DefaultDockerClientConfig;
+import com.github.dockerjava.core.DockerClientImpl;
+import com.github.dockerjava.httpclient5.ApacheDockerHttpClient;
+import com.github.dockerjava.transport.DockerHttpClient;
+import com.google.common.collect.ImmutableList;
 
-import java.sql.*;
-import java.time.*;
-import java.util.*;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.time.Duration;
+import java.util.Properties;
 
 public class PostgresConnectionProvider implements ConnectionProvider, AutoCloseable {
     final DefaultDockerClientConfig config = DefaultDockerClientConfig
@@ -145,9 +149,10 @@ public class PostgresConnectionProvider implements ConnectionProvider, AutoClose
         dockerClient
             .listContainersCmd()
             .withShowAll(true)
-            .withNameFilter(ImmutableList.of(
-                "db-replica-postgresql-main",
-                "db-replica-postgresql-replica"
+            .withNameFilter(
+                ImmutableList.of(
+                    "db-replica-postgresql-main",
+                    "db-replica-postgresql-replica"
                 )
             )
             .exec()

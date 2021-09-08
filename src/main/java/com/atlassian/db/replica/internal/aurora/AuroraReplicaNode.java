@@ -1,51 +1,37 @@
 package com.atlassian.db.replica.internal.aurora;
 
-import com.atlassian.db.replica.api.AuroraConnectionDetails;
 import com.atlassian.db.replica.internal.Database;
+import com.atlassian.db.replica.spi.ReplicaConnectionProvider;
 
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.SQLException;
-import java.util.Properties;
 import java.util.function.Supplier;
 
 public class AuroraReplicaNode implements Database {
-
-    private final AuroraJdbcUrl auroraUrl;
-    private final AuroraConnectionDetails auroraConnectionDetails;
-    private final ReplicaNode replicaNode = new ReplicaNode();
+    private final String id;
+    private final ReplicaConnectionProvider replicaConnectionProvider;
 
     public AuroraReplicaNode(
-        AuroraJdbcUrl auroraUrl,
-        AuroraConnectionDetails auroraConnectionDetails
+        String id,
+        ReplicaConnectionProvider replicaConnectionProvider
     ) {
-        this.auroraUrl = auroraUrl;
-        this.auroraConnectionDetails = auroraConnectionDetails;
+        this.id = id;
+        this.replicaConnectionProvider = replicaConnectionProvider;
     }
 
     @Override
     public String getId() {
-        return auroraUrl.getEndpoint().getServerId();
+        return id;
     }
 
     @Override
     public Supplier<Connection> getConnectionSupplier() {
         return () -> {
             try {
-                return replicaNode.mark(
-                    getConnection(auroraUrl),
-                    auroraUrl.getEndpoint().getServerId()
-                );
+                return replicaConnectionProvider.getReplicaConnection();
             } catch (SQLException exception) {
                 throw new ReadReplicaConnectionCreationException(exception);
             }
         };
-    }
-
-    private Connection getConnection(AuroraJdbcUrl url) throws SQLException {
-        Properties properties = new Properties();
-        properties.setProperty("user", auroraConnectionDetails.getUsername());
-        properties.setProperty("password", auroraConnectionDetails.getPassword());
-        return DriverManager.getConnection(url.toString(), properties);
     }
 }

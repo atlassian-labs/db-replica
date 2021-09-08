@@ -1,8 +1,10 @@
 package com.atlassian.db.replica.internal.aurora;
 
 import com.atlassian.db.replica.api.AuroraConnectionDetails;
+import com.atlassian.db.replica.api.jdbc.JdbcUrl;
 import com.atlassian.db.replica.internal.Database;
 import com.atlassian.db.replica.internal.NoCacheSuppliedCache;
+import com.atlassian.db.replica.spi.ReplicaConnectionPerUrlProvider;
 import com.atlassian.db.replica.spi.SuppliedCache;
 
 import java.sql.Connection;
@@ -14,14 +16,14 @@ import java.util.function.Supplier;
 import static java.util.stream.Collectors.toList;
 
 public final class AuroraClusterDiscovery {
-    private final AuroraConnectionDetails auroraConnectionDetails;
+    private final ReplicaConnectionPerUrlProvider replicaConnectionPerUrlProvider;
     private final SuppliedCache<Collection<Database>> discoveredReplicasCache;
 
     private AuroraClusterDiscovery(
-        AuroraConnectionDetails auroraConnectionDetails,
+        ReplicaConnectionPerUrlProvider replicaConnectionPerUrlProvider,
         SuppliedCache<Collection<Database>> discoveredReplicasCache
     ) {
-        this.auroraConnectionDetails = auroraConnectionDetails;
+        this.replicaConnectionPerUrlProvider = replicaConnectionPerUrlProvider;
         this.discoveredReplicasCache = discoveredReplicasCache;
     }
 
@@ -35,7 +37,13 @@ public final class AuroraClusterDiscovery {
             final Connection connection = connectionSupplier.get();
             final AuroraReplicasDiscoverer discoverer = createDiscoverer(connection);
             return discoverer.fetchReplicasUrls(connection).stream()
-                .map(auroraUrl -> new AuroraReplicaNode(auroraUrl, auroraConnectionDetails))
+                .map(auroraUrl -> {
+                    JdbcUrl url = auroraUrl.toJdbcUrl();
+                    return new AuroraReplicaNode(
+                        auroraUrl.getEndpoint().getServerId(),
+                        replicaConnectionPerUrlProvider.getReplicaConnectionProvider(url)
+                    );
+                })
                 .collect(toList());
         } catch (SQLException exception) {
             throw new ReadReplicaDiscoveryOperationException(exception);
@@ -61,15 +69,32 @@ public final class AuroraClusterDiscovery {
     }
 
     public static final class Builder {
+        private ReplicaConnectionPerUrlProvider replicaConnectionPerUrlProvider;
         private SuppliedCache<Collection<Database>> discoveredReplicasCache = new NoCacheSuppliedCache<>();
+
+        public Builder replicaConnectionPerUrlProvider(ReplicaConnectionPerUrlProvider replicaConnectionPerUrlProvider) {
+            this.replicaConnectionPerUrlProvider = replicaConnectionPerUrlProvider;
+            return this;
+        }
 
         public Builder discoveredReplicasCache(SuppliedCache<Collection<Database>> discoveredReplicasCache) {
             this.discoveredReplicasCache = discoveredReplicasCache;
             return this;
         }
 
+        /**
+         * @deprecated use
+         * {@link Builder#replicaConnectionPerUrlProvider(ReplicaConnectionPerUrlProvider)}{@code .}
+         * {@link Builder#build()} instead.
+         * also see {@link AuroraConnectionDetails}.
+         */
+        @Deprecated
         public AuroraClusterDiscovery build(AuroraConnectionDetails auroraConnectionDetails) {
-            return new AuroraClusterDiscovery(auroraConnectionDetails, discoveredReplicasCache);
+            return replicaConnectionPerUrlProvider(auroraConnectionDetails.convert()).build();
+        }
+
+        public AuroraClusterDiscovery build() {
+            return new AuroraClusterDiscovery(replicaConnectionPerUrlProvider, discoveredReplicasCache);
         }
     }
 

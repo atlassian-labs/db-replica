@@ -1,7 +1,9 @@
 package com.atlassian.db.replica.api;
 
 import com.atlassian.db.replica.internal.Database;
+import com.atlassian.db.replica.internal.DefaultReplicaConnectionPerUrlProvider;
 import com.atlassian.db.replica.internal.aurora.AuroraClusterDiscovery;
+import com.atlassian.db.replica.spi.ReplicaConnectionPerUrlProvider;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -26,7 +28,6 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.Executor;
 
-import static com.atlassian.db.replica.api.AuroraConnectionDetails.Builder.anAuroraConnectionDetailsBuilder;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class AuroraClusterDiscoveryTest {
@@ -46,9 +47,13 @@ class AuroraClusterDiscoveryTest {
             auroraClusterMock.getMainConnection(),
             "jdbc:postgresql://" + readerEndpoint + "/" + databaseName
         );
-        auroraClusterDiscovery = AuroraClusterDiscovery.builder().build(
-            anAuroraConnectionDetailsBuilder().username(jdbcUsername).password(jdbcPassword).build()
+        ReplicaConnectionPerUrlProvider replicaConnectionPerUrlProvider = new DefaultReplicaConnectionPerUrlProvider(
+            jdbcUsername,
+            jdbcPassword
         );
+        auroraClusterDiscovery = AuroraClusterDiscovery.builder()
+            .replicaConnectionPerUrlProvider(replicaConnectionPerUrlProvider)
+            .build();
     }
 
     @Test

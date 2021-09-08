@@ -1,6 +1,5 @@
 package com.atlassian.db.replica.it.example.aurora;
 
-import com.atlassian.db.replica.api.AuroraConnectionDetails;
 import com.atlassian.db.replica.api.DualConnection;
 import com.atlassian.db.replica.api.SqlCall;
 import com.atlassian.db.replica.api.reason.Reason;
@@ -11,8 +10,10 @@ import com.atlassian.db.replica.it.example.aurora.replica.AuroraConnectionProvid
 import com.atlassian.db.replica.it.example.aurora.replica.ConsistencyFactory;
 import com.atlassian.db.replica.it.example.aurora.utils.DecisionLog;
 import com.atlassian.db.replica.it.example.aurora.utils.ReplicationLag;
+import com.atlassian.db.replica.spi.ReplicaConnectionPerUrlProvider;
 import com.atlassian.db.replica.spi.ConnectionProvider;
 import com.atlassian.db.replica.spi.DatabaseCall;
+import com.atlassian.db.replica.internal.DefaultReplicaConnectionPerUrlProvider;
 import com.atlassian.db.replica.spi.ReplicaConsistency;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -23,7 +24,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static com.atlassian.db.replica.api.AuroraConnectionDetails.Builder.anAuroraConnectionDetailsBuilder;
 import static com.atlassian.db.replica.api.reason.Reason.READ_OPERATION;
 import static com.atlassian.db.replica.api.reason.Reason.REPLICA_INCONSISTENT;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -66,17 +66,18 @@ class AuroraClusterTest {
             writerJdbcUrl
         );
 
-        AuroraConnectionDetails auroraConnectionDetails = anAuroraConnectionDetailsBuilder()
-            .username(jdbcUsername)
-            .password(jdbcPassword)
-            .build();
+        ReplicaConnectionPerUrlProvider replicaConnectionPerUrlProvider = new DefaultReplicaConnectionPerUrlProvider(
+            jdbcUsername,
+            jdbcPassword
+        );
 
-        final ReplicaConsistency replicaConsistency = new ConsistencyFactory(connectionProvider, auroraConnectionDetails).create();
-
-        return () -> DualConnection.builder(
+        final ReplicaConsistency replicaConsistency = new ConsistencyFactory(
             connectionProvider,
-            replicaConsistency
-        ).databaseCall(decisionLog)
+            replicaConnectionPerUrlProvider
+        ).create();
+
+        return () -> DualConnection.builder(connectionProvider, replicaConsistency)
+            .databaseCall(decisionLog)
             .build();
     }
 

@@ -5,7 +5,6 @@ import com.atlassian.db.replica.spi.ConnectionProvider;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
-import java.util.Properties;
 
 public final class AuroraConnectionProvider implements ConnectionProvider {
     private final String readerUrl;
@@ -32,9 +31,10 @@ public final class AuroraConnectionProvider implements ConnectionProvider {
     }
 
     private Connection getConnection(String url) throws SQLException {
-        final Properties props = new Properties();
-        props.setProperty("user", "postgres");
-        props.setProperty("password", System.getenv("password"));
-        return DriverManager.getConnection(url, props);
+        return DriverManager.getConnection(
+            url,
+            "postgres",
+            System.getenv("password")
+        );
     }
 }
