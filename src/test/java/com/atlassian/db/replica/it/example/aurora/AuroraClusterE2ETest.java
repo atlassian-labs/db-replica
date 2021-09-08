@@ -5,6 +5,7 @@ import com.atlassian.db.replica.api.DualConnection;
 import com.atlassian.db.replica.api.SqlCall;
 import com.atlassian.db.replica.api.reason.Reason;
 import com.atlassian.db.replica.api.reason.RouteDecision;
+import com.atlassian.db.replica.internal.aurora.AuroraReplicaNode;
 import com.atlassian.db.replica.it.example.aurora.app.User;
 import com.atlassian.db.replica.it.example.aurora.app.Users;
 import com.atlassian.db.replica.it.example.aurora.replica.AuroraConnectionProvider;
@@ -57,8 +58,10 @@ class AuroraClusterE2ETest {
             readerJdbcUrl,
             writerJdbcUrl
         );
-
+        final AuroraReplicaNode.PostgresUri postgresUri = new AuroraReplicaNode.PostgresUri(readerJdbcUrl);
         AuroraConnectionDetails auroraConnectionDetails = anAuroraConnectionDetailsBuilder()
+            .password(postgresUri.getPassword())
+            .username(postgresUri.getUser())
             .build();
 
         final ReplicaConsistency replicaConsistency = new ConsistencyFactory(
