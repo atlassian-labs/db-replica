@@ -34,6 +34,7 @@ dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter")
     testImplementation("org.assertj:assertj-core:3.19.0")
     testImplementation("org.mockito:mockito-core:3.11.0")
+    testImplementation("org.mockito:mockito-junit-jupiter:3.11.0")
     testImplementation("org.threeten:threeten-extra:1.5.0")
     testImplementation("com.github.docker-java:docker-java-core:3.2.6")
     testImplementation("com.github.docker-java:docker-java-transport-httpclient5:3.2.6")

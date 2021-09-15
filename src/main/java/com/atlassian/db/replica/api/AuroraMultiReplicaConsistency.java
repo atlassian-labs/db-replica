@@ -1,5 +1,6 @@
 package com.atlassian.db.replica.api;
 
+import com.atlassian.db.replica.api.exception.ConnectionCouldNotBeClosedException;
 import com.atlassian.db.replica.internal.NoCacheSuppliedCache;
 import com.atlassian.db.replica.internal.aurora.AuroraClusterDiscovery;
 import com.atlassian.db.replica.spi.ReplicaConnectionPerUrlProvider;
@@ -7,6 +8,7 @@ import com.atlassian.db.replica.spi.ReplicaConsistency;
 import com.atlassian.db.replica.spi.SuppliedCache;
 
 import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.Collection;
 import java.util.function.Supplier;
 
@@ -37,14 +39,15 @@ public final class AuroraMultiReplicaConsistency implements ReplicaConsistency {
 
     @Override
     public boolean isConsistent(Supplier<Connection> replicaSupplier) {
-        Collection<Database> replicas = cluster.getReplicas(replicaSupplier);
-
-        if (replicas.isEmpty()) {
-            return false;
-        }
-
-        return replicas.stream()
-            .allMatch(replica -> replicaConsistency.isConsistent(() -> replica.getConnectionSupplier().get()));
+        return cluster.getReplicas(replicaSupplier)
+            .stream()
+            .allMatch(replica -> {
+                try (Connection connection = replica.getConnectionSupplier().get()) {
+                    return replicaConsistency.isConsistent(() -> connection);
+                } catch (SQLException exception) {
+                    throw new ConnectionCouldNotBeClosedException(exception);
+                }
+            });
     }
 
     public static final class Builder {
