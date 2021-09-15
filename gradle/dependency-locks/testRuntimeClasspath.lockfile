@@ -32,6 +32,7 @@ org.junit.platform:junit-platform-commons:1.7.2
 org.junit.platform:junit-platform-engine:1.7.2
 org.junit:junit-bom:5.7.2
 org.mockito:mockito-core:3.11.0
+org.mockito:mockito-junit-jupiter:3.11.0
 org.objenesis:objenesis:3.2
 org.opentest4j:opentest4j:1.2.0
 org.postgresql:postgresql:42.2.18
