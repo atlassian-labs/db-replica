@@ -13,12 +13,16 @@ public final class SqlQuery {
     }
 
     public boolean isWriteOperation(SqlFunction sqlFunction) {
-        return sqlFunction.isFunctionCall(sql) || isUpdate() || isDelete();
+        return sqlFunction.isFunctionCall(sql) || isUpdate() || isDelete() || isInsert();
     }
 
     public boolean isSelectForUpdate() {
         final String trimmedQuery = trimForSelectForUpdateCheck();
         return trimmedQuery.contains("for update") || trimmedQuery.contains("FOR UPDATE");
+    }
+
+    public boolean isInsert() {
+        return sql.startsWith("insert") || sql.startsWith("INSERT");
     }
 
     public boolean isSqlSet() {
