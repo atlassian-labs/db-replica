@@ -55,6 +55,23 @@ import static org.mockito.Mockito.when;
 public class TestDualConnection {
 
     @Test
+    public void shouldUseMainConnectionForInserts() throws SQLException {
+        final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
+        final Connection connection = DualConnection.builder(
+            connectionProvider,
+            permanentConsistency().build()
+        ).build();
+
+        connection.prepareStatement("insert into \"public\".\"fvv\" (\"cd\", \"iid\", \"did\", \"s\")\n" +
+            "values (?, ?, ?, ?), (?, ?, ?, ?), (?, ?, ?, ?), (?, ?, ?, ?)\n" +
+            "ON CONFLICT (\"ssid\", \"iid\") DO UPDATE SET \"s\" = \"fvv\".\"s\" + ?, \"ssid\" = \"fvv\".\"ssid\", \"us\" = \"es\".\"us\", \"iid\" = \"fvv\".\"iid\", \"cd\" = \"es\".\"cd\" WHERE fvv.cd is distinct from es. cd\n" +
+            "returning \"fvv\".\"id\", \"fvv\".\"ssid\", \"fvv\".\"iid\", \"fvv\".\"cd\", \"fvv\".\"s\", \"fvv\".\"created\", \"fvv\".\"us\"").executeQuery();
+
+        assertThat(connectionProvider.getProvidedConnectionTypes())
+            .containsOnly(MAIN);
+    }
+
+    @Test
     public void shouldUseReplicaConnectionForExecuteQuery() throws SQLException {
         final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
         final Connection connection = DualConnection.builder(
@@ -328,7 +345,7 @@ public class TestDualConnection {
         ).build();
 
         connection.prepareStatement(
-            "select \"project_id_1\" from ((select \"PROJECT_3\".\"id\" as \"project_id_1\" from \"public\".\"project\" \"PROJECT_3\" join \"public\".\"schemepermissions\" \"SCHEME_PERMISSIONS_4\" on \"PROJECT_3\".\"permissionscheme\" = \"SCHEME_PERMISSIONS_4\".\"scheme\" join \"public\".\"projectroleactor\" \"PROJECT_ROLE_ACTOR_5\" on \"SCHEME_PERMISSIONS_4\".\"perm_parameter\" = cast(\"PROJECT_ROLE_ACTOR_5\".\"projectroleid\" as varchar) and \"PROJECT_3\".\"id\" = \"PROJECT_ROLE_ACTOR_5\".\"pid\" where \"SCHEME_PERMISSIONS_4\".\"permission_key\" = $1").executeQuery();
+            "select \"ssid_1\" from ((select \"PROJECT_3\".\"id\" as \"ssid_1\" from \"public\".\"project\" \"PROJECT_3\" join \"public\".\"schemepermissions\" \"SCHEME_PERMISSIONS_4\" on \"PROJECT_3\".\"permissionscheme\" = \"SCHEME_PERMISSIONS_4\".\"scheme\" join \"public\".\"projectroleactor\" \"PROJECT_ROLE_ACTOR_5\" on \"SCHEME_PERMISSIONS_4\".\"perm_parameter\" = cast(\"PROJECT_ROLE_ACTOR_5\".\"projectroleid\" as varchar) and \"PROJECT_3\".\"id\" = \"PROJECT_ROLE_ACTOR_5\".\"pid\" where \"SCHEME_PERMISSIONS_4\".\"permission_key\" = $1").executeQuery();
 
         assertThat(connectionProvider.getProvidedConnectionTypes())
             .containsOnly(REPLICA);
@@ -343,8 +360,8 @@ public class TestDualConnection {
         ).build();
 
         connection.prepareStatement("update \"jiraissue\" \"ISSUE\"\n" +
-            "set \"version\" = \"ISSUE\".\"version\" + 1\n" +
-            "where \"ISSUE\".\"id\" in (42, 43) returning \"ISSUE\".\"id\", \"ISSUE\".\"version\"").executeQuery();
+            "set \"s\" = \"ISSUE\".\"s\" + 1\n" +
+            "where \"ISSUE\".\"id\" in (42, 43) returning \"ISSUE\".\"id\", \"ISSUE\".\"s\"").executeQuery();
 
         assertThat(connectionProvider.getProvidedConnectionTypes())
             .containsOnly(MAIN);
@@ -359,8 +376,8 @@ public class TestDualConnection {
         ).build();
 
         connection.prepareStatement("UPDATE \"jiraissue\" \"ISSUE\"\n" +
-            "set \"version\" = \"ISSUE\".\"version\" + 1\n" +
-            "where \"ISSUE\".\"id\" in (42, 43) RETURNING \"ISSUE\".\"id\", \"ISSUE\".\"version\"").executeQuery();
+            "set \"s\" = \"ISSUE\".\"s\" + 1\n" +
+            "where \"ISSUE\".\"id\" in (42, 43) RETURNING \"ISSUE\".\"id\", \"ISSUE\".\"s\"").executeQuery();
 
         assertThat(connectionProvider.getProvidedConnectionTypes())
             .containsOnly(MAIN);
@@ -375,7 +392,7 @@ public class TestDualConnection {
         ).build();
 
         connection.prepareStatement("delete from \"jiraissue\" \"ISSUE\"\n" +
-            "where \"ISSUE\".\"id\" in (42, 43) returning \"ISSUE\".\"id\", \"ISSUE\".\"version\"").executeQuery();
+            "where \"ISSUE\".\"id\" in (42, 43) returning \"ISSUE\".\"id\", \"ISSUE\".\"s\"").executeQuery();
 
         assertThat(connectionProvider.getProvidedConnectionTypes())
             .containsOnly(MAIN);
@@ -390,7 +407,7 @@ public class TestDualConnection {
         ).build();
 
         connection.prepareStatement("DELETE FROM \"jiraissue\" \"ISSUE\"\n" +
-            "where \"ISSUE\".\"id\" in (42, 43) RETURNING \"ISSUE\".\"id\", \"ISSUE\".\"version\"").executeQuery();
+            "where \"ISSUE\".\"id\" in (42, 43) RETURNING \"ISSUE\".\"id\", \"ISSUE\".\"s\"").executeQuery();
 
         assertThat(connectionProvider.getProvidedConnectionTypes())
             .containsOnly(MAIN);

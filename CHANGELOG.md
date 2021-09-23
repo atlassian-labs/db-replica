@@ -24,6 +24,9 @@ Dropping a requirement of a major version of a dependency is a new contract.
 ## [Unreleased]
 [Unreleased]: https://github.com/atlassian-labs/db-replica/compare/release-2.3.2...master
 
+### Fixed
+- Run `insert` queries on the main database
+
 ## [2.3.2] - 2021-09-15
 [2.3.2]: https://github.com/atlassian-labs/db-replica/compare/release-2.3.0...release-2.3.2
 
