@@ -3,6 +3,7 @@ package com.atlassian.db.replica.api;
 import com.atlassian.db.replica.api.exception.ConnectionCouldNotBeClosedException;
 import com.atlassian.db.replica.internal.NoCacheSuppliedCache;
 import com.atlassian.db.replica.internal.aurora.AuroraClusterDiscovery;
+import com.atlassian.db.replica.internal.aurora.ReadReplicaConnectionCreationException;
 import com.atlassian.db.replica.spi.ReplicaConnectionPerUrlProvider;
 import com.atlassian.db.replica.spi.ReplicaConsistency;
 import com.atlassian.db.replica.spi.SuppliedCache;
@@ -44,6 +45,9 @@ public final class AuroraMultiReplicaConsistency implements ReplicaConsistency {
             .allMatch(replica -> {
                 try (Connection connection = replica.getConnectionSupplier().get()) {
                     return replicaConsistency.isConsistent(() -> connection);
+                } catch (ReadReplicaConnectionCreationException exception) {
+                    // it means that given replica is not yet available
+                    return true;
                 } catch (SQLException exception) {
                     throw new ConnectionCouldNotBeClosedException(exception);
                 }
