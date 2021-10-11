@@ -2,8 +2,10 @@ package com.atlassian.db.replica.api;
 
 import com.atlassian.db.replica.api.exception.ConnectionCouldNotBeClosedException;
 import com.atlassian.db.replica.internal.NoCacheSuppliedCache;
+import com.atlassian.db.replica.internal.NotLoggingLogger;
 import com.atlassian.db.replica.internal.aurora.AuroraClusterDiscovery;
 import com.atlassian.db.replica.internal.aurora.ReadReplicaConnectionCreationException;
+import com.atlassian.db.replica.spi.Logger;
 import com.atlassian.db.replica.spi.ReplicaConnectionPerUrlProvider;
 import com.atlassian.db.replica.spi.ReplicaConsistency;
 import com.atlassian.db.replica.spi.SuppliedCache;
@@ -14,14 +16,17 @@ import java.util.Collection;
 import java.util.function.Supplier;
 
 public final class AuroraMultiReplicaConsistency implements ReplicaConsistency {
+    private final Logger logger;
     private final ReplicaConsistency replicaConsistency;
     private final AuroraClusterDiscovery cluster;
 
     private AuroraMultiReplicaConsistency(
+        Logger logger,
         ReplicaConsistency replicaConsistency,
         ReplicaConnectionPerUrlProvider replicaConnectionPerUrlProvider,
         SuppliedCache<Collection<Database>> discoveredReplicasCache
     ) {
+        this.logger = logger;
         this.replicaConsistency = replicaConsistency;
         this.cluster = AuroraClusterDiscovery.builder()
             .replicaConnectionPerUrlProvider(replicaConnectionPerUrlProvider)
@@ -46,7 +51,7 @@ public final class AuroraMultiReplicaConsistency implements ReplicaConsistency {
                 try (Connection connection = replica.getConnectionSupplier().get()) {
                     return replicaConsistency.isConsistent(() -> connection);
                 } catch (ReadReplicaConnectionCreationException exception) {
-                    // it means that given replica is not yet available
+                    logger.warn("ReadReplicaConnectionCreationException occurred during consistency checking. It is likely that replica is the process of scaling, replica id: " + replica.getId(), exception);
                     return true;
                 } catch (SQLException exception) {
                     throw new ConnectionCouldNotBeClosedException(exception);
@@ -58,6 +63,7 @@ public final class AuroraMultiReplicaConsistency implements ReplicaConsistency {
         private ReplicaConsistency replicaConsistency;
         private ReplicaConnectionPerUrlProvider replicaConnectionPerUrlProvider;
         private SuppliedCache<Collection<Database>> discoveredReplicasCache = new NoCacheSuppliedCache<>();
+        private Logger logger = new NotLoggingLogger();
 
         public Builder replicaConsistency(ReplicaConsistency replicaConsistency) {
             this.replicaConsistency = replicaConsistency;
@@ -66,6 +72,11 @@ public final class AuroraMultiReplicaConsistency implements ReplicaConsistency {
 
         public Builder replicaConnectionPerUrlProvider(ReplicaConnectionPerUrlProvider replicaConnectionPerUrlProvider) {
             this.replicaConnectionPerUrlProvider = replicaConnectionPerUrlProvider;
+            return this;
+        }
+
+        public Builder logger(Logger logger) {
+            this.logger = logger;
             return this;
         }
 
@@ -97,6 +108,7 @@ public final class AuroraMultiReplicaConsistency implements ReplicaConsistency {
 
         public AuroraMultiReplicaConsistency build() {
             return new AuroraMultiReplicaConsistency(
+                logger,
                 replicaConsistency,
                 replicaConnectionPerUrlProvider,
                 discoveredReplicasCache
