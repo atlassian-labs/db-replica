@@ -24,6 +24,9 @@ Dropping a requirement of a major version of a dependency is a new contract.
 ## [Unreleased]
 [Unreleased]: https://github.com/atlassian-labs/db-replica/compare/release-2.4.0...master
 
+### Added
+- Add support for sequences to ThrottledCache
+
 ## [2.4.0] - 2021-10-11
 [2.4.0]: https://github.com/atlassian-labs/db-replica/compare/release-2.3.4...release-2.4.0
 
