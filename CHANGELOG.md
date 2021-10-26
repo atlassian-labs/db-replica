@@ -22,7 +22,10 @@ Dropping a requirement of a major version of a dependency is a new contract.
 
 
 ## [Unreleased]
-[Unreleased]: https://github.com/atlassian-labs/db-replica/compare/release-2.5.0...master
+[Unreleased]: https://github.com/atlassian-labs/db-replica/compare/release-2.5.2...master
+
+## [2.5.2] - 2021-10-26
+[2.5.2]: https://github.com/atlassian-labs/db-replica/compare/release-2.5.0...release-2.5.2
 
 ### Fixed
 - Support `SELECT FOR NO KEY UPDATE` statement
