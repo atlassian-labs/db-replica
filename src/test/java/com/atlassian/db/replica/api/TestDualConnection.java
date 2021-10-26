@@ -30,6 +30,9 @@ import java.util.Map;
 import java.util.function.Supplier;
 
 import static com.atlassian.db.replica.api.Queries.LARGE_SQL_QUERY;
+import static com.atlassian.db.replica.api.Queries.SELECT_FOR_KEY_SHARE;
+import static com.atlassian.db.replica.api.Queries.SELECT_FOR_NO_KEY_UPDATE;
+import static com.atlassian.db.replica.api.Queries.SELECT_FOR_SHARE;
 import static com.atlassian.db.replica.api.Queries.SELECT_FOR_UPDATE;
 import static com.atlassian.db.replica.api.Queries.SIMPLE_QUERY;
 import static com.atlassian.db.replica.api.mocks.CircularConsistency.permanentConsistency;
@@ -245,6 +248,48 @@ public class TestDualConnection {
         ).build();
 
         connection.prepareStatement(SELECT_FOR_UPDATE).executeQuery();
+
+        assertThat(connectionProvider.getProvidedConnectionTypes())
+            .containsOnly(MAIN);
+    }
+
+    @Test
+    public void shouldUseMainConnectionForSelectForNoKeyUpdate() throws SQLException {
+        final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
+        final Connection connection = DualConnection.builder(
+            connectionProvider,
+            permanentConsistency().build()
+        ).build();
+
+        connection.prepareStatement(SELECT_FOR_NO_KEY_UPDATE).executeQuery();
+
+        assertThat(connectionProvider.getProvidedConnectionTypes())
+            .containsOnly(MAIN);
+    }
+
+    @Test
+    public void shouldUseMainConnectionForSelectForShare() throws SQLException {
+        final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
+        final Connection connection = DualConnection.builder(
+            connectionProvider,
+            permanentConsistency().build()
+        ).build();
+
+        connection.prepareStatement(SELECT_FOR_SHARE).executeQuery();
+
+        assertThat(connectionProvider.getProvidedConnectionTypes())
+            .containsOnly(MAIN);
+    }
+
+    @Test
+    public void shouldUseMainConnectionForSelectForNoKeyShare() throws SQLException {
+        final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
+        final Connection connection = DualConnection.builder(
+            connectionProvider,
+            permanentConsistency().build()
+        ).build();
+
+        connection.prepareStatement(SELECT_FOR_KEY_SHARE).executeQuery();
 
         assertThat(connectionProvider.getProvidedConnectionTypes())
             .containsOnly(MAIN);

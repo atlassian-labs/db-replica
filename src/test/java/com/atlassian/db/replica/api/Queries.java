@@ -6,6 +6,21 @@ public class Queries {
         "where O_S_PROPERTY_ENTRY.entity_name = ? and O_S_PROPERTY_ENTRY.entity_id = ? and O_S_PROPERTY_ENTRY.property_key = ?\n" +
         "order by O_S_PROPERTY_ENTRY.id desc\n" +
         "for update";
+    public static final String SELECT_FOR_NO_KEY_UPDATE = "select \"ISSUE\".\"id\"\n" +
+        "from \"public\".\"jiraissue\" \"ISSUE\"\n" +
+        "where \"ISSUE\".\"id\" = ?\n" +
+        "order by \"ISSUE\".\"id\" asc\n" +
+        "FOR NO KEY UPDATE";
+    public static final String SELECT_FOR_SHARE = "select \"ISSUE\".\"id\"\n" +
+        "from \"public\".\"jiraissue\" \"ISSUE\"\n" +
+        "where \"ISSUE\".\"id\" = ?\n" +
+        "order by \"ISSUE\".\"id\" asc\n" +
+        "FOR SHARE";
+    public static final String SELECT_FOR_KEY_SHARE = "select \"ISSUE\".\"id\"\n" +
+        "from \"public\".\"jiraissue\" \"ISSUE\"\n" +
+        "where \"ISSUE\".\"id\" = ?\n" +
+        "order by \"ISSUE\".\"id\" asc\n" +
+        "FOR KEY SHARE";
 
     public static final String SELECT_FOR_UPDATE_SKIP_LOCKED = "select \"AO1\".\"ID\"\n" +
         "from \"AO1\" \"AO1\"\n" +

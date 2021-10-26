@@ -18,7 +18,19 @@ public final class SqlQuery {
 
     public boolean isSelectForUpdate() {
         final String trimmedQuery = trimForSelectForUpdateCheck();
-        return trimmedQuery.contains("for update") || trimmedQuery.contains("FOR UPDATE");
+        return containsFor(trimmedQuery) && (containsUpdate(trimmedQuery) || containsShare(trimmedQuery));
+    }
+
+    private boolean containsUpdate(String trimmedQuery) {
+        return trimmedQuery.contains("update") || trimmedQuery.contains("UPDATE");
+    }
+
+    private boolean containsShare(String trimmedQuery) {
+        return trimmedQuery.contains("share") || trimmedQuery.contains("SHARE");
+    }
+
+    private boolean containsFor(String trimmedQuery) {
+        return trimmedQuery.contains("for") || trimmedQuery.contains("FOR");
     }
 
     public boolean isInsert() {
