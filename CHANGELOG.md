@@ -22,7 +22,10 @@ Dropping a requirement of a major version of a dependency is a new contract.
 
 
 ## [Unreleased]
-[Unreleased]: https://github.com/atlassian-labs/db-replica/compare/release-2.5.2...master
+[Unreleased]: https://github.com/atlassian-labs/db-replica/compare/release-2.5.4...master
+
+## [2.5.4] - 2021-10-27
+[2.5.4]: https://github.com/atlassian-labs/db-replica/compare/release-2.5.2...release-2.5.4
 
 ### Fixed
 - `Statement#getConnection()` returns `DualConnection` instead of the main database connection
