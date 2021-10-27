@@ -1685,21 +1685,6 @@ public class TestDualConnection {
     }
 
     @Test
-    public void wasSwitchingToMainForCreateArrayOf() throws SQLException {
-        final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
-        final Connection connection = DualConnection.builder(
-                connectionProvider,
-                permanentConsistency().build()
-            ).compatibleWithPreviousVersion()
-            .build();
-
-        connection.prepareStatement(SIMPLE_QUERY).getConnection().createArrayOf("int8", Arrays.array(100L));
-
-        assertThat(connectionProvider.getProvidedConnectionTypes())
-            .containsOnly(MAIN);
-    }
-
-    @Test
     public void shouldUseReplicaForCreateArrayOf() throws SQLException {
         final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
         final Connection connection = DualConnection.builder(
