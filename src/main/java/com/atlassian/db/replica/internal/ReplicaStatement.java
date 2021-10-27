@@ -1,5 +1,6 @@
 package com.atlassian.db.replica.internal;
 
+import com.atlassian.db.replica.api.DualConnection;
 import com.atlassian.db.replica.api.SqlCall;
 import com.atlassian.db.replica.api.reason.Reason;
 import com.atlassian.db.replica.api.reason.RouteDecision;
@@ -39,6 +40,7 @@ public class ReplicaStatement implements Statement {
     private final SqlFunction sqlFunction;
     private final DecisionAwareReference<Statement> readStatement;
     private final DecisionAwareReference<Statement> writeStatement;
+    private final DualConnection dualConnection;
 
     public ReplicaStatement(
         ReplicaConsistency consistency,
@@ -47,7 +49,8 @@ public class ReplicaStatement implements Statement {
         Integer resultSetType,
         Integer resultSetConcurrency,
         Integer resultSetHoldability,
-        Set<String> readOnlyFunctions
+        Set<String> readOnlyFunctions,
+        DualConnection dualConnection
     ) {
         this.consistency = consistency;
         this.connectionProvider = connectionProvider;
@@ -68,6 +71,7 @@ public class ReplicaStatement implements Statement {
                 return createStatement(connectionProvider.getWriteConnection(getFirstCause()));
             }
         };
+        this.dualConnection = dualConnection;
     }
 
     @Override
@@ -294,7 +298,11 @@ public class ReplicaStatement implements Statement {
     @Override
     public Connection getConnection() throws SQLException {
         checkClosed();
-        return connectionProvider.getWriteConnection(new RouteDecisionBuilder(Reason.RW_API_CALL));
+        if (dualConnection != null) {
+            return dualConnection;
+        } else {
+            return connectionProvider.getWriteConnection(new RouteDecisionBuilder(Reason.RW_API_CALL));
+        }
     }
 
     @Override
@@ -550,13 +558,15 @@ public class ReplicaStatement implements Statement {
         ReplicaConnectionProvider connectionProvider,
         ReplicaConsistency consistency,
         DatabaseCall databaseCall,
-        Set<String> readOnlyFunctions
+        Set<String> readOnlyFunctions,
+        DualConnection dualConnection
     ) {
         return new Builder(
             connectionProvider,
             consistency,
             databaseCall,
-            readOnlyFunctions
+            readOnlyFunctions,
+            dualConnection
         );
     }
 
@@ -626,6 +636,7 @@ public class ReplicaStatement implements Statement {
         private final ReplicaConsistency consistency;
         private final DatabaseCall databaseCall;
         private final Set<String> readOnlyFunctions;
+        private final DualConnection dualConnection;
         private Integer resultSetType;
         private Integer resultSetConcurrency;
         private Integer resultSetHoldability;
@@ -634,12 +645,14 @@ public class ReplicaStatement implements Statement {
             ReplicaConnectionProvider connectionProvider,
             ReplicaConsistency consistency,
             DatabaseCall databaseCall,
-            Set<String> readOnlyFunctions
+            Set<String> readOnlyFunctions,
+            DualConnection dualConnection
         ) {
             this.connectionProvider = connectionProvider;
             this.consistency = consistency;
             this.databaseCall = databaseCall;
             this.readOnlyFunctions = readOnlyFunctions;
+            this.dualConnection = dualConnection;
         }
 
         public Builder resultSetType(int resultSetType) {
@@ -665,7 +678,8 @@ public class ReplicaStatement implements Statement {
                 resultSetType,
                 resultSetConcurrency,
                 resultSetHoldability,
-                readOnlyFunctions
+                readOnlyFunctions,
+                dualConnection
             );
         }
     }

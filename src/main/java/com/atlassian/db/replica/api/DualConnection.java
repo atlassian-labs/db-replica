@@ -49,6 +49,7 @@ public final class DualConnection implements Connection {
     private final ReplicaConsistency consistency;
     private final DatabaseCall databaseCall;
     private final Set<String> readOnlyFunctions;
+    private final boolean compatibleWithPreviousVersion;
 
     private DualConnection(
         ConnectionProvider connectionProvider,
@@ -66,6 +67,7 @@ public final class DualConnection implements Connection {
         this.consistency = consistency;
         this.databaseCall = databaseCall;
         this.readOnlyFunctions = readOnlyFunctions;
+        this.compatibleWithPreviousVersion = compatibleWithPreviousVersion;
     }
 
     @Override
@@ -75,7 +77,8 @@ public final class DualConnection implements Connection {
             connectionProvider,
             consistency,
             databaseCall,
-            readOnlyFunctions
+            readOnlyFunctions,
+            compatibleWithPreviousVersion ? null : this
         ).build();
     }
 
@@ -87,7 +90,8 @@ public final class DualConnection implements Connection {
             consistency,
             databaseCall,
             sql,
-            readOnlyFunctions
+            readOnlyFunctions,
+            compatibleWithPreviousVersion ? null : this
         ).build();
     }
 
@@ -99,7 +103,8 @@ public final class DualConnection implements Connection {
             consistency,
             databaseCall,
             sql,
-            readOnlyFunctions
+            readOnlyFunctions,
+            compatibleWithPreviousVersion ? null : this
         ).build();
     }
 
@@ -203,7 +208,7 @@ public final class DualConnection implements Connection {
     public Statement createStatement(int resultSetType, int resultSetConcurrency) throws SQLException {
         checkClosed();
         return ReplicaStatement
-            .builder(connectionProvider, consistency, databaseCall, readOnlyFunctions)
+            .builder(connectionProvider, consistency, databaseCall, readOnlyFunctions, compatibleWithPreviousVersion ? null : this)
             .resultSetType(resultSetType)
             .resultSetConcurrency(resultSetConcurrency)
             .build();
@@ -221,7 +226,8 @@ public final class DualConnection implements Connection {
             consistency,
             databaseCall,
             sql,
-            readOnlyFunctions
+            readOnlyFunctions,
+            compatibleWithPreviousVersion ? null : this
         ).resultSetType(resultSetType)
             .resultSetConcurrency(resultSetConcurrency)
             .build();
@@ -231,7 +237,7 @@ public final class DualConnection implements Connection {
     public CallableStatement prepareCall(String sql, int resultSetType, int resultSetConcurrency) throws SQLException {
         checkClosed();
         return new ReplicaCallableStatement
-            .Builder(connectionProvider, consistency, databaseCall, sql, readOnlyFunctions)
+            .Builder(connectionProvider, consistency, databaseCall, sql, readOnlyFunctions, compatibleWithPreviousVersion ? null : this)
             .resultSetType(resultSetType)
             .resultSetConcurrency(resultSetConcurrency)
             .build();
@@ -293,11 +299,12 @@ public final class DualConnection implements Connection {
     ) throws SQLException {
         checkClosed();
         return ReplicaStatement.builder(
-            connectionProvider,
-            consistency,
-            databaseCall,
-            readOnlyFunctions
-        ).resultSetType(resultSetType)
+                connectionProvider,
+                consistency,
+                databaseCall,
+                readOnlyFunctions,
+                compatibleWithPreviousVersion ? null : this
+            ).resultSetType(resultSetType)
             .resultSetConcurrency(resultSetConcurrency)
             .resultSetHoldability(resultSetHoldability)
             .build();
@@ -316,7 +323,8 @@ public final class DualConnection implements Connection {
             consistency,
             databaseCall,
             sql,
-            readOnlyFunctions
+            readOnlyFunctions,
+            compatibleWithPreviousVersion ? null : this
         ).resultSetType(resultSetType)
             .resultSetConcurrency(resultSetConcurrency)
             .resultSetHoldability(resultSetHoldability)
@@ -332,7 +340,7 @@ public final class DualConnection implements Connection {
     ) throws SQLException {
         checkClosed();
         return new ReplicaCallableStatement
-            .Builder(connectionProvider, consistency, databaseCall, sql, readOnlyFunctions)
+            .Builder(connectionProvider, consistency, databaseCall, sql, readOnlyFunctions, compatibleWithPreviousVersion ? null : this)
             .resultSetType(resultSetType)
             .resultSetConcurrency(resultSetConcurrency)
             .resultSetHoldability(resultSetHoldability)
@@ -347,7 +355,8 @@ public final class DualConnection implements Connection {
             consistency,
             databaseCall,
             sql,
-            readOnlyFunctions
+            readOnlyFunctions,
+            compatibleWithPreviousVersion ? null : this
         ).autoGeneratedKeys(autoGeneratedKeys)
             .build();
     }
@@ -360,7 +369,8 @@ public final class DualConnection implements Connection {
             consistency,
             databaseCall,
             sql,
-            readOnlyFunctions
+            readOnlyFunctions,
+            compatibleWithPreviousVersion ? null : this
         ).columnIndexes(columnIndexes)
             .build();
     }
@@ -373,7 +383,8 @@ public final class DualConnection implements Connection {
             consistency,
             databaseCall,
             sql,
-            readOnlyFunctions
+            readOnlyFunctions,
+            compatibleWithPreviousVersion ? null : this
         ).columnNames(columnNames)
             .build();
     }
@@ -478,9 +489,15 @@ public final class DualConnection implements Connection {
     @Override
     public Array createArrayOf(String typeName, Object[] elements) throws SQLException {
         checkClosed();
-        return connectionProvider
-            .getWriteConnection(new RouteDecisionBuilder(Reason.RW_API_CALL))
-            .createArrayOf(typeName, elements);
+        if (compatibleWithPreviousVersion) {
+            return connectionProvider
+                .getWriteConnection(new RouteDecisionBuilder(Reason.RW_API_CALL))
+                .createArrayOf(typeName, elements);
+        } else {
+            return connectionProvider
+                .getReadConnection(new RouteDecisionBuilder(Reason.RO_API_CALL))
+                .createArrayOf(typeName, elements);
+        }
     }
 
     @Override

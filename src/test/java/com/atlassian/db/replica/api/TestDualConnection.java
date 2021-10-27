@@ -17,6 +17,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import org.apache.commons.lang.NotImplementedException;
 import org.assertj.core.api.Assertions;
+import org.assertj.core.util.Arrays;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
@@ -300,9 +301,9 @@ public class TestDualConnection {
         final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
         final DatabaseCall databaseCall = mock(DatabaseCall.class);
         final Connection connection = DualConnection.builder(
-            connectionProvider,
-            permanentConsistency().build()
-        ).databaseCall(databaseCall)
+                connectionProvider,
+                permanentConsistency().build()
+            ).databaseCall(databaseCall)
             .build();
 
         connection.prepareStatement(SELECT_FOR_UPDATE).executeQuery();
@@ -351,9 +352,9 @@ public class TestDualConnection {
     public void shouldSupprtCustomReadOnlyFunctions() throws SQLException {
         final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
         final Connection connection = DualConnection.builder(
-            connectionProvider,
-            permanentConsistency().build()
-        ).readOnlyFunctions(ImmutableSet.of("myFunction"))
+                connectionProvider,
+                permanentConsistency().build()
+            ).readOnlyFunctions(ImmutableSet.of("myFunction"))
             .build();
 
         connection.prepareStatement("SELECT myFunction() FROM user").executeQuery();
@@ -367,9 +368,9 @@ public class TestDualConnection {
         final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
         final DatabaseCall databaseCall = mock(DatabaseCall.class);
         final Connection connection = DualConnection.builder(
-            connectionProvider,
-            permanentConsistency().build()
-        ).databaseCall(databaseCall)
+                connectionProvider,
+                permanentConsistency().build()
+            ).databaseCall(databaseCall)
             .build();
 
         final String sql = "SELECT doSomething(1234)";
@@ -814,9 +815,9 @@ public class TestDualConnection {
         final DatabaseCall databaseCall = mock(DatabaseCall.class);
         when(databaseCall.call(any(), any())).thenReturn(1);
         final Connection dualConnection = DualConnection.builder(
-            connectionProvider,
-            permanentConsistency().build()
-        ).databaseCall(databaseCall)
+                connectionProvider,
+                permanentConsistency().build()
+            ).databaseCall(databaseCall)
             .build();
         dualConnection.prepareStatement(SIMPLE_QUERY).executeUpdate();
         Mockito.reset(databaseCall);
@@ -916,9 +917,9 @@ public class TestDualConnection {
         final StateListener stateListener = mock(StateListener.class);
 
         final Connection connection = DualConnection.builder(
-            connectionProvider,
-            new CircularConsistency.Builder(ImmutableList.of(false, true)).build()
-        ).stateListener(stateListener)
+                connectionProvider,
+                new CircularConsistency.Builder(ImmutableList.of(false, true)).build()
+            ).stateListener(stateListener)
             .build();
         connection.prepareStatement(SIMPLE_QUERY).executeQuery();
         Mockito.reset(stateListener);
@@ -1068,9 +1069,9 @@ public class TestDualConnection {
         final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
         final DatabaseCall databaseCall = mock(DatabaseCall.class);
         final Connection connection = DualConnection.builder(
-            connectionProvider,
-            permanentInconsistency().build()
-        ).databaseCall(databaseCall)
+                connectionProvider,
+                permanentInconsistency().build()
+            ).databaseCall(databaseCall)
             .build();
 
         connection.setTransactionIsolation(TRANSACTION_SERIALIZABLE);
@@ -1286,21 +1287,6 @@ public class TestDualConnection {
         assertThat(connectionProvider.getProvidedConnectionTypes())
             .containsOnly(MAIN);
         verify(connectionProvider.singleProvidedConnection()).isValid(10);
-    }
-
-    @Test
-    public void shouldCreateArrayOfOnMainConnection() throws SQLException {
-        final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
-        final Connection connection = DualConnection.builder(
-            connectionProvider,
-            permanentConsistency().build()
-        ).build();
-
-        connection.createArrayOf("type", new Object[]{});
-
-        assertThat(connectionProvider.getProvidedConnectionTypes())
-            .containsOnly(MAIN);
-        verify(connectionProvider.singleProvidedConnection()).createArrayOf("type", new Object[]{});
     }
 
     @Test
@@ -1696,5 +1682,34 @@ public class TestDualConnection {
         dualConnection.close();
 
         Assertions.assertThat(connection.isReadOnly()).isFalse();
+    }
+
+    @Test
+    public void wasSwitchingToMainForCreateArrayOf() throws SQLException {
+        final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
+        final Connection connection = DualConnection.builder(
+                connectionProvider,
+                permanentConsistency().build()
+            ).compatibleWithPreviousVersion()
+            .build();
+
+        connection.prepareStatement(SIMPLE_QUERY).getConnection().createArrayOf("int8", Arrays.array(100L));
+
+        assertThat(connectionProvider.getProvidedConnectionTypes())
+            .containsOnly(MAIN);
+    }
+
+    @Test
+    public void shouldUseReplicaForCreateArrayOf() throws SQLException {
+        final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
+        final Connection connection = DualConnection.builder(
+            connectionProvider,
+            permanentConsistency().build()
+        ).build();
+
+        connection.prepareStatement(SIMPLE_QUERY).getConnection().createArrayOf("int8", Arrays.array(100L));
+
+        assertThat(connectionProvider.getProvidedConnectionTypes())
+            .containsOnly(REPLICA);
     }
 }
