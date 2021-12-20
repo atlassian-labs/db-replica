@@ -40,8 +40,7 @@ public class ReplicaCallableStatement extends ReplicaPreparedStatement implement
         Integer resultSetConcurrency,
         Integer resultSetHoldability,
         Set<String> readOnlyFunctions,
-        DualConnection dualConnection,
-        boolean compatibleWithPreviousVersion
+        DualConnection dualConnection
     ) {
         super(
             connectionProvider,
@@ -52,8 +51,7 @@ public class ReplicaCallableStatement extends ReplicaPreparedStatement implement
             resultSetConcurrency,
             resultSetHoldability,
             readOnlyFunctions,
-            dualConnection,
-            compatibleWithPreviousVersion
+            dualConnection
         );
         this.sql = sql;
         this.resultSetType = resultSetType;
@@ -646,7 +644,6 @@ public class ReplicaCallableStatement extends ReplicaPreparedStatement implement
         private Integer resultSetType;
         private Integer resultSetConcurrency;
         private Integer resultSetHoldability;
-        private final boolean compatibleWithPreviousVersion;
 
         public Builder(
             ReplicaConnectionProvider connectionProvider,
@@ -654,8 +651,7 @@ public class ReplicaCallableStatement extends ReplicaPreparedStatement implement
             DatabaseCall databaseCall,
             String sql,
             Set<String> readOnlyFunctions,
-            DualConnection dualConnection,
-            boolean compatibleWithPreviousVersion
+            DualConnection dualConnection
         ) {
             this.connectionProvider = connectionProvider;
             this.consistency = consistency;
@@ -663,7 +659,6 @@ public class ReplicaCallableStatement extends ReplicaPreparedStatement implement
             this.sql = sql;
             this.readOnlyFunctions = readOnlyFunctions;
             this.dualConnection = dualConnection;
-            this.compatibleWithPreviousVersion = compatibleWithPreviousVersion;
         }
 
         public ReplicaCallableStatement.Builder resultSetType(int resultSetType) {
@@ -691,8 +686,7 @@ public class ReplicaCallableStatement extends ReplicaPreparedStatement implement
                 resultSetConcurrency,
                 resultSetHoldability,
                 readOnlyFunctions,
-                dualConnection,
-                compatibleWithPreviousVersion
+                dualConnection
             );
         }
     }

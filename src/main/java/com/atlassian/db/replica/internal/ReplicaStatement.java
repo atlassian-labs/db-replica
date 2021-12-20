@@ -41,7 +41,6 @@ public class ReplicaStatement implements Statement {
     private final DecisionAwareReference<Statement> readStatement;
     private final DecisionAwareReference<Statement> writeStatement;
     private final DualConnection dualConnection;
-    private final boolean compatibleWithPreviousVersion;
 
     public ReplicaStatement(
         ReplicaConsistency consistency,
@@ -51,8 +50,7 @@ public class ReplicaStatement implements Statement {
         Integer resultSetConcurrency,
         Integer resultSetHoldability,
         Set<String> readOnlyFunctions,
-        DualConnection dualConnection,
-        boolean compatibleWithPreviousVersion
+        DualConnection dualConnection
     ) {
         this.consistency = consistency;
         this.connectionProvider = connectionProvider;
@@ -74,7 +72,6 @@ public class ReplicaStatement implements Statement {
             }
         };
         this.dualConnection = dualConnection;
-        this.compatibleWithPreviousVersion = compatibleWithPreviousVersion;
     }
 
     @Override
@@ -200,9 +197,7 @@ public class ReplicaStatement implements Statement {
         if (sqlQuery.isSqlSet()) {
             decisionBuilder = new RouteDecisionBuilder(READ_OPERATION).sql(sql);
             statement = getReadStatement(decisionBuilder);
-            if (!compatibleWithPreviousVersion) {
-                connectionProvider.addRuntimeParameterConfiguration(sql);
-            }
+            connectionProvider.addRuntimeParameterConfiguration(sql);
         } else {
             decisionBuilder = new RouteDecisionBuilder(RW_API_CALL).sql(sql);
             statement = getWriteStatement(decisionBuilder);
@@ -565,16 +560,14 @@ public class ReplicaStatement implements Statement {
         ReplicaConsistency consistency,
         DatabaseCall databaseCall,
         Set<String> readOnlyFunctions,
-        DualConnection dualConnection,
-        boolean compatibleWithPreviousVersion
+        DualConnection dualConnection
     ) {
         return new Builder(
             connectionProvider,
             consistency,
             databaseCall,
             readOnlyFunctions,
-            dualConnection,
-            compatibleWithPreviousVersion
+            dualConnection
         );
     }
 
@@ -648,22 +641,19 @@ public class ReplicaStatement implements Statement {
         private Integer resultSetType;
         private Integer resultSetConcurrency;
         private Integer resultSetHoldability;
-        private final boolean compatibleWithPreviousVersion;
 
         private Builder(
             ReplicaConnectionProvider connectionProvider,
             ReplicaConsistency consistency,
             DatabaseCall databaseCall,
             Set<String> readOnlyFunctions,
-            DualConnection dualConnection,
-            boolean compatibleWithPreviousVersion
+            DualConnection dualConnection
         ) {
             this.connectionProvider = connectionProvider;
             this.consistency = consistency;
             this.databaseCall = databaseCall;
             this.readOnlyFunctions = readOnlyFunctions;
             this.dualConnection = dualConnection;
-            this.compatibleWithPreviousVersion = compatibleWithPreviousVersion;
         }
 
         public Builder resultSetType(int resultSetType) {
@@ -690,8 +680,7 @@ public class ReplicaStatement implements Statement {
                 resultSetConcurrency,
                 resultSetHoldability,
                 readOnlyFunctions,
-                dualConnection,
-                compatibleWithPreviousVersion
+                dualConnection
             );
         }
     }
