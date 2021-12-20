@@ -22,7 +22,10 @@ Dropping a requirement of a major version of a dependency is a new contract.
 
 
 ## [Unreleased]
-[Unreleased]: https://github.com/atlassian-labs/db-replica/compare/release-2.5.4...master
+[Unreleased]: https://github.com/atlassian-labs/db-replica/compare/release-2.5.6...master
+
+## [2.5.6] - 2021-12-20
+[2.5.6]: https://github.com/atlassian-labs/db-replica/compare/release-2.5.4...release-2.5.6
 
 ### Fixed
 - Set connection runtime parameters, after switching to the main connection
