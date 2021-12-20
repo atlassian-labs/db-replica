@@ -27,8 +27,10 @@ import java.sql.SQLException;
 import java.sql.Savepoint;
 import java.sql.Statement;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 import static com.atlassian.db.replica.api.Queries.LARGE_SQL_QUERY;
 import static com.atlassian.db.replica.api.Queries.SELECT_FOR_KEY_SHARE;
@@ -1651,6 +1653,37 @@ public class TestDualConnection {
 
         assertThat(connectionProvider.getProvidedConnectionTypes())
             .containsOnly(REPLICA);
+    }
+
+    @Test
+    public void shouldKeepStatementTimeoutWhenSwitchingConnections() throws SQLException {
+        final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
+        final Connection connection = DualConnection.builder(
+            connectionProvider,
+            permanentConsistency().build()
+        ).build();
+
+        try (Statement statement = connection.createStatement()) {
+            statement.execute("set statement_timeout to 30000");
+        }
+
+        connection.prepareStatement(SIMPLE_QUERY).executeQuery();
+        connection.prepareStatement(SIMPLE_QUERY).executeQuery();
+        final List<Statement> replicaStatements = connectionProvider.getStatements();
+        connection.prepareStatement(SELECT_FOR_UPDATE).executeQuery();
+        connection.prepareStatement(SELECT_FOR_UPDATE).executeQuery();
+
+        final List<Statement> allStatements = connectionProvider.getStatements();
+        final List<Statement> mainConnectionStatements = allStatements
+            .stream()
+            .filter(statement -> !replicaStatements.contains(statement))
+            .collect(Collectors.toList());
+        assertThat(connectionProvider.getProvidedConnectionTypes())
+            .containsExactly(REPLICA, MAIN);
+        assertThat(replicaStatements).hasSize(1);
+        verify(replicaStatements.get(0)).execute("set statement_timeout to 30000");
+        assertThat(mainConnectionStatements).hasSize(1);
+        verify(mainConnectionStatements.get(0)).execute("set statement_timeout to 30000");
     }
 
     @Test

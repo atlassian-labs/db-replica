@@ -197,6 +197,7 @@ public class ReplicaStatement implements Statement {
         if (sqlQuery.isSqlSet()) {
             decisionBuilder = new RouteDecisionBuilder(READ_OPERATION).sql(sql);
             statement = getReadStatement(decisionBuilder);
+            connectionProvider.addRuntimeParameterConfiguration(sql);
         } else {
             decisionBuilder = new RouteDecisionBuilder(RW_API_CALL).sql(sql);
             statement = getWriteStatement(decisionBuilder);

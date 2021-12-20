@@ -2,10 +2,13 @@ package com.atlassian.db.replica.internal;
 
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Supplier;
 
 public final class ConnectionParameters {
@@ -18,6 +21,7 @@ public final class ConnectionParameters {
     private String schema;
     private ClientInfo clientInfo;
     private NetworkTimeout networkTimeout;
+    private List<String> runtimeParameterChanges = new CopyOnWriteArrayList<>();
 
     public void initialize(Connection connection) throws SQLException {
         if (isAutoCommit != null) {
@@ -47,6 +51,24 @@ public final class ConnectionParameters {
         if (networkTimeout != null) {
             networkTimeout.configure(connection);
         }
+        initializeRuntimeParameters(connection);
+    }
+
+    private void initializeRuntimeParameters(Connection connection) throws SQLException {
+        if (runtimeParameterChanges.isEmpty()) {
+            return;
+        }
+        try (Statement statement = connection.createStatement()) {
+            for (String parameterChange : runtimeParameterChanges) {
+                statement.execute(parameterChange);
+            }
+        }
+    }
+
+    public void addRuntimeParameterConfiguration(
+        String parameterConfiguration
+    ) {
+        runtimeParameterChanges.add(parameterConfiguration);
     }
 
     public void setTransactionIsolation(
@@ -160,6 +182,9 @@ public final class ConnectionParameters {
             ", typeMap=" + typeMap +
             ", holdability=" + holdability +
             ", schema='" + schema + '\'' +
+            ", clientInfo=" + clientInfo +
+            ", networkTimeout=" + networkTimeout +
+            ", runtimeParameterChanges=" + runtimeParameterChanges +
             '}';
     }
 }
