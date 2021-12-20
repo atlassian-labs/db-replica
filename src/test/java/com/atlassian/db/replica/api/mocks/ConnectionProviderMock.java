@@ -1,6 +1,7 @@
 package com.atlassian.db.replica.api.mocks;
 
 import com.atlassian.db.replica.spi.ConnectionProvider;
+import com.google.common.collect.ImmutableList;
 import org.mockito.Mockito;
 import org.mockito.stubbing.Answer;
 
@@ -55,6 +56,7 @@ public class ConnectionProviderMock implements ConnectionProvider {
     public List<ConnectionType> providedConnectionTypes = new ArrayList<>();
     public List<Connection> providedConnections = new ArrayList<>();
     public List<Statement> preparedStatements = new ArrayList<>();
+    public List<Statement> statements = new ArrayList<>();
 
     public List<Connection> getProvidedConnections() {
         return providedConnections;
@@ -80,6 +82,10 @@ public class ConnectionProviderMock implements ConnectionProvider {
 
     public List<Statement> getPreparedStatements() {
         return preparedStatements;
+    }
+
+    public List<Statement> getStatements() {
+        return ImmutableList.copyOf(statements);
     }
 
     @Override
@@ -195,6 +201,7 @@ public class ConnectionProviderMock implements ConnectionProvider {
     private Statement createStatement(Connection connection) throws SQLException {
         final Statement statement = mock(Statement.class);
         initializeConnection(connection, statement);
+        statements.add(statement);
         return statement;
     }
 
@@ -245,7 +252,7 @@ public class ConnectionProviderMock implements ConnectionProvider {
 
         @Override
         public boolean isClosed() {
-            return isClosed != null ;
+            return isClosed != null;
         }
     }
 }

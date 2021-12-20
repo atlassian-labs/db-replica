@@ -50,6 +50,10 @@ public class ReplicaConnectionProvider implements AutoCloseable {
         return state.getReadConnection(decisionBuilder);
     }
 
+    public void addRuntimeParameterConfiguration(String parameterConfiguration) {
+        parameters.addRuntimeParameterConfiguration(parameterConfiguration);
+    }
+
     public void setTransactionIsolation(Integer transactionIsolation) throws SQLException {
         parameters.setTransactionIsolation(state::getConnection, transactionIsolation);
     }
