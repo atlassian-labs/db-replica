@@ -5,7 +5,6 @@ import com.atlassian.db.replica.internal.aurora.AuroraClusterDiscovery;
 import com.atlassian.db.replica.spi.ReplicaConnectionPerUrlProvider;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 
 import java.sql.Array;
 import java.sql.Blob;
@@ -23,11 +22,16 @@ import java.sql.Savepoint;
 import java.sql.Statement;
 import java.sql.Struct;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.Executor;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 class AuroraClusterDiscoveryTest {
     private final String readerEndpoint = "database-1.cluster-xxxxxxxxxxxxx.xx-xxxxxx-1.rds.amazonaws.com:5432";
@@ -64,6 +68,53 @@ class AuroraClusterDiscoveryTest {
         final Collection<Database> replicas = auroraClusterDiscovery.getReplicas(() -> postgresConnectionMock);
 
         assertThat(replicas).hasSize(2);
+    }
+
+    @Test
+    void shouldUseClusterUri() {
+        auroraClusterMock
+            .scaleUp()
+            .scaleUp();
+
+        AuroraClusterDiscovery clusterDiscovery = AuroraClusterDiscovery.builder()
+            .replicaConnectionPerUrlProvider(replicaUrl -> () -> {
+                final Connection connection = mock(Connection.class);
+                final DatabaseMetaData databaseMetaData = mock(DatabaseMetaData.class);
+                when(databaseMetaData.getURL()).thenReturn(replicaUrl.toString());
+                when(connection.getMetaData()).thenReturn(databaseMetaData);
+                return connection;
+            })
+            .clusterUri(
+                "jdbc:postgresql://db-003.cluster-ro-xyz89.us-east-1.rds.amazonaws.com:5432/database")
+            .build();
+        final Collection<Database> replicas = clusterDiscovery.getReplicas(() -> postgresConnectionMock);
+        final List<String> urls = replicas.stream()
+            .map(Database::getConnectionSupplier)
+            .map(Supplier::get)
+            .map(this::getDatabaseMetaData)
+            .map(this::getUrl)
+            .collect(Collectors.toList());
+        assertThat(urls)
+            .containsExactlyInAnyOrder(
+                "jdbc:postgresql://apg-global-db-rpo-mammothrw-elephantro-n1.xyz89.us-east-1.rds.amazonaws.com:5432/database",
+                "jdbc:postgresql://apg-global-db-rpo-mammothrw-elephantro-n2.xyz89.us-east-1.rds.amazonaws.com:5432/database"
+            );
+    }
+
+    private String getUrl(DatabaseMetaData it) {
+        try {
+            return it.getURL();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private DatabaseMetaData getDatabaseMetaData(Connection connection) {
+        try {
+            return connection.getMetaData();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Test
@@ -134,8 +185,8 @@ class AuroraClusterDiscoveryTest {
 
         @Override
         public DatabaseMetaData getMetaData() throws SQLException {
-            final DatabaseMetaData metaData = Mockito.mock(DatabaseMetaData.class);
-            Mockito.when(metaData.getURL()).thenReturn(uri);
+            final DatabaseMetaData metaData = mock(DatabaseMetaData.class);
+            when(metaData.getURL()).thenReturn(uri);
             return metaData;
         }
 

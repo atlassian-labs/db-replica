@@ -24,6 +24,9 @@ Dropping a requirement of a major version of a dependency is a new contract.
 ## [Unreleased]
 [Unreleased]: https://github.com/atlassian-labs/db-replica/compare/release-2.5.6...master
 
+### Add
+- Support for `clusterUri` in `AuroraMultiReplicaConsistency`
+
 ## [2.5.6] - 2021-12-20
 [2.5.6]: https://github.com/atlassian-labs/db-replica/compare/release-2.5.4...release-2.5.6
 

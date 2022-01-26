@@ -24,13 +24,15 @@ public final class AuroraMultiReplicaConsistency implements ReplicaConsistency {
         Logger logger,
         ReplicaConsistency replicaConsistency,
         ReplicaConnectionPerUrlProvider replicaConnectionPerUrlProvider,
-        SuppliedCache<Collection<Database>> discoveredReplicasCache
+        SuppliedCache<Collection<Database>> discoveredReplicasCache,
+        String clusterUri
     ) {
         this.logger = logger;
         this.replicaConsistency = replicaConsistency;
         this.cluster = AuroraClusterDiscovery.builder()
             .replicaConnectionPerUrlProvider(replicaConnectionPerUrlProvider)
             .discoveredReplicasCache(discoveredReplicasCache)
+            .clusterUri(clusterUri)
             .build();
     }
 
@@ -64,6 +66,7 @@ public final class AuroraMultiReplicaConsistency implements ReplicaConsistency {
         private ReplicaConnectionPerUrlProvider replicaConnectionPerUrlProvider;
         private SuppliedCache<Collection<Database>> discoveredReplicasCache = new NoCacheSuppliedCache<>();
         private Logger logger = new NotLoggingLogger();
+        private String clusterUri;
 
         public Builder replicaConsistency(ReplicaConsistency replicaConsistency) {
             this.replicaConsistency = replicaConsistency;
@@ -77,6 +80,11 @@ public final class AuroraMultiReplicaConsistency implements ReplicaConsistency {
 
         public Builder logger(Logger logger) {
             this.logger = logger;
+            return this;
+        }
+
+        public Builder clusterUri(String clusterUri) {
+            this.clusterUri = clusterUri;
             return this;
         }
 
@@ -111,7 +119,8 @@ public final class AuroraMultiReplicaConsistency implements ReplicaConsistency {
                 logger,
                 replicaConsistency,
                 replicaConnectionPerUrlProvider,
-                discoveredReplicasCache
+                discoveredReplicasCache,
+                clusterUri
             );
         }
     }
