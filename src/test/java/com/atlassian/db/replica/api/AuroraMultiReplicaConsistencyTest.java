@@ -14,9 +14,16 @@ import java.sql.SQLException;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.Optional;
+import java.util.function.Supplier;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class AuroraMultiReplicaConsistencyTest {
@@ -28,10 +35,17 @@ class AuroraMultiReplicaConsistencyTest {
     private AuroraMultiReplicaConsistency sut;
 
     private Collection<Connection> mockReplicaConnections(int count) {
+        return mockReplicaConnections(count, false);
+    }
+
+    private Collection<Connection> mockReplicaConnections(int count, boolean mockBrokenConnections) {
         Collection<Connection> replicas = new LinkedList<>();
         Collection<Database> nodes = new LinkedList<>();
 
         ReplicaConnectionPerUrlProvider replicaConnectionPerUrlProvider = (url) -> () -> {
+            if (mockBrokenConnections) {
+                throw new RuntimeException();
+            }
             Connection replica = mock(Connection.class);
             replicas.add(replica);
             return replica;
@@ -104,5 +118,34 @@ class AuroraMultiReplicaConsistencyTest {
         for (Connection replica : replicas) {
             verify(replica).close();
         }
+    }
+
+    @Test
+    void shouldNotOpenConnectionIfNotNeeded() {
+        //given
+        mockReplicaConnections(5, true);
+        final Supplier<Connection> connectionSupplier = mock(Supplier.class);
+        sut = AuroraMultiReplicaConsistency.builder()
+            .replicaConsistency(new ReplicaConsistency() {
+                @Override
+                public void write(Connection main) {
+
+                }
+
+                @Override
+                public boolean isConsistent(Supplier<Connection> replica) {
+                    // Don't use the supplier
+                    return true;
+                }
+            })
+            .discoveredReplicasCache(discoveredReplicasCache)
+            .build();
+
+
+        //when
+        final Throwable throwable = catchThrowable(() -> sut.isConsistent(connectionSupplier));
+
+        //then
+        assertThat(throwable).doesNotThrowAnyException();
     }
 }
