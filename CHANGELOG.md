@@ -22,7 +22,10 @@ Dropping a requirement of a major version of a dependency is a new contract.
 
 
 ## [Unreleased]
-[Unreleased]: https://github.com/atlassian-labs/db-replica/compare/release-2.6.0...master
+[Unreleased]: https://github.com/atlassian-labs/db-replica/compare/release-2.6.2...master
+
+## [2.6.2] - 2022-04-20
+[2.6.2]: https://github.com/atlassian-labs/db-replica/compare/release-2.6.0...release-2.6.2
 
 ### Fixed
 - AuroraMultiReplicaConsistency#isConsistent always calls replica connection supplier

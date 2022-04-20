@@ -20,19 +20,16 @@ public final class AuroraMultiReplicaConsistency implements ReplicaConsistency {
     private final Logger logger;
     private final ReplicaConsistency replicaConsistency;
     private final AuroraClusterDiscovery cluster;
-    private final boolean compatibleWithPreviousVersion;
 
     private AuroraMultiReplicaConsistency(
         Logger logger,
         ReplicaConsistency replicaConsistency,
         ReplicaConnectionPerUrlProvider replicaConnectionPerUrlProvider,
         SuppliedCache<Collection<Database>> discoveredReplicasCache,
-        String clusterUri,
-        boolean compatibleWithPreviousVersion
+        String clusterUri
     ) {
         this.logger = logger;
         this.replicaConsistency = replicaConsistency;
-        this.compatibleWithPreviousVersion = compatibleWithPreviousVersion;
         this.cluster = AuroraClusterDiscovery.builder()
             .replicaConnectionPerUrlProvider(replicaConnectionPerUrlProvider)
             .discoveredReplicasCache(discoveredReplicasCache)
@@ -51,25 +48,6 @@ public final class AuroraMultiReplicaConsistency implements ReplicaConsistency {
 
     @Override
     public boolean isConsistent(Supplier<Connection> replicaSupplier) {
-        return compatibleWithPreviousVersion ? isConsistent_old(replicaSupplier) : isConsistent_new(replicaSupplier);
-    }
-
-    private boolean isConsistent_old(Supplier<Connection> replicaSupplier) {
-        return cluster.getReplicas(replicaSupplier)
-            .stream()
-            .allMatch(replica -> {
-                try (Connection connection = replica.getConnectionSupplier().get()) {
-                    return replicaConsistency.isConsistent(() -> connection);
-                } catch (ReadReplicaConnectionCreationException exception) {
-                    logger.warn("ReadReplicaConnectionCreationException occurred during consistency checking. It is likely that replica is the process of scaling, replica id: " + replica.getId(), exception);
-                    return true;
-                } catch (SQLException exception) {
-                    throw new ConnectionCouldNotBeClosedException(exception);
-                }
-            });
-    }
-
-    private boolean isConsistent_new(Supplier<Connection> replicaSupplier) {
         return cluster.getReplicas(replicaSupplier)
             .stream()
             .allMatch(replica -> {
@@ -128,7 +106,6 @@ public final class AuroraMultiReplicaConsistency implements ReplicaConsistency {
         private SuppliedCache<Collection<Database>> discoveredReplicasCache = new NoCacheSuppliedCache<>();
         private Logger logger = new NotLoggingLogger();
         private String clusterUri;
-        private boolean compatibleWithPreviousVersion = false;
 
         public Builder replicaConsistency(ReplicaConsistency replicaConsistency) {
             this.replicaConsistency = replicaConsistency;
@@ -158,7 +135,6 @@ public final class AuroraMultiReplicaConsistency implements ReplicaConsistency {
          * the same way as the previous version of the library.
          */
         public Builder compatibleWithPreviousVersion() {
-            this.compatibleWithPreviousVersion = true;
             return this;
         }
 
@@ -194,8 +170,7 @@ public final class AuroraMultiReplicaConsistency implements ReplicaConsistency {
                 replicaConsistency,
                 replicaConnectionPerUrlProvider,
                 discoveredReplicasCache,
-                clusterUri,
-                compatibleWithPreviousVersion
+                clusterUri
             );
         }
     }
