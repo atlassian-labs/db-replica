@@ -37,7 +37,7 @@ public class PessimisticPropagationConsistencyTest {
 
         consistency.write(main);
         clock.add(Duration.ofMillis(300));
-        boolean consistent = consistency.isConsistent(new ConnectionSupplier(replica));
+        boolean consistent = consistency.isConsistent(() -> new ConnectionSupplier(replica));
 
         assertThat(consistent).isTrue();
     }
@@ -50,7 +50,7 @@ public class PessimisticPropagationConsistencyTest {
 
         consistency.write(main);
         clock.add(Duration.ofMillis(50));
-        boolean consistent = consistency.isConsistent(new ConnectionSupplier(replica));
+        boolean consistent = consistency.isConsistent(() -> new ConnectionSupplier(replica));
 
         assertThat(consistent).isFalse();
     }
@@ -62,7 +62,7 @@ public class PessimisticPropagationConsistencyTest {
             .build();
 
         clock.add(Duration.ofMillis(700));
-        boolean consistent = consistency.isConsistent(new ConnectionSupplier(replica));
+        boolean consistent = consistency.isConsistent(() -> new ConnectionSupplier(replica));
 
         assertThat(consistent).isFalse();
     }
@@ -74,9 +74,9 @@ public class PessimisticPropagationConsistencyTest {
             .build();
 
         clock.add(Duration.ofMillis(700));
-        boolean isConsistent = consistency.isConsistent(new ConnectionSupplier(replica));
+        boolean isConsistent = consistency.isConsistent(() -> new ConnectionSupplier(replica));
         clock.add(Duration.ofMillis(700));
-        boolean isConsistentLater = consistency.isConsistent(new ConnectionSupplier(replica));
+        boolean isConsistentLater = consistency.isConsistent(() -> new ConnectionSupplier(replica));
 
         assertThat(isConsistent).isFalse();
         assertThat(isConsistentLater).isTrue();

@@ -1,5 +1,6 @@
 package com.atlassian.db.replica.it.consistency;
 
+import com.atlassian.db.replica.api.Database;
 import com.atlassian.db.replica.spi.ReplicaConsistency;
 
 import java.sql.Connection;
@@ -18,7 +19,7 @@ public class WaitingReplicaConsistency implements ReplicaConsistency {
     }
 
     @Override
-    public boolean isConsistent(Supplier<Connection> replica) {
+    public boolean isConsistent(Database replica) {
         for (int i = 0; i < 30; i++) {
             if (consistency.isConsistent(replica)) {
                 return true;

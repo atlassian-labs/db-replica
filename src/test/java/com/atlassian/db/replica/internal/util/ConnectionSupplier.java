@@ -1,9 +1,11 @@
 package com.atlassian.db.replica.internal.util;
 
+import com.atlassian.db.replica.spi.DataSource;
+
 import java.sql.Connection;
 import java.util.function.Supplier;
 
-public class ConnectionSupplier implements Supplier<Connection> {
+public class ConnectionSupplier implements DataSource {
     private final Connection connection;
 
     public ConnectionSupplier(Connection connection) {
@@ -11,7 +13,7 @@ public class ConnectionSupplier implements Supplier<Connection> {
     }
 
     @Override
-    public Connection get() {
+    public Connection getConnection() {
         return connection;
     }
 }

@@ -1469,8 +1469,8 @@ public class TestDualConnection {
                 }
 
                 @Override
-                public boolean isConsistent(Supplier<Connection> replica) {
-                    replica.get();
+                public boolean isConsistent(Database replica) {
+                    replica.getDataSource().getConnection();
                     throw new RuntimeException(exceptionMessage);
                 }
             }

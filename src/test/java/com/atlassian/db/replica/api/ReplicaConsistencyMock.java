@@ -3,7 +3,6 @@ package com.atlassian.db.replica.api;
 import com.atlassian.db.replica.spi.ReplicaConsistency;
 
 import java.sql.Connection;
-import java.util.function.Supplier;
 
 public class ReplicaConsistencyMock implements ReplicaConsistency {
     private final boolean consistent;
@@ -18,8 +17,8 @@ public class ReplicaConsistencyMock implements ReplicaConsistency {
     }
 
     @Override
-    public boolean isConsistent(Supplier<Connection> replica) {
-        Connection connection = replica.get();
+    public boolean isConsistent(Database replica) {
+        Connection connection = replica.getDataSource().getConnection();
         return consistent;
     }
 }

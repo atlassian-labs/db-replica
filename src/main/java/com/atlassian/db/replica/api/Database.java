@@ -1,10 +1,13 @@
 package com.atlassian.db.replica.api;
 
-import java.sql.Connection;
-import java.util.function.Supplier;
+import com.atlassian.db.replica.spi.DataSource;
+
+import java.util.Optional;
 
 public interface Database {
-    String getId();
+    default Optional<String> getId() {
+        return Optional.empty();
+    }
 
-    Supplier<Connection> getConnectionSupplier();
+    DataSource getDataSource();
 }

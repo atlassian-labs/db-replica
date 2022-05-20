@@ -1,7 +1,9 @@
 package com.atlassian.db.replica.it.example.aurora.replica.api;
 
+import com.atlassian.db.replica.api.Database;
 import com.atlassian.db.replica.internal.LazyReference;
 import com.atlassian.db.replica.spi.ConnectionProvider;
+import com.atlassian.db.replica.spi.DataSource;
 import com.atlassian.db.replica.spi.ReplicaConsistency;
 
 import java.sql.Connection;
@@ -42,8 +44,8 @@ public class SynchronousWriteConsistency implements ReplicaConsistency {
     }
 
     @Override
-    public boolean isConsistent(Supplier<Connection> supplier) {
-        return replicaConsistency.isConsistent(supplier);
+    public boolean isConsistent(Database database) {
+        return replicaConsistency.isConsistent(database);
     }
 
     public static class Waiting {
@@ -84,8 +86,8 @@ public class SynchronousWriteConsistency implements ReplicaConsistency {
         }
 
         private boolean checkConsistency() {
-            try (ConnectionSupplier replica = new ConnectionSupplier(connections)) {
-                return consistency.isConsistent(replica);
+            try (LazyDataSource replica = new LazyDataSource(connections)) {
+                return consistency.isConsistent(() -> replica);
             } catch (Exception e) {
                 throw new RuntimeException(format("Checking consistency failed: %s", consistency), e);
             }
@@ -97,10 +99,10 @@ public class SynchronousWriteConsistency implements ReplicaConsistency {
 
     }
 
-    private static class ConnectionSupplier implements Supplier<Connection>, AutoCloseable {
+    private static class LazyDataSource implements DataSource, AutoCloseable {
         private final LazyReference<Connection> connection;
 
-        private ConnectionSupplier(ConnectionProvider connectionProvider) {
+        private LazyDataSource(ConnectionProvider connectionProvider) {
             connection = new LazyReference<Connection>() {
                 @Override
                 protected Connection create() throws Exception {
@@ -120,7 +122,7 @@ public class SynchronousWriteConsistency implements ReplicaConsistency {
         }
 
         @Override
-        public Connection get() {
+        public Connection getConnection() {
             return connection.get();
         }
     }

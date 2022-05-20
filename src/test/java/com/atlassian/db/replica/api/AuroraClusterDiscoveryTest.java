@@ -2,6 +2,7 @@ package com.atlassian.db.replica.api;
 
 import com.atlassian.db.replica.internal.DefaultReplicaConnectionPerUrlProvider;
 import com.atlassian.db.replica.internal.aurora.AuroraClusterDiscovery;
+import com.atlassian.db.replica.spi.DataSource;
 import com.atlassian.db.replica.spi.ReplicaConnectionPerUrlProvider;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -89,8 +90,8 @@ class AuroraClusterDiscoveryTest {
             .build();
         final Collection<Database> replicas = clusterDiscovery.getReplicas(() -> postgresConnectionMock);
         final List<String> urls = replicas.stream()
-            .map(Database::getConnectionSupplier)
-            .map(Supplier::get)
+            .map(Database::getDataSource)
+            .map(DataSource::getConnection)
             .map(this::getDatabaseMetaData)
             .map(this::getUrl)
             .collect(Collectors.toList());

@@ -1,6 +1,7 @@
 package com.atlassian.db.replica.api;
 
 import com.atlassian.db.replica.internal.aurora.AuroraReplicaNode;
+import com.atlassian.db.replica.spi.DataSource;
 import com.atlassian.db.replica.spi.ReplicaConnectionPerUrlProvider;
 import com.atlassian.db.replica.spi.ReplicaConsistency;
 import com.atlassian.db.replica.spi.SuppliedCache;
@@ -74,57 +75,17 @@ class AuroraMultiReplicaConsistencyTest {
             .build();
 
         //when
-        boolean consistent = sut.isConsistent(() -> supplierConnection);
+        boolean consistent = sut.isConsistent(() -> () -> supplierConnection);
 
         //then
         assertTrue(consistent);
     }
 
     @Test
-    void shouldCloseReplicaConnectionsWhenConsistent() throws SQLException {
-        //given
-        Collection<Connection> replicas = mockReplicaConnections(5);
-
-        sut = AuroraMultiReplicaConsistency.builder()
-            .replicaConsistency(new ReplicaConsistencyMock(true))
-            .discoveredReplicasCache(discoveredReplicasCache)
-            .build();
-
-        //when
-        sut.isConsistent(() -> supplierConnection);
-
-        //then
-        verify(supplierConnection, never()).close();
-        for (Connection replica : replicas) {
-            verify(replica).close();
-        }
-    }
-
-    @Test
-    void shouldCloseReplicaConnectionsWhenNotConsistent() throws SQLException {
-        //given
-        Collection<Connection> replicas = mockReplicaConnections(5);
-
-        sut = AuroraMultiReplicaConsistency.builder()
-            .replicaConsistency(new ReplicaConsistencyMock(false))
-            .discoveredReplicasCache(discoveredReplicasCache)
-            .build();
-
-        //when
-        sut.isConsistent(() -> supplierConnection);
-
-        //then
-        verify(supplierConnection, never()).close();
-        for (Connection replica : replicas) {
-            verify(replica).close();
-        }
-    }
-
-    @Test
     void shouldNotOpenConnectionIfNotNeeded() {
         //given
         mockReplicaConnections(5, true);
-        final Supplier<Connection> connectionSupplier = mock(Supplier.class);
+        final DataSource connectionSupplier = mock(DataSource.class);
         sut = AuroraMultiReplicaConsistency.builder()
             .replicaConsistency(new ReplicaConsistency() {
                 @Override
@@ -133,7 +94,7 @@ class AuroraMultiReplicaConsistencyTest {
                 }
 
                 @Override
-                public boolean isConsistent(Supplier<Connection> replica) {
+                public boolean isConsistent(Database replica) {
                     // Don't use the supplier
                     return true;
                 }
@@ -143,7 +104,7 @@ class AuroraMultiReplicaConsistencyTest {
 
 
         //when
-        final Throwable throwable = catchThrowable(() -> sut.isConsistent(connectionSupplier));
+        final Throwable throwable = catchThrowable(() -> sut.isConsistent(() -> connectionSupplier));
 
         //then
         assertThat(throwable).doesNotThrowAnyException();

@@ -1,5 +1,6 @@
 package com.atlassian.db.replica.it.example.aurora.replica.api;
 
+import com.atlassian.db.replica.api.Database;
 import com.atlassian.db.replica.api.ThrottledCache;
 import com.atlassian.db.replica.internal.MonotonicMemoryCache;
 import com.atlassian.db.replica.internal.aurora.ReplicaNode;
@@ -55,34 +56,34 @@ public class SequenceReplicaConsistency implements ReplicaConsistency {
     }
 
     @Override
-    public boolean isConsistent(Supplier<Connection> replica) {
+    public boolean isConsistent(Database replica) {
         try {
             return lastWrite.get()
-                .map(lastWrite1 -> computeReplicasConsistency(replica.get(), lastWrite1))
+                .map(lastWrite1 -> computeReplicasConsistency(replica, lastWrite1))
                 .orElse(unknownWritesFallback);
         } catch (Exception e) {
             throw new RuntimeException("Exception occurred during consistency checking.", e);
         }
     }
 
-    private boolean computeReplicasConsistency(Connection replica, long lastWrite) {
+    private boolean computeReplicasConsistency(Database replica, long lastWrite) {
         tryRefreshLsnCacheForCurrentReplica(replica);
         return isConsistent(replica, lastWrite);
     }
 
-    private void tryRefreshLsnCacheForCurrentReplica(Connection replica) {
-        String replicaId = replicaNode.get(replica);
-        if (replicaId != null) {
+    private void tryRefreshLsnCacheForCurrentReplica(Database replica) {
+        replica.getId().ifPresent(replicaId -> {
             multiReplicaLsnCache.computeIfAbsent(
                     replicaId,
                     x -> new ThrottledCache<>(Clock.systemUTC(), LSN_CHECK_LOCK_TIMEOUT)
                 )
-                .get(() -> sequence.fetch(replica));
-        }
+                .get(() -> sequence.fetch(replica.getDataSource().getConnection()));
+
+        });
     }
 
-    private boolean isConsistent(Connection replica, long lastWrite) {
-        final Long lsn = multiReplicaLsnCache.get(replicaNode.get(replica)).get().orElse(0L);
+    private boolean isConsistent(Database replica, long lastWrite) {
+        final Long lsn = multiReplicaLsnCache.get(replica.getId().orElse(null)).get().orElse(0L);
         return lsn >= lastWrite;
     }
 

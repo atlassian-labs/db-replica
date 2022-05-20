@@ -46,7 +46,7 @@ public class AuroraPostgresLsnReplicaConsistencyTest {
     public void shouldBeInconsistentWhenLastWriteLsnUnknown() {
         lastWriteCache.reset();
 
-        boolean isConsistent = consistency.isConsistent(new ConnectionSupplier(replica));
+        boolean isConsistent = consistency.isConsistent(() -> new ConnectionSupplier(replica));
 
         assertThat(isConsistent).isFalse();
     }
@@ -57,7 +57,7 @@ public class AuroraPostgresLsnReplicaConsistencyTest {
         mockLsnFetchingFailure(replica);
         consistency.write(main);
 
-        boolean isConsistent = consistency.isConsistent(new ConnectionSupplier(replica));
+        boolean isConsistent = consistency.isConsistent(() -> new ConnectionSupplier(replica));
 
         assertThat(isConsistent).isFalse();
     }
@@ -68,7 +68,7 @@ public class AuroraPostgresLsnReplicaConsistencyTest {
         mockLsnFetching(replica, LAST_WRITE_LSN - 1);
         consistency.write(main);
 
-        boolean isConsistent = consistency.isConsistent(new ConnectionSupplier(replica));
+        boolean isConsistent = consistency.isConsistent(() -> new ConnectionSupplier(replica));
 
         assertThat(isConsistent).isFalse();
     }
@@ -79,7 +79,7 @@ public class AuroraPostgresLsnReplicaConsistencyTest {
         mockLsnFetching(replica, LAST_WRITE_LSN + 1);
         consistency.write(main);
 
-        boolean isConsistent = consistency.isConsistent(new ConnectionSupplier(replica));
+        boolean isConsistent = consistency.isConsistent(() -> new ConnectionSupplier(replica));
 
         assertThat(isConsistent).isTrue();
     }
@@ -90,7 +90,7 @@ public class AuroraPostgresLsnReplicaConsistencyTest {
         mockLsnFetching(replica, LAST_WRITE_LSN);
         consistency.write(main);
 
-        boolean isConsistent = consistency.isConsistent(new ConnectionSupplier(replica));
+        boolean isConsistent = consistency.isConsistent(() -> new ConnectionSupplier(replica));
 
         assertThat(isConsistent).isTrue();
     }

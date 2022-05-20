@@ -1,5 +1,6 @@
 package com.atlassian.db.replica.spi;
 
+import com.atlassian.db.replica.api.Database;
 import com.atlassian.db.replica.internal.util.ThreadSafe;
 
 import java.sql.Connection;
@@ -33,8 +34,8 @@ public interface ReplicaConsistency {
     /**
      * Judges if {@code replica} is ready to be queried.
      *
-     * @param replica connects to the replica database
+     * @param database returns a supplier for replica database
      * @return true if {@code replica} is consistent with main
      */
-    boolean isConsistent(Supplier<Connection> replica);
+    boolean isConsistent(Database database);
 }

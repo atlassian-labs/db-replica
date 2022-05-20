@@ -1,5 +1,6 @@
 package com.atlassian.db.replica.internal;
 
+import com.atlassian.db.replica.api.Database;
 import com.atlassian.db.replica.internal.util.ThreadSafe;
 import com.atlassian.db.replica.spi.*;
 import org.postgresql.replication.LogSequenceNumber;
@@ -37,14 +38,14 @@ public class LsnReplicaConsistency implements ReplicaConsistency {
     }
 
     @Override
-    public boolean isConsistent(Supplier<Connection> replica) {
+    public boolean isConsistent(Database replica) {
         Optional<LogSequenceNumber> maybeLastWrite = lastWrite.get();
         if (!maybeLastWrite.isPresent()) {
             return false;
         }
         LogSequenceNumber lastRefresh;
         try {
-            lastRefresh = queryLsn(replica.get());
+            lastRefresh = queryLsn(replica.getDataSource().getConnection());
         } catch (Exception e) {
             //TODO: log warning
             return false;

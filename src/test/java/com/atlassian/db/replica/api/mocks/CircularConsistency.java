@@ -1,5 +1,6 @@
 package com.atlassian.db.replica.api.mocks;
 
+import com.atlassian.db.replica.api.Database;
 import com.atlassian.db.replica.spi.ReplicaConsistency;
 import com.google.common.collect.ImmutableList;
 
@@ -24,9 +25,9 @@ public class CircularConsistency implements ReplicaConsistency {
     }
 
     @Override
-    public boolean isConsistent(Supplier<Connection> replica) {
+    public boolean isConsistent(Database replica) {
         if (!this.ignoreSupplier) {
-            replica.get();
+            replica.getDataSource().getConnection();
         }
         return consistency.get(counter.getAndIncrement() % consistency.size());
     }
