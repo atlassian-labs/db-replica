@@ -1,6 +1,5 @@
 package com.atlassian.db.replica.internal.aurora;
 
-import com.atlassian.db.replica.api.AuroraConnectionDetails;
 import com.atlassian.db.replica.api.Database;
 import com.atlassian.db.replica.api.jdbc.JdbcUrl;
 import com.atlassian.db.replica.internal.NoCacheSuppliedCache;
@@ -12,7 +11,6 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.function.Supplier;
 
 import static java.util.stream.Collectors.toList;
 
@@ -107,17 +105,6 @@ public final class AuroraClusterDiscovery {
         public Builder clusterUri(String clusterUri) {
             this.clusterUri = clusterUri;
             return this;
-        }
-
-        /**
-         * @deprecated use
-         * {@link Builder#replicaConnectionPerUrlProvider(ReplicaConnectionPerUrlProvider)}{@code .}
-         * {@link Builder#build()} instead.
-         * also see {@link AuroraConnectionDetails}.
-         */
-        @Deprecated
-        public AuroraClusterDiscovery build(AuroraConnectionDetails auroraConnectionDetails) {
-            return replicaConnectionPerUrlProvider(auroraConnectionDetails.convert()).build();
         }
 
         public AuroraClusterDiscovery build() {

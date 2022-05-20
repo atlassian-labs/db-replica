@@ -107,22 +107,6 @@ public final class AuroraMultiReplicaConsistency implements ReplicaConsistency {
             return this;
         }
 
-        /**
-         * @deprecated see {@link AuroraConnectionDetails}.
-         */
-        @Deprecated
-        public Builder auroraConnectionDetails(AuroraConnectionDetails auroraConnectionDetails) {
-            return replicaConnectionPerUrlProvider(auroraConnectionDetails.convert());
-        }
-
-        /**
-         * @deprecated use {@link AuroraMultiReplicaConsistency#builder()} instead.
-         */
-        @Deprecated
-        public static Builder anAuroraMultiReplicaConsistencyBuilder() {
-            return new Builder();
-        }
-
         public AuroraMultiReplicaConsistency build() {
             return new AuroraMultiReplicaConsistency(
                 logger,
