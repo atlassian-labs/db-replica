@@ -18,7 +18,10 @@ import java.sql.Statement;
 import java.time.Duration;
 import java.util.Collections;
 import java.util.Properties;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 import static com.atlassian.db.replica.api.Queries.SIMPLE_QUERY;
 import static java.sql.ResultSet.CLOSE_CURSORS_AT_COMMIT;
@@ -80,6 +83,71 @@ public class DualConnectionIT {
 
             assertThat(readOnly).isTrue();
             assertThat(throwable).hasMessage("ERROR: cannot execute INSERT in a read-only transaction");
+        }
+    }
+
+    @Test
+    public void shouldInvokeRecoveryConflict() throws SQLException {
+        try (PostgresConnectionProvider connectionProvider = new PostgresConnectionProvider()) {
+            final WaitingReplicaConsistency consistency = new WaitingReplicaConsistency(new LsnReplicaConsistency());
+
+            createTable(DualConnection.builder(connectionProvider, consistency).build());
+
+            final Connection connection = DualConnection.builder(
+                connectionProvider,
+                consistency
+            ).build();
+
+
+            connection.prepareStatement("CREATE TABLE IF NOT EXISTS some_table (text VARCHAR ( 255 ));").executeUpdate();
+            final PreparedStatement preparedStatement = connection.prepareStatement("INSERT INTO some_table VALUES(?);");
+            for (int i = 0; i < 100; i++) {
+                preparedStatement.setString(1, "" + i);
+                preparedStatement.executeUpdate();
+            }
+
+            connection.close();
+
+            final Connection connection1 = DualConnection.builder(
+                connectionProvider,
+                consistency
+            ).build();
+
+            final Connection connection2 = DualConnection.builder(
+                connectionProvider,
+                consistency
+            ).build();
+
+            Callable callable = () -> {
+                Thread.sleep(300);
+                connection1.prepareStatement("LOCK TABLE some_table IN EXCLUSIVE MODE;").executeUpdate();
+                return null;
+            };
+
+            connection2.setAutoCommit(false);
+            Callable callable1 = () -> {
+                //needs better SQLs ;)
+                connection2.prepareStatement("SOME SQL").executeUpdate();
+                connection2.prepareStatement("SOME SQL").executeUpdate();
+                return null;
+            };
+
+
+            ExecutorService ex = Executors.newFixedThreadPool(2);
+            final Future future = ex.submit(callable);
+            final Future future1 = ex.submit(callable1);
+
+            try {
+                future.get();
+                future1.get();
+            }  catch (Exception e) {
+                System.out.println("Hopefully Recovery Conflict :fingerscrossed: " + e.getMessage());
+            }
+
+            connection1.close();
+            connection2.commit();
+            connection2.close();
+
         }
     }
 
