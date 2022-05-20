@@ -72,7 +72,7 @@ public final class AuroraPostgresLsnReplicaConsistency implements ReplicaConsist
     }
 
     @Override
-    public boolean isConsistent(Supplier<Connection> replica) {
+    public boolean isConsistent(Database replica) {
         try {
             return lastWrite.get()
                 .flatMap(lastWriteLsn -> isConsistentBasedOnLsn(replica, lastWriteLsn))
@@ -82,9 +82,9 @@ public final class AuroraPostgresLsnReplicaConsistency implements ReplicaConsist
         }
     }
 
-    private Optional<Boolean> isConsistentBasedOnLsn(Supplier<Connection> replica, Long lastWriteLsn) {
+    private Optional<Boolean> isConsistentBasedOnLsn(Database replica, Long lastWriteLsn) {
         return replicaLsnCache
-            .get(() -> queryReplicaDbLsn(replica.get()))
+            .get(() -> queryReplicaDbLsn(replica.getDataSource().getConnection()))
             .map(lsn -> lsn >= lastWriteLsn);
     }
 

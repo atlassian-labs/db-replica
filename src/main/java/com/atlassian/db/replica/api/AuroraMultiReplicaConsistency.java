@@ -1,7 +1,5 @@
 package com.atlassian.db.replica.api;
 
-import com.atlassian.db.replica.api.exception.ConnectionCouldNotBeClosedException;
-import com.atlassian.db.replica.internal.LazyReference;
 import com.atlassian.db.replica.internal.NoCacheSuppliedCache;
 import com.atlassian.db.replica.internal.NotLoggingLogger;
 import com.atlassian.db.replica.internal.aurora.AuroraClusterDiscovery;
@@ -12,9 +10,7 @@ import com.atlassian.db.replica.spi.ReplicaConsistency;
 import com.atlassian.db.replica.spi.SuppliedCache;
 
 import java.sql.Connection;
-import java.sql.SQLException;
 import java.util.Collection;
-import java.util.function.Supplier;
 
 public final class AuroraMultiReplicaConsistency implements ReplicaConsistency {
     private final Logger logger;
@@ -47,57 +43,20 @@ public final class AuroraMultiReplicaConsistency implements ReplicaConsistency {
     }
 
     @Override
-    public boolean isConsistent(Supplier<Connection> replicaSupplier) {
-        return cluster.getReplicas(replicaSupplier)
+    public boolean isConsistent(Database database) {
+        return cluster.getReplicas(database.getDataSource())
             .stream()
             .allMatch(replica -> {
-                try (LazyConnectionSupplier connectionSupplier = new LazyConnectionSupplier(replica.getConnectionSupplier())) {
-                    return replicaConsistency.isConsistent(connectionSupplier);
+                try {
+                    return replicaConsistency.isConsistent(replica);
                 } catch (ReadReplicaConnectionCreationException exception) {
-                    logger.warn("ReadReplicaConnectionCreationException occurred during consistency checking. It is likely that replica is the process of scaling, replica id: " + replica.getId(), exception);
+                    logger.warn(
+                        "ReadReplicaConnectionCreationException occurred during consistency checking. It is likely that replica is the process of scaling, replica id: " + replica.getId(),
+                        exception
+                    );
                     return true;
-                } catch (SQLException exception) {
-                    throw new ConnectionCouldNotBeClosedException(exception);
                 }
             });
-    }
-
-    private static class LazyConnectionSupplier implements Supplier<Connection>, AutoCloseable {
-        final LazyReference<Connection> connectionLazyReference = new LazyReference<Connection>() {
-            @Override
-            protected Connection create() {
-                return supplier.get();
-            }
-        };
-        private final Supplier<Connection> supplier;
-
-        private LazyConnectionSupplier(Supplier<Connection> supplier) {
-            this.supplier = supplier;
-        }
-
-        /**
-         * The initial implementation of AuroraMultiReplicaConsistency was buggy. The implementation took the
-         * connection management responsibility from ReplicaConsistency. The current implementation fixes the issue
-         * by allowing ReplicaConsistency implementation to take full responsibility for the connection lifecycle.
-         *
-         * Unfortunately, the existing implementations of ReplicaConsistency may rely on the bug (for example some
-         * implementations in our product rely on it). To make it backwards compatible (behavioural compatibility),
-         * LazyConnectionSupplier closes the connection if ReplicaConsistency doesn't do that.
-         */
-        @Override
-        public void close() throws SQLException {
-            if (connectionLazyReference.isInitialized()) {
-                final Connection connection = connectionLazyReference.get();
-                if (!connection.isClosed()) {
-                    connection.close();
-                }
-            }
-        }
-
-        @Override
-        public Connection get() {
-            return connectionLazyReference.get();
-        }
     }
 
     public static final class Builder {

@@ -1,11 +1,11 @@
 package com.atlassian.db.replica.internal.aurora;
 
+import com.atlassian.db.replica.spi.DataSource;
 import com.atlassian.db.replica.spi.ReplicaConnectionProvider;
 import com.atlassian.db.replica.api.Database;
 
-import java.sql.Connection;
 import java.sql.SQLException;
-import java.util.function.Supplier;
+import java.util.Optional;
 
 public class AuroraReplicaNode implements Database {
     private final String id;
@@ -20,12 +20,12 @@ public class AuroraReplicaNode implements Database {
     }
 
     @Override
-    public String getId() {
-        return id;
+    public Optional<String> getId() {
+        return Optional.ofNullable(id);
     }
 
     @Override
-    public Supplier<Connection> getConnectionSupplier() {
+    public DataSource getDataSource() {
         return () -> {
             try {
                 return replicaConnectionProvider.getReplicaConnection();

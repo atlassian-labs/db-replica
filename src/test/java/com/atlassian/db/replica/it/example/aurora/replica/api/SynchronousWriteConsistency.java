@@ -1,5 +1,6 @@
 package com.atlassian.db.replica.it.example.aurora.replica.api;
 
+import com.atlassian.db.replica.api.Database;
 import com.atlassian.db.replica.internal.LazyReference;
 import com.atlassian.db.replica.spi.ConnectionProvider;
 import com.atlassian.db.replica.spi.ReplicaConsistency;
@@ -42,8 +43,8 @@ public class SynchronousWriteConsistency implements ReplicaConsistency {
     }
 
     @Override
-    public boolean isConsistent(Supplier<Connection> supplier) {
-        return replicaConsistency.isConsistent(supplier);
+    public boolean isConsistent(Database database) {
+        return replicaConsistency.isConsistent(database);
     }
 
     public static class Waiting {

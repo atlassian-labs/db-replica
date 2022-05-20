@@ -4,6 +4,7 @@ import com.atlassian.db.replica.api.AuroraConnectionDetails;
 import com.atlassian.db.replica.api.Database;
 import com.atlassian.db.replica.api.jdbc.JdbcUrl;
 import com.atlassian.db.replica.internal.NoCacheSuppliedCache;
+import com.atlassian.db.replica.spi.DataSource;
 import com.atlassian.db.replica.spi.ReplicaConnectionPerUrlProvider;
 import com.atlassian.db.replica.spi.SuppliedCache;
 
@@ -30,14 +31,14 @@ public final class AuroraClusterDiscovery {
         this.clusterUri = clusterUri;
     }
 
-    public Collection<Database> getReplicas(Supplier<Connection> connectionSupplier) {
-        return discoveredReplicasCache.get(() -> fetchReplicas(connectionSupplier))
+    public Collection<Database> getReplicas(DataSource dataSource) {
+        return discoveredReplicasCache.get(() -> fetchReplicas(dataSource))
             .orElse(Collections.emptyList());
     }
 
-    private Collection<Database> fetchReplicas(Supplier<Connection> connectionSupplier) {
+    private Collection<Database> fetchReplicas(DataSource dataSource) {
         try {
-            final Connection connection = connectionSupplier.get();
+            final Connection connection = dataSource.getConnection();
             final AuroraReplicasDiscoverer discoverer = createDiscoverer(connection);
             return discoverer.fetchReplicasUrls(connection).stream()
                 .map(auroraUrl -> {

@@ -8,7 +8,6 @@ import java.sql.Connection;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.function.Supplier;
 
 /**
  * Assumes that writes propagate from main to replicas in at most a given amount of time.
@@ -69,7 +68,7 @@ public final class PessimisticPropagationConsistency implements ReplicaConsisten
     }
 
     @Override
-    public boolean isConsistent(Supplier<Connection> replica) {
+    public boolean isConsistent(Database replica) {
         Instant assumedRefresh = assumeLastRefresh();
         Instant assumedWrite = assumeLastWrite();
         return assumedRefresh.isAfter(assumedWrite);

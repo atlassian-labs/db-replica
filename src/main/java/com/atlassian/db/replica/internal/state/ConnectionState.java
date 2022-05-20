@@ -1,5 +1,6 @@
 package com.atlassian.db.replica.internal.state;
 
+import com.atlassian.db.replica.api.Database;
 import com.atlassian.db.replica.api.reason.RouteDecision;
 import com.atlassian.db.replica.internal.ConnectionParameters;
 import com.atlassian.db.replica.internal.DecisionAwareReference;
@@ -14,6 +15,7 @@ import java.sql.SQLException;
 import java.sql.SQLWarning;
 import java.util.Optional;
 import java.util.concurrent.Executor;
+import java.util.function.Supplier;
 
 import static com.atlassian.db.replica.api.reason.Reason.HIGH_TRANSACTION_ISOLATION_LEVEL;
 import static com.atlassian.db.replica.api.reason.Reason.MAIN_CONNECTION_REUSE;
@@ -217,7 +219,7 @@ public final class ConnectionState {
         }
         boolean isConsistent;
         try {
-            isConsistent = consistency.isConsistent(() -> readConnection.get(decisionBuilder));
+            isConsistent = consistency.isConsistent(() -> () -> readConnection.get(decisionBuilder));
         } catch (Exception e) {
             closeConnection(readConnection, decisionBuilder);
             throw e;
