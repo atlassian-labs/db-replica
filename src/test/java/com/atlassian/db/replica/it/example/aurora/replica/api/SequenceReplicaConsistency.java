@@ -75,7 +75,7 @@ public class SequenceReplicaConsistency implements ReplicaConsistency {
         replica.getId().ifPresent(replicaId -> {
             multiReplicaLsnCache.computeIfAbsent(
                     replicaId,
-                    x -> new ThrottledCache<>(Clock.systemUTC(), LSN_CHECK_LOCK_TIMEOUT)
+                    x ->  ThrottledCache.<Long>builder(Clock.systemUTC(), LSN_CHECK_LOCK_TIMEOUT).build()
                 )
                 .get(() -> sequence.fetch(replica.getDataSource().getConnection()));
 

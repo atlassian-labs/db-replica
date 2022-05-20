@@ -1,6 +1,5 @@
 package com.atlassian.db.replica.api;
 
-import com.atlassian.db.replica.internal.LockBasedThrottledCache;
 import com.atlassian.db.replica.internal.util.ThreadSafe;
 import com.atlassian.db.replica.spi.SuppliedCache;
 
@@ -34,22 +33,8 @@ public final class ThrottledCache<T> implements SuppliedCache<T> {
         return new Builder<>(clock, timeout);
     }
 
-    /**
-     * @deprecated use `ThrottledCache#builder`
-     */
-    @SuppressWarnings("DeprecatedIsStillUsed")
-    @Deprecated
-    public ThrottledCache(Clock clock, Duration timeout) {
+    private ThrottledCache(Clock clock, Duration timeout) {
         this.delegate = new ThrottledCacheWithTimeout<>(clock, timeout);
-    }
-
-    /**
-     * @deprecated It may be dangerous to use ThrottledCache without any timeout. A single supplier can block the cache refreshes forever.
-     * This constructor is available for compatibility only.
-     */
-    @Deprecated
-    public ThrottledCache() {
-        this.delegate = new LockBasedThrottledCache<>();
     }
 
     private ThrottledCache(Clock clock, Duration timeout, Comparator<T> comparator) {

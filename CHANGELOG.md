@@ -30,6 +30,7 @@ Dropping a requirement of a major version of a dependency is a new contract.
 - Supplier<Connection> getConnectionSupplier();  -> getConnection DataSource
 - AuroraMultiReplicaConsistency#isConsistent no longer opens or closes connections
 - AuroraConnectionDetails
+- ThrottledCache constructors
 ### Added
 - ReplicaConsistency#isConsistent(Database replica)
 - Database#getId() returning Optional<String>
