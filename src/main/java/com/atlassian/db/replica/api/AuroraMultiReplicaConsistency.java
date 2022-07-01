@@ -26,14 +26,19 @@ public final class AuroraMultiReplicaConsistency implements ReplicaConsistency {
         ReplicaConsistency replicaConsistency,
         ReplicaConnectionPerUrlProvider replicaConnectionPerUrlProvider,
         SuppliedCache<Collection<Database>> discoveredReplicasCache,
-        String clusterUri
+        String clusterUri,
+        boolean compatibleWithPreviousVersion
     ) {
         this.logger = logger;
         this.replicaConsistency = replicaConsistency;
-        this.cluster = AuroraClusterDiscovery.builder()
+        final AuroraClusterDiscovery.Builder builder = AuroraClusterDiscovery.builder()
             .replicaConnectionPerUrlProvider(replicaConnectionPerUrlProvider)
             .discoveredReplicasCache(discoveredReplicasCache)
-            .clusterUri(clusterUri)
+            .clusterUri(clusterUri);
+        if (!compatibleWithPreviousVersion) {
+            builder.ignoreInactiveReplicas();
+        }
+        this.cluster = builder
             .build();
     }
 
@@ -106,6 +111,7 @@ public final class AuroraMultiReplicaConsistency implements ReplicaConsistency {
         private SuppliedCache<Collection<Database>> discoveredReplicasCache = new NoCacheSuppliedCache<>();
         private Logger logger = new NotLoggingLogger();
         private String clusterUri;
+        private boolean compatibleWithPreviousVersion = false;
 
         public Builder replicaConsistency(ReplicaConsistency replicaConsistency) {
             this.replicaConsistency = replicaConsistency;
@@ -135,6 +141,7 @@ public final class AuroraMultiReplicaConsistency implements ReplicaConsistency {
          * the same way as the previous version of the library.
          */
         public Builder compatibleWithPreviousVersion() {
+            this.compatibleWithPreviousVersion = true;
             return this;
         }
 
@@ -170,7 +177,8 @@ public final class AuroraMultiReplicaConsistency implements ReplicaConsistency {
                 replicaConsistency,
                 replicaConnectionPerUrlProvider,
                 discoveredReplicasCache,
-                clusterUri
+                clusterUri,
+                compatibleWithPreviousVersion
             );
         }
     }

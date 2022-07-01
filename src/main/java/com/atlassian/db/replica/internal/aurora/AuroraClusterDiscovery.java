@@ -19,15 +19,18 @@ public final class AuroraClusterDiscovery {
     private final ReplicaConnectionPerUrlProvider replicaConnectionPerUrlProvider;
     private final SuppliedCache<Collection<Database>> discoveredReplicasCache;
     private final String clusterUri;
+    private final boolean ignoreInactiveReplicas;
 
     private AuroraClusterDiscovery(
         ReplicaConnectionPerUrlProvider replicaConnectionPerUrlProvider,
         SuppliedCache<Collection<Database>> discoveredReplicasCache,
-        String clusterUri
+        String clusterUri,
+        boolean ignoreInactiveReplicas
     ) {
         this.replicaConnectionPerUrlProvider = replicaConnectionPerUrlProvider;
         this.discoveredReplicasCache = discoveredReplicasCache;
         this.clusterUri = clusterUri;
+        this.ignoreInactiveReplicas = ignoreInactiveReplicas;
     }
 
     public Collection<Database> getReplicas(Supplier<Connection> connectionSupplier) {
@@ -68,7 +71,8 @@ public final class AuroraClusterDiscovery {
             final String readerEndpoint = split[2];
             final String databaseName = split[3];
             return new AuroraReplicasDiscoverer(
-                new AuroraJdbcUrl(AuroraEndpoint.parse(readerEndpoint), databaseName)
+                new AuroraJdbcUrl(AuroraEndpoint.parse(readerEndpoint), databaseName),
+                ignoreInactiveReplicas
             );
         } catch (SQLException exception) {
             throw new ReadReplicaDiscovererCreationException(exception);
@@ -80,7 +84,8 @@ public final class AuroraClusterDiscovery {
         final String readerEndpoint = split[2];
         final String databaseName = split[3];
         return new AuroraReplicasDiscoverer(
-            new AuroraJdbcUrl(AuroraEndpoint.parse(readerEndpoint), databaseName)
+            new AuroraJdbcUrl(AuroraEndpoint.parse(readerEndpoint), databaseName),
+            ignoreInactiveReplicas
         );
     }
 
@@ -92,6 +97,7 @@ public final class AuroraClusterDiscovery {
         private ReplicaConnectionPerUrlProvider replicaConnectionPerUrlProvider;
         private SuppliedCache<Collection<Database>> discoveredReplicasCache = new NoCacheSuppliedCache<>();
         private String clusterUri;
+        private boolean ignoreInactiveReplicas = false;
 
         public Builder replicaConnectionPerUrlProvider(ReplicaConnectionPerUrlProvider replicaConnectionPerUrlProvider) {
             this.replicaConnectionPerUrlProvider = replicaConnectionPerUrlProvider;
@@ -108,6 +114,11 @@ public final class AuroraClusterDiscovery {
             return this;
         }
 
+        public Builder ignoreInactiveReplicas() {
+            this.ignoreInactiveReplicas = true;
+            return this;
+        }
+
         /**
          * @deprecated use
          * {@link Builder#replicaConnectionPerUrlProvider(ReplicaConnectionPerUrlProvider)}{@code .}
@@ -120,7 +131,9 @@ public final class AuroraClusterDiscovery {
         }
 
         public AuroraClusterDiscovery build() {
-            return new AuroraClusterDiscovery(replicaConnectionPerUrlProvider, discoveredReplicasCache, clusterUri);
+            return new AuroraClusterDiscovery(replicaConnectionPerUrlProvider, discoveredReplicasCache, clusterUri,
+                ignoreInactiveReplicas
+            );
         }
     }
 
