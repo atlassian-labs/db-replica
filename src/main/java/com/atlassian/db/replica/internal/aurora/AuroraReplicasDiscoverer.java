@@ -14,11 +14,9 @@ import static java.util.stream.Collectors.toList;
  */
 public final class AuroraReplicasDiscoverer {
     private final AuroraJdbcUrl readerUrl;
-    private final boolean ignoreInactiveReplicas;
 
-    public AuroraReplicasDiscoverer(AuroraJdbcUrl readerUrl, boolean ignoreInactiveReplicas) {
+    public AuroraReplicasDiscoverer(AuroraJdbcUrl readerUrl) {
         this.readerUrl = readerUrl;
-        this.ignoreInactiveReplicas = ignoreInactiveReplicas;
     }
 
     /**
@@ -40,9 +38,7 @@ public final class AuroraReplicasDiscoverer {
 
     private List<String> fetchReplicasServerIds(Connection connection) throws SQLException {
         List<String> ids = new LinkedList<>();
-        final String sql = ignoreInactiveReplicas ?
-            "SELECT server_id FROM aurora_replica_status() WHERE session_id != 'MASTER_SESSION_ID' and last_update_timestamp > NOW() - INTERVAL '5 minutes'" :
-            "SELECT server_id FROM aurora_replica_status() WHERE session_id != 'MASTER_SESSION_ID'";
+        final String sql = "SELECT server_id FROM aurora_replica_status() WHERE session_id != 'MASTER_SESSION_ID' and last_update_timestamp > NOW() - INTERVAL '5 minutes'";
         try (ResultSet rs =
                  connection.prepareStatement(sql).executeQuery()) {
             while (rs.next()) {
