@@ -22,7 +22,10 @@ Dropping a requirement of a major version of a dependency is a new contract.
 
 
 ## [Unreleased]
-[Unreleased]: https://github.com/atlassian-labs/db-replica/compare/release-2.6.2...master
+[Unreleased]: https://github.com/atlassian-labs/db-replica/compare/release-2.6.4...master
+
+## [2.6.4] - 2022-07-01
+[2.6.4]: https://github.com/atlassian-labs/db-replica/compare/release-2.6.2...release-2.6.4
 
 ### Fixed
 - Ignore replica nodes when the topology state for the node was not updated for 5 minutes.
