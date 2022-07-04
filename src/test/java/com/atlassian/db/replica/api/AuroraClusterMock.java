@@ -2,9 +2,13 @@ package com.atlassian.db.replica.api;
 
 import com.google.common.collect.Sets;
 import org.h2.tools.SimpleResultSet;
+import org.mockito.Mockito;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -14,19 +18,25 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 public class AuroraClusterMock {
-    private final Connection connection = DriverManager.getConnection("jdbc:h2:mem:testdb", "sa", "");
+    private final Connection connection;
     private static final Set<Node> replicas = Sets.newConcurrentHashSet();
     private static final AtomicInteger counter = new AtomicInteger();
 
     public AuroraClusterMock() throws SQLException {
         counter.set(0);
         replicas.clear();
-        try (Statement statement = getMainConnection().createStatement()) {
-            //noinspection SqlNoDataSourceInspection
-            statement.executeUpdate(
-                "CREATE ALIAS IF NOT EXISTS aurora_replica_status FOR \"com.atlassian.db.replica.api.AuroraClusterMock.auroraGlobalDbInstanceStatus\";");
-        }
+        this.connection = mock(Connection.class);
+        final PreparedStatement preparedStatement = mock(PreparedStatement.class);
+        when(this.connection.prepareStatement(eq("SELECT server_id FROM aurora_replica_status() WHERE session_id != 'MASTER_SESSION_ID' and last_update_timestamp > NOW() - INTERVAL '5 minutes'")))
+            .thenReturn(preparedStatement);
+        when(preparedStatement.executeQuery()).thenAnswer((Answer<ResultSet>) invocation -> {
+            return auroraGlobalDbInstanceStatus();
+        });
     }
 
     public Connection getMainConnection() {
@@ -52,7 +62,6 @@ public class AuroraClusterMock {
         SimpleResultSet rs = new SimpleResultSet();
         rs.addColumn("SERVER_ID", Types.VARCHAR, 255, 0);
         rs.addColumn("SESSION_ID", Types.VARCHAR, 255, 0);
-        rs.addRow("apg-global-db-rpo-mammothrw-elephantro-1-n1", "MASTER_SESSION_ID");
         replicas.forEach(replica -> rs.addRow(replica.getServerId(), replica.getSessionId()));
         return rs;
     }
