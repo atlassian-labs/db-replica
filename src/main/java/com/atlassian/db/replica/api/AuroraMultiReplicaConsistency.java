@@ -5,7 +5,7 @@ import com.atlassian.db.replica.internal.LazyReference;
 import com.atlassian.db.replica.internal.NoCacheSuppliedCache;
 import com.atlassian.db.replica.internal.NotLoggingLogger;
 import com.atlassian.db.replica.internal.aurora.AuroraClusterDiscovery;
-import com.atlassian.db.replica.internal.aurora.ReadReplicaConnectionCreationException;
+import com.atlassian.db.replica.api.exception.ReadReplicaConnectionCreationException;
 import com.atlassian.db.replica.spi.Logger;
 import com.atlassian.db.replica.spi.ReplicaConnectionPerUrlProvider;
 import com.atlassian.db.replica.spi.ReplicaConsistency;

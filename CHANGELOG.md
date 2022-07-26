@@ -24,6 +24,9 @@ Dropping a requirement of a major version of a dependency is a new contract.
 ## [Unreleased]
 [Unreleased]: https://github.com/atlassian-labs/db-replica/compare/release-2.6.4...master
 
+### Add
+- Throw `ReadReplicaConnectionCreationException` when failing to connect to a replica
+
 ## [2.6.4] - 2022-07-01
 [2.6.4]: https://github.com/atlassian-labs/db-replica/compare/release-2.6.2...release-2.6.4
 
