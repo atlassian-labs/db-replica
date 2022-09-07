@@ -1,5 +1,6 @@
 package com.atlassian.db.replica.api;
 
+import com.atlassian.db.replica.api.mocks.CircularConsistency;
 import com.atlassian.db.replica.api.reason.Reason;
 import com.atlassian.db.replica.api.mocks.ConnectionMock;
 import com.atlassian.db.replica.api.mocks.ConnectionProviderMock;
@@ -28,6 +29,7 @@ import static com.atlassian.db.replica.api.mocks.CircularConsistency.permanentCo
 import static com.atlassian.db.replica.api.mocks.CircularConsistency.permanentInconsistency;
 import static com.atlassian.db.replica.api.mocks.ConnectionProviderMock.ConnectionType.MAIN;
 import static com.atlassian.db.replica.api.mocks.ConnectionProviderMock.ConnectionType.REPLICA;
+import static com.google.common.collect.ImmutableList.of;
 import static java.sql.Connection.TRANSACTION_SERIALIZABLE;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
@@ -1333,5 +1335,21 @@ public class TestDualConnection {
         dualConnection.close();
 
         assertThat(dualConnection.isValid(1)).isFalse();
+    }
+
+    @Test
+    public void shouldUseMainConnectionAfterWrite() throws SQLException {
+        final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
+        final Connection connection = DualConnection.builder(
+            connectionProvider,
+            permanentInconsistency().build()
+        ).build();
+
+        connection.prepareStatement("SELECT 1").executeQuery();
+        connection.prepareStatement("INSERT INTO test VALUES(1,2)").executeUpdate();
+        connection.prepareStatement("SELECT 1").executeQuery();
+
+        assertThat(connectionProvider.getProvidedConnectionTypes())
+            .containsOnly(MAIN);
     }
 }
