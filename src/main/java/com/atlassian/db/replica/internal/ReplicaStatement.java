@@ -575,6 +575,8 @@ public class ReplicaStatement implements Statement {
         final Connection connection = currentStatement.getConnection();
         if (connection.getAutoCommit()) {
             consistency.write(connection);
+        } else {
+            connectionProvider.markConnectionDirty();
         }
     }
 

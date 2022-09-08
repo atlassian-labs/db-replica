@@ -175,6 +175,7 @@ public class ReplicaConnectionProvider implements AutoCloseable {
         final Optional<Connection> connection = state.getConnection();
         if (connection.isPresent()) {
             connection.get().rollback();
+            state.clearDirty();
         }
     }
 
@@ -191,6 +192,7 @@ public class ReplicaConnectionProvider implements AutoCloseable {
         if (state.getState().equals(MAIN) && !autoCommit) {
             final Connection mainConnection = state.getWriteConnection(new RouteDecisionBuilder(Reason.RW_API_CALL));
             consistency.write(mainConnection);
+            state.clearDirty();
         }
     }
 
@@ -200,7 +202,13 @@ public class ReplicaConnectionProvider implements AutoCloseable {
             consistency.preCommit(mainConnection);
         }
     }
+    public void markConnectionDirty(){
+        this.state.markDirty();
+    }
 
+    public boolean isDirty(){
+        return this.state.isDirty();
+    }
     @Override
     public void close() throws SQLException {
         state.close();

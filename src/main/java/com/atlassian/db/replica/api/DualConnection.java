@@ -3,6 +3,7 @@ package com.atlassian.db.replica.api;
 import com.atlassian.db.replica.api.reason.Reason;
 import com.atlassian.db.replica.internal.ClientInfo;
 import com.atlassian.db.replica.internal.ForwardCall;
+import com.atlassian.db.replica.internal.NoOpDirtyConnectionCloseHook;
 import com.atlassian.db.replica.internal.ReplicaCallableStatement;
 import com.atlassian.db.replica.internal.ReplicaConnectionProvider;
 import com.atlassian.db.replica.internal.ReplicaPreparedStatement;
@@ -12,6 +13,7 @@ import com.atlassian.db.replica.internal.state.NoOpStateListener;
 import com.atlassian.db.replica.internal.state.StateListener;
 import com.atlassian.db.replica.spi.ConnectionProvider;
 import com.atlassian.db.replica.spi.DatabaseCall;
+import com.atlassian.db.replica.spi.DirtyConnectionCloseHook;
 import com.atlassian.db.replica.spi.ReplicaConsistency;
 
 import java.sql.Array;
@@ -49,14 +51,17 @@ public final class DualConnection implements Connection {
     private final ReplicaConsistency consistency;
     private final DatabaseCall databaseCall;
     private final Set<String> readOnlyFunctions;
+    private final DirtyConnectionCloseHook dirtyConnectionCloseHook;
 
     private DualConnection(
         ConnectionProvider connectionProvider,
         ReplicaConsistency consistency,
         DatabaseCall databaseCall,
         StateListener stateListener,
-        Set<String> readOnlyFunctions
+        Set<String> readOnlyFunctions,
+        DirtyConnectionCloseHook dirtyConnectionCloseHook
     ) {
+        this.dirtyConnectionCloseHook = dirtyConnectionCloseHook;
         this.connectionProvider = new ReplicaConnectionProvider(
             connectionProvider,
             consistency,
@@ -138,6 +143,9 @@ public final class DualConnection implements Connection {
 
     @Override
     public void close() throws SQLException {
+        if (connectionProvider.isDirty()) {
+            dirtyConnectionCloseHook.onClose(this);
+        }
         connectionProvider.close();
     }
 
@@ -559,6 +567,7 @@ public final class DualConnection implements Connection {
         private DatabaseCall databaseCall = new ForwardCall();
         private StateListener stateListener = new NoOpStateListener();
         private Set<String> readOnlyFunctions = new HashSet<>();
+        private DirtyConnectionCloseHook dirtyConnectionCloseHook = new NoOpDirtyConnectionCloseHook();
 
         private Builder(
             ConnectionProvider connectionProvider,
@@ -599,13 +608,19 @@ public final class DualConnection implements Connection {
             return this;
         }
 
+        public DualConnection.Builder dirtyConnectionCloseHook(DirtyConnectionCloseHook dirtyConnectionCloseHook) {
+            this.dirtyConnectionCloseHook = dirtyConnectionCloseHook;
+            return this;
+        }
+
         public Connection build() throws SQLException {
             return new DualConnection(
                 connectionProvider,
                 consistency,
                 databaseCall,
                 stateListener,
-                readOnlyFunctions
+                readOnlyFunctions,
+                dirtyConnectionCloseHook
             );
         }
     }
