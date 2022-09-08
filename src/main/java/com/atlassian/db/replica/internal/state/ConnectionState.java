@@ -37,6 +37,28 @@ public final class ConnectionState {
     private final DecisionAwareReference<Connection> readConnection;
     private final DecisionAwareReference<Connection> writeConnection;
 
+    /**
+     * When we use a connection to write to the database, it becomes a 'dirty' connection.
+     * The state is cleared when we commit the transaction. Currently, we use it only
+     * to detect dirty connection close() and commit the transaction before closing
+     * the connection.
+     * In the future we can use this state to exit `MainConnection` state and move more traffic to replicas.
+     * (see <a href="https://github.com/atlassian-labs/db-replica/blob/master/docs/dual-connection-states.png">Dual connection states</a>).
+     */
+    private volatile boolean dirty = false;
+
+    public void markDirty() {
+        this.dirty = true;
+    }
+
+    public void clearDirty() {
+        this.dirty = false;
+    }
+
+    public boolean isDirty(){
+        return dirty;
+    }
+
     public ConnectionState(
         ConnectionProvider connectionProvider,
         ReplicaConsistency consistency,

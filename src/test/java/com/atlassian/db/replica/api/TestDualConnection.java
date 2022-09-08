@@ -1746,7 +1746,8 @@ public class TestDualConnection {
                 .assumeMaxPropagation(Duration.ofDays(10))
                 .cacheLastWrite(lastWriteCache)
                 .build()
-        ).build();
+        ).dirtyConnectionCloseHook(Connection::commit)
+            .build();
         connection.setAutoCommit(false);
         connection.prepareStatement(SIMPLE_QUERY).executeUpdate();
         connection.close();

@@ -265,6 +265,9 @@ Dropping a requirement of a major version of a dependency is a new contract.
 - Avoid unnecessary switch to `MainConnection` while setting `read-only` mode
 - Statement Behavior changes don't affect DualConnection's state
 
+### Added
+- Add `DirtyConnectionCloseHook`
+
 ## [0.1.24] - 2021-02-16
 [0.1.24]: https://github.com/atlassian-labs/db-replica/compare/release-0.1.23...release-0.1.24
 
