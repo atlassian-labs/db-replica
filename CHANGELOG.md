@@ -22,7 +22,13 @@ Dropping a requirement of a major version of a dependency is a new contract.
 
 
 ## [Unreleased]
-[Unreleased]: https://github.com/atlassian-labs/db-replica/compare/release-2.6.4...master
+[Unreleased]: https://github.com/atlassian-labs/db-replica/compare/release-2.7.0...master
+
+## [2.7.0] - 2022-09-08
+[2.7.0]: https://github.com/atlassian-labs/db-replica/compare/release-2.6.4...release-2.7.0
+
+### Added
+- Add `DirtyConnectionCloseHook`
 
 ## [2.6.4] - 2022-07-01
 [2.6.4]: https://github.com/atlassian-labs/db-replica/compare/release-2.6.2...release-2.6.4
@@ -264,9 +270,6 @@ Dropping a requirement of a major version of a dependency is a new contract.
 ### Fixed
 - Avoid unnecessary switch to `MainConnection` while setting `read-only` mode
 - Statement Behavior changes don't affect DualConnection's state
-
-### Added
-- Add `DirtyConnectionCloseHook`
 
 ## [0.1.24] - 2021-02-16
 [0.1.24]: https://github.com/atlassian-labs/db-replica/compare/release-0.1.23...release-0.1.24
