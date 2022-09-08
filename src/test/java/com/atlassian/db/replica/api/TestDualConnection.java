@@ -7,6 +7,7 @@ import com.atlassian.db.replica.api.mocks.NoOpConnection;
 import com.atlassian.db.replica.api.mocks.NoOpConnectionProvider;
 import com.atlassian.db.replica.api.mocks.ReadOnlyAwareConnection;
 import com.atlassian.db.replica.api.mocks.SingleConnectionProvider;
+import com.atlassian.db.replica.internal.MonotonicMemoryCache;
 import com.atlassian.db.replica.api.reason.Reason;
 import com.atlassian.db.replica.internal.RouteDecisionBuilder;
 import com.atlassian.db.replica.internal.state.State;
@@ -26,6 +27,8 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Savepoint;
 import java.sql.Statement;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -1729,5 +1732,25 @@ public class TestDualConnection {
 
         assertThat(connectionProvider.getProvidedConnectionTypes())
             .containsOnly(REPLICA);
+    }
+
+    @Test
+    public void shouldPropagateLastWrite() throws SQLException {
+        final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
+        final MonotonicMemoryCache<Instant> lastWriteCache = new MonotonicMemoryCache<>();
+
+        final Connection connection = DualConnection.builder(
+            connectionProvider,
+            new PessimisticPropagationConsistency
+                .Builder()
+                .assumeMaxPropagation(Duration.ofDays(10))
+                .cacheLastWrite(lastWriteCache)
+                .build()
+        ).build();
+        connection.setAutoCommit(false);
+        connection.prepareStatement(SIMPLE_QUERY).executeUpdate();
+        connection.close();
+
+        assertThat(lastWriteCache.get()).isPresent();
     }
 }
