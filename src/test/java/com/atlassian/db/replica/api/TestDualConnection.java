@@ -1754,4 +1754,18 @@ public class TestDualConnection {
 
         assertThat(lastWriteCache.get()).isPresent();
     }
+
+    @Test
+    public void shouldSetEnforceOnMain() throws SQLException {
+        final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
+        final Connection connection = DualConnection.builder(
+            connectionProvider,
+            permanentConsistency().ignoreSupplier(true).build()
+        ).build();
+
+        connection.createStatement().execute("set mcrud.enforce=1");
+
+        assertThat(connectionProvider.getProvidedConnectionTypes())
+            .containsOnly(MAIN);
+    }
 }
