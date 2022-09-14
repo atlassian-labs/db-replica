@@ -51,7 +51,8 @@ public class ReplicaPreparedStatement extends ReplicaStatement implements Prepar
         String[] columnNames,
         int[] columnIndexes,
         Set<String> readOnlyFunctions,
-        DualConnection dualConnection
+        DualConnection dualConnection,
+        boolean compatibleWithPreviousVersion
     ) {
         super(
             consistency,
@@ -61,7 +62,8 @@ public class ReplicaPreparedStatement extends ReplicaStatement implements Prepar
             resultSetConcurrency,
             resultSetHoldability,
             readOnlyFunctions,
-            dualConnection
+            dualConnection,
+            compatibleWithPreviousVersion
         );
         this.sql = sql;
         this.resultSetType = resultSetType;
@@ -81,7 +83,8 @@ public class ReplicaPreparedStatement extends ReplicaStatement implements Prepar
         Integer resultSetConcurrency,
         Integer resultSetHoldability,
         Set<String> readOnlyFunctions,
-        DualConnection dualConnection
+        DualConnection dualConnection,
+        boolean compatibleWithPreviousVersion
     ) {
         super(
             consistency,
@@ -91,7 +94,8 @@ public class ReplicaPreparedStatement extends ReplicaStatement implements Prepar
             resultSetConcurrency,
             resultSetHoldability,
             readOnlyFunctions,
-            dualConnection
+            dualConnection,
+            compatibleWithPreviousVersion
         );
         this.sql = sql;
         this.resultSetType = resultSetType;
@@ -607,6 +611,7 @@ public class ReplicaPreparedStatement extends ReplicaStatement implements Prepar
         private final String sql;
         private final Set<String> readOnlyFunctions;
         private final DualConnection dualConnection;
+        private final boolean compatibleWithPreviousVersion;
         private Integer resultSetType;
         private Integer resultSetConcurrency;
         private Integer resultSetHoldability;
@@ -620,7 +625,8 @@ public class ReplicaPreparedStatement extends ReplicaStatement implements Prepar
             DatabaseCall databaseCall,
             String sql,
             Set<String> readOnlyFunctions,
-            DualConnection dualConnection
+            DualConnection dualConnection,
+            boolean compatibleWithPreviousVersion
         ) {
             this.connectionProvider = connectionProvider;
             this.consistency = consistency;
@@ -628,6 +634,7 @@ public class ReplicaPreparedStatement extends ReplicaStatement implements Prepar
             this.sql = sql;
             this.readOnlyFunctions = readOnlyFunctions;
             this.dualConnection = dualConnection;
+            this.compatibleWithPreviousVersion = compatibleWithPreviousVersion;
         }
 
         public ReplicaPreparedStatement.Builder resultSetType(int resultSetType) {
@@ -673,7 +680,8 @@ public class ReplicaPreparedStatement extends ReplicaStatement implements Prepar
                 columnNames,
                 columnIndexes,
                 readOnlyFunctions,
-                dualConnection
+                dualConnection,
+                compatibleWithPreviousVersion
             );
         }
     }
