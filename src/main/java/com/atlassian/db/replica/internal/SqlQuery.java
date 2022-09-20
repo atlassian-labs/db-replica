@@ -3,10 +3,8 @@ package com.atlassian.db.replica.internal;
 public final class SqlQuery {
     private static final int SELECT_FOR_UPDATE_SUFFIX_LIMIT = 100;
     private final String sql;
-    private final boolean compatibleWithPreviousVersion;
 
     public SqlQuery(String sql, boolean compatibleWithPreviousVersion) {
-        this.compatibleWithPreviousVersion = compatibleWithPreviousVersion;
         if (sql == null) {
             throw new RuntimeException("An SqlQuery must have an SQL query string");
         }
@@ -39,14 +37,6 @@ public final class SqlQuery {
     }
 
     public boolean isSqlSet() {
-        return compatibleWithPreviousVersion ? isSqlSet_old() : isSqlSet_new();
-    }
-
-    private boolean isSqlSet_old() {
-        return sql.startsWith("set");
-    }
-
-    private boolean isSqlSet_new() {
         return sql.startsWith("set") || sql.startsWith("SET");
     }
 

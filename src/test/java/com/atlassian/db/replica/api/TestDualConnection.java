@@ -1678,25 +1678,6 @@ public class TestDualConnection {
     }
 
     @Test
-    public void shouldUseMainAfterSettingTimeoutUpperCaseInCompatibilityMode() throws SQLException {
-        final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
-        final Connection connection = DualConnection.builder(
-            connectionProvider,
-            permanentConsistency().build()
-        ).compatibleWithPreviousVersion()
-            .build();
-
-        try (Statement statement = connection.createStatement()) {
-            statement.execute("SET statement_timeout to 30000");
-        }
-
-        connection.prepareStatement(SIMPLE_QUERY).executeQuery();
-
-        assertThat(connectionProvider.getProvidedConnectionTypes())
-            .containsOnly(MAIN);
-    }
-
-    @Test
     public void shouldKeepStatementTimeoutWhenSwitchingConnections() throws SQLException {
         final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
         final Connection connection = DualConnection.builder(
