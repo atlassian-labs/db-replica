@@ -13,6 +13,7 @@ import com.atlassian.db.replica.internal.RouteDecisionBuilder;
 import com.atlassian.db.replica.internal.state.State;
 import com.atlassian.db.replica.internal.state.StateListener;
 import com.atlassian.db.replica.spi.DatabaseCall;
+import com.atlassian.db.replica.spi.DirtyConnectionCloseHook;
 import com.atlassian.db.replica.spi.ReplicaConsistency;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
@@ -1790,5 +1791,40 @@ public class TestDualConnection {
         connection.close();
 
         assertThat(lastWriteCache.get()).isPresent();
+    }
+
+    @Test
+    public void shouldNotCallDirtyConnectionHookAfterARollback() throws SQLException {
+        final ConnectionProviderMock provider = getProviderThrowingExceptionsOnConnectionRollback();
+        final DirtyConnectionCloseHook dirtyConnectionCloseHook = mock(DirtyConnectionCloseHook.class);
+        final Connection connection = DualConnection.builder(provider, permanentInconsistency().build())
+            .dirtyConnectionCloseHook(dirtyConnectionCloseHook)
+            .build();
+
+        connection.setAutoCommit(false);
+        connection.prepareStatement(SIMPLE_QUERY).executeUpdate();
+        final Throwable throwable = catchThrowable(connection::rollback);
+        connection.close();
+
+        assertThat(throwable).hasMessageContaining("Can't rollback.");
+        verify(dirtyConnectionCloseHook, never()).onClose(any(Connection.class));
+    }
+
+    private static ConnectionProviderMock getProviderThrowingExceptionsOnConnectionRollback() {
+        return new ConnectionProviderMock(false) {
+            @Override
+            public Connection getMainConnection() {
+                return throwOnRollback(super.getMainConnection());
+            }
+
+            private Connection throwOnRollback(Connection connection) {
+                try {
+                    doThrow(new RuntimeException("Can't rollback.")).when(connection).rollback();
+                    return connection;
+                } catch (SQLException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        };
     }
 }
