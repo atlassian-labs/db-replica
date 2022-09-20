@@ -172,10 +172,10 @@ public class ReplicaConnectionProvider implements AutoCloseable {
     }
 
     public void rollback() throws SQLException {
+        state.clearDirty();
         final Optional<Connection> connection = state.getConnection();
         if (connection.isPresent()) {
             connection.get().rollback();
-            state.clearDirty();
         }
     }
 
