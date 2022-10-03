@@ -2,6 +2,7 @@ package com.atlassian.db.replica.internal;
 
 import com.atlassian.db.replica.api.reason.Reason;
 import com.atlassian.db.replica.api.reason.RouteDecision;
+import com.atlassian.db.replica.internal.logs.LazyLogger;
 import com.atlassian.db.replica.internal.state.ConnectionState;
 import com.atlassian.db.replica.internal.state.State;
 import com.atlassian.db.replica.internal.state.StateListener;
@@ -24,22 +25,26 @@ public class ReplicaConnectionProvider implements AutoCloseable {
     private final ConnectionState state;
     private final ConnectionParameters parameters;
     private final Warnings warnings;
+    private final LazyLogger logger;
 
     public ReplicaConnectionProvider(
         ConnectionProvider connectionProvider,
         ReplicaConsistency consistency,
-        StateListener stateListener
+        StateListener stateListener,
+        LazyLogger logger
     ) {
-        this.parameters = new ConnectionParameters();
+        this.parameters = new ConnectionParameters(logger);
         this.warnings = new Warnings();
         this.state = new ConnectionState(
             connectionProvider,
             consistency,
             parameters,
             warnings,
-            stateListener
+            stateListener,
+            logger
         );
         this.consistency = consistency;
+        this.logger = logger;
     }
 
     public Connection getWriteConnection(RouteDecisionBuilder decisionBuilder) throws SQLException {
@@ -183,6 +188,7 @@ public class ReplicaConnectionProvider implements AutoCloseable {
         final Optional<Connection> connection = state.getConnection();
         if (connection.isPresent()) {
             preCommit(parameters.isAutoCommit());
+            logger.debug(() -> "commit()");
             connection.get().commit();
             recordCommit(parameters.isAutoCommit());
         }
@@ -202,13 +208,15 @@ public class ReplicaConnectionProvider implements AutoCloseable {
             consistency.preCommit(mainConnection);
         }
     }
-    public void markConnectionDirty(){
+
+    public void markConnectionDirty() {
         this.state.markDirty();
     }
 
-    public boolean isDirty(){
+    public boolean isDirty() {
         return this.state.isDirty();
     }
+
     @Override
     public void close() throws SQLException {
         state.close();

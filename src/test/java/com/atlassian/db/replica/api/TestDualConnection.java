@@ -3,6 +3,7 @@ package com.atlassian.db.replica.api;
 import com.atlassian.db.replica.api.mocks.CircularConsistency;
 import com.atlassian.db.replica.api.mocks.ConnectionMock;
 import com.atlassian.db.replica.api.mocks.ConnectionProviderMock;
+import com.atlassian.db.replica.api.mocks.MockLogger;
 import com.atlassian.db.replica.api.mocks.NoOpConnection;
 import com.atlassian.db.replica.api.mocks.NoOpConnectionProvider;
 import com.atlassian.db.replica.api.mocks.ReadOnlyAwareConnection;
@@ -24,6 +25,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Savepoint;
@@ -1759,13 +1761,13 @@ public class TestDualConnection {
         final MonotonicMemoryCache<Instant> lastWriteCache = new MonotonicMemoryCache<>();
 
         final Connection connection = DualConnection.builder(
-            connectionProvider,
-            new PessimisticPropagationConsistency
-                .Builder()
-                .assumeMaxPropagation(Duration.ofDays(10))
-                .cacheLastWrite(lastWriteCache)
-                .build()
-        ).dirtyConnectionCloseHook(Connection::commit)
+                connectionProvider,
+                new PessimisticPropagationConsistency
+                    .Builder()
+                    .assumeMaxPropagation(Duration.ofDays(10))
+                    .cacheLastWrite(lastWriteCache)
+                    .build()
+            ).dirtyConnectionCloseHook(Connection::commit)
             .build();
         connection.setAutoCommit(false);
         connection.prepareStatement(SIMPLE_QUERY).executeUpdate();
@@ -1789,6 +1791,35 @@ public class TestDualConnection {
 
         assertThat(throwable).hasMessageContaining("Can't rollback.");
         verify(dirtyConnectionCloseHook, never()).onClose(any(Connection.class));
+    }
+
+    @Test
+    public void shouldLoggerCatchAllQueries() throws SQLException {
+        final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
+        final MockLogger logger = new MockLogger();
+        final Connection connection = DualConnection.builder(
+                connectionProvider,
+                permanentConsistency().build()
+            ).logger(logger)
+            .build();
+
+        connection.setAutoCommit(false);
+        connection.createStatement().executeQuery("SELECT 1;");
+        final PreparedStatement preparedStatement = connection.prepareStatement("SELECT 2;");
+        preparedStatement.executeQuery();
+        preparedStatement.executeUpdate();
+        connection.prepareStatement("INSERT INTO foo(bar);").executeUpdate();
+        connection.prepareStatement("SELECT 3;").executeQuery();
+        connection.commit();
+        connection.close();
+
+        final String allMessages = String.join("", logger.getMessages());
+
+        assertThat(allMessages)
+            .contains("SELECT 1;")
+            .contains("SELECT 2;")
+            .contains("INSERT INTO foo(bar);")
+            .contains("SELECT 3;");
     }
 
     private static ConnectionProviderMock getProviderThrowingExceptionsOnConnectionRollback() {

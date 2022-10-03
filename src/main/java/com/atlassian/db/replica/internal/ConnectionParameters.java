@@ -1,5 +1,7 @@
 package com.atlassian.db.replica.internal;
 
+import com.atlassian.db.replica.internal.logs.LazyLogger;
+
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -11,6 +13,8 @@ import java.util.Optional;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Supplier;
 
+import static java.lang.String.format;
+
 public final class ConnectionParameters {
     private Boolean isAutoCommit;
     private Boolean readOnly;
@@ -21,45 +25,62 @@ public final class ConnectionParameters {
     private String schema;
     private ClientInfo clientInfo;
     private NetworkTimeout networkTimeout;
-    private List<String> runtimeParameterChanges = new CopyOnWriteArrayList<>();
+    private final List<String> runtimeParameterChanges = new CopyOnWriteArrayList<>();
+    private final LazyLogger logger;
+
+    public ConnectionParameters(LazyLogger logger) {
+        this.logger = logger;
+    }
 
     public void initialize(Connection connection) throws SQLException {
+        logger.debug(() -> format("Initializing connection %s", connection));
         if (isAutoCommit != null) {
+            logger.debug(() -> format("Initializing connection setAutoCommit(%s)", isAutoCommit));
             connection.setAutoCommit(isAutoCommit);
         }
         if (transactionIsolation != null) {
+            logger.debug(() -> format("Initializing connection setTransactionIsolation(%s)", transactionIsolation));
             connection.setTransactionIsolation(transactionIsolation);
         }
         if (catalog != null) {
+            logger.debug(() -> format("Initializing connection setCatalog(%s)", catalog));
             connection.setCatalog(catalog);
         }
         if (typeMap != null) {
+            logger.debug(() -> format("Initializing connection setTypeMap(%s)", typeMap));
             connection.setTypeMap(typeMap);
         }
         if (holdability != null) {
+            logger.debug(() -> format("Initializing connection setHoldability(%s)", holdability));
             connection.setHoldability(holdability);
         }
         if (readOnly != null) {
+            logger.debug(() -> format("Initializing connection setReadOnly(%s)", readOnly));
             connection.setReadOnly(readOnly);
         }
         if (schema != null) {
+            logger.debug(() -> format("Initializing connection setSchema(%s)", schema));
             connection.setSchema(schema);
         }
         if (clientInfo != null) {
+            logger.debug(() -> format("Initializing connection configure clientInfo(%s)", clientInfo));
             clientInfo.configure(connection);
         }
         if (networkTimeout != null) {
+            logger.debug(() -> format("Initializing connection configure networkTimeout(%s)", networkTimeout));
             networkTimeout.configure(connection);
         }
         initializeRuntimeParameters(connection);
     }
 
     private void initializeRuntimeParameters(Connection connection) throws SQLException {
+        logger.debug(() -> format("Initializing runtimeParameters %s", connection));
         if (runtimeParameterChanges.isEmpty()) {
             return;
         }
         try (Statement statement = connection.createStatement()) {
             for (String parameterChange : runtimeParameterChanges) {
+                logger.debug(() -> format("Initializing runtimeParameter %s", parameterChange));
                 statement.execute(parameterChange);
             }
         }
@@ -75,7 +96,10 @@ public final class ConnectionParameters {
         Supplier<Optional<Connection>> currentConnection,
         Integer transactionIsolation
     ) throws SQLException {
-        executeIfPresent(currentConnection, connection -> connection.setTransactionIsolation(transactionIsolation));
+        executeIfPresent(currentConnection, connection -> {
+            logger.debug(() -> format("connection(%s)#setTransactionIsolation(%s)", connection, transactionIsolation));
+            connection.setTransactionIsolation(transactionIsolation);
+        });
         this.transactionIsolation = transactionIsolation;
     }
 
@@ -87,7 +111,10 @@ public final class ConnectionParameters {
         Supplier<Optional<Connection>> currentConnection,
         Boolean autoCommit
     ) throws SQLException {
-        executeIfPresent(currentConnection, connection -> connection.setAutoCommit(autoCommit));
+        executeIfPresent(currentConnection, connection -> {
+            logger.debug(() -> format("connection(%s)#setAutoCommit(%s)", connection, autoCommit));
+            connection.setAutoCommit(autoCommit);
+        });
         this.isAutoCommit = autoCommit;
     }
 
@@ -133,7 +160,10 @@ public final class ConnectionParameters {
     }
 
     public void setReadOnly(Supplier<Optional<Connection>> currentConnection, boolean readOnly) throws SQLException {
-        executeIfPresent(currentConnection, connection -> connection.setReadOnly(readOnly));
+        executeIfPresent(currentConnection, connection -> {
+            logger.debug(() -> format("connection(%s)#setReadOnly(%s)", connection, readOnly));
+            connection.setReadOnly(readOnly);
+        });
         this.readOnly = readOnly;
     }
 
@@ -168,7 +198,10 @@ public final class ConnectionParameters {
         Supplier<Optional<Connection>> currentConnection,
         NetworkTimeout networkTimeout
     ) throws SQLException {
-        executeIfPresent(currentConnection, networkTimeout::configure);
+        executeIfPresent(currentConnection, connection -> {
+            logger.debug(() -> format("connection(%s)#setNetworkTimeout(%s)", connection, networkTimeout));
+            networkTimeout.configure(connection);
+        });
         this.networkTimeout = networkTimeout;
     }
 

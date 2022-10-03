@@ -4,6 +4,8 @@ import com.atlassian.db.replica.api.DualConnection;
 import com.atlassian.db.replica.api.SqlCall;
 import com.atlassian.db.replica.api.reason.Reason;
 import com.atlassian.db.replica.api.reason.RouteDecision;
+import com.atlassian.db.replica.internal.logs.LazyLogger;
+import com.atlassian.db.replica.internal.logs.TaggedLogger;
 import com.atlassian.db.replica.spi.DatabaseCall;
 import com.atlassian.db.replica.spi.ReplicaConsistency;
 
@@ -16,6 +18,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 
 import static com.atlassian.db.replica.api.reason.Reason.LOCK;
 import static com.atlassian.db.replica.api.reason.Reason.MAIN_CONNECTION_REUSE;
@@ -24,6 +27,7 @@ import static com.atlassian.db.replica.api.reason.Reason.RO_API_CALL;
 import static com.atlassian.db.replica.api.reason.Reason.RW_API_CALL;
 import static com.atlassian.db.replica.api.reason.Reason.WRITE_OPERATION;
 import static com.atlassian.db.replica.internal.state.State.MAIN;
+import static java.lang.String.format;
 
 public class ReplicaStatement implements Statement {
     private final ReplicaConnectionProvider connectionProvider;
@@ -42,6 +46,8 @@ public class ReplicaStatement implements Statement {
     private final DecisionAwareReference<Statement> writeStatement;
     private final DualConnection dualConnection;
     private final boolean compatibleWithPreviousVersion;
+    private final LazyLogger logger;
+
     public ReplicaStatement(
         ReplicaConsistency consistency,
         ReplicaConnectionProvider connectionProvider,
@@ -51,7 +57,8 @@ public class ReplicaStatement implements Statement {
         Integer resultSetHoldability,
         Set<String> readOnlyFunctions,
         DualConnection dualConnection,
-        boolean compatibleWithPreviousVersion
+        boolean compatibleWithPreviousVersion,
+        LazyLogger logger
     ) {
         this.consistency = consistency;
         this.connectionProvider = connectionProvider;
@@ -74,6 +81,7 @@ public class ReplicaStatement implements Statement {
         };
         this.dualConnection = dualConnection;
         this.compatibleWithPreviousVersion = compatibleWithPreviousVersion;
+        this.logger = logger;
     }
 
     @Override
@@ -81,6 +89,7 @@ public class ReplicaStatement implements Statement {
         checkClosed();
         final RouteDecisionBuilder decisionBuilder = new RouteDecisionBuilder(READ_OPERATION).sql(sql);
         final Statement statement = getReadStatement(decisionBuilder);
+        logger.info(() -> format("executeQuery(sql='%s')", sql));
         return execute(() -> statement.executeQuery(sql), decisionBuilder.build());
     }
 
@@ -89,6 +98,7 @@ public class ReplicaStatement implements Statement {
         checkClosed();
         final RouteDecisionBuilder decisionBuilder = new RouteDecisionBuilder(RW_API_CALL).sql(sql);
         final Statement statement = getWriteStatement(decisionBuilder);
+        logger.info(() -> format("executeUpdate(sql='%s')", sql));
         return execute(
             () -> statement.executeUpdate(sql),
             decisionBuilder.build()
@@ -108,6 +118,7 @@ public class ReplicaStatement implements Statement {
         readStatement.reset();
         writeStatement.reset();
         currentStatement = null;
+        logger.debug(() -> "close()");
     }
 
     @Override
@@ -204,6 +215,7 @@ public class ReplicaStatement implements Statement {
             decisionBuilder = new RouteDecisionBuilder(RW_API_CALL).sql(sql);
             statement = getWriteStatement(decisionBuilder);
         }
+        logger.info(() -> format("execute(sql='%s')", sql));
         return execute(
             () -> statement.execute(sql),
             decisionBuilder.build()
@@ -281,6 +293,7 @@ public class ReplicaStatement implements Statement {
         final StatementOperation<Statement> addBatch = statement -> statement.addBatch(sql);
         addOperation(addBatch);
         batches.add(addBatch);
+        logger.info(() -> format("addBatch(sql='%s')", sql));
     }
 
     @Override
@@ -288,6 +301,7 @@ public class ReplicaStatement implements Statement {
         checkClosed();
         batches.forEach(operations::remove);
         batches.clear();
+        logger.info(() -> "clearBatch()");
     }
 
     @Override
@@ -295,6 +309,7 @@ public class ReplicaStatement implements Statement {
         checkClosed();
         final RouteDecisionBuilder decisionBuilder = new RouteDecisionBuilder(RW_API_CALL);
         final Statement statement = getWriteStatement(decisionBuilder);
+        logger.info(() -> "executeBatch()");
         return execute(statement::executeBatch, decisionBuilder.build());
     }
 
@@ -325,6 +340,7 @@ public class ReplicaStatement implements Statement {
         checkClosed();
         final RouteDecisionBuilder decisionBuilder = new RouteDecisionBuilder(RW_API_CALL).sql(sql);
         final Statement statement = getWriteStatement(decisionBuilder);
+        logger.info(() -> format("executeUpdate(sql='%s', autoGeneratedKeys)", sql));
         return execute(
             () -> statement.executeUpdate(sql, autoGeneratedKeys),
             decisionBuilder.build()
@@ -336,6 +352,7 @@ public class ReplicaStatement implements Statement {
         checkClosed();
         final RouteDecisionBuilder decisionBuilder = new RouteDecisionBuilder(RW_API_CALL).sql(sql);
         final Statement statement = getWriteStatement(decisionBuilder);
+        logger.info(() -> format("executeUpdate(sql='%s', columnIndexes)", sql));
         return execute(
             () -> statement.executeUpdate(sql, columnIndexes),
             decisionBuilder.build()
@@ -347,6 +364,7 @@ public class ReplicaStatement implements Statement {
         checkClosed();
         final RouteDecisionBuilder decisionBuilder = new RouteDecisionBuilder(RW_API_CALL).sql(sql);
         final Statement statement = getWriteStatement(decisionBuilder);
+        logger.info(() -> format("executeUpdate(sql='%s', columnNames)", sql));
         return execute(
             () -> statement.executeUpdate(sql, columnNames),
             decisionBuilder.build()
@@ -358,6 +376,7 @@ public class ReplicaStatement implements Statement {
         checkClosed();
         final RouteDecisionBuilder decisionBuilder = new RouteDecisionBuilder(RW_API_CALL).sql(sql);
         final Statement statement = getWriteStatement(decisionBuilder);
+        logger.info(() -> format("execute(sql='%s', autoGeneratedKeys)", sql));
         return execute(
             () -> statement.execute(sql, autoGeneratedKeys),
             decisionBuilder.build()
@@ -369,6 +388,7 @@ public class ReplicaStatement implements Statement {
         checkClosed();
         final RouteDecisionBuilder decisionBuilder = new RouteDecisionBuilder(RW_API_CALL).sql(sql);
         final Statement state = getWriteStatement(decisionBuilder);
+        logger.info(() -> format("execute(sql='%s', columnIndexes)", sql));
         return execute(
             () -> state.execute(sql, columnIndexes),
             decisionBuilder.build()
@@ -380,6 +400,7 @@ public class ReplicaStatement implements Statement {
         checkClosed();
         final RouteDecisionBuilder decisionBuilder = new RouteDecisionBuilder(RW_API_CALL).sql(sql);
         final Statement statement = getWriteStatement(decisionBuilder);
+        logger.info(() -> format("execute(sql='%s', columnNames)", sql));
         return execute(
             () -> statement.execute(sql, columnNames),
             decisionBuilder.build()
@@ -474,6 +495,7 @@ public class ReplicaStatement implements Statement {
         checkClosed();
         final RouteDecisionBuilder decisionBuilder = new RouteDecisionBuilder(RW_API_CALL);
         final Statement statement = getWriteStatement(decisionBuilder);
+        logger.info(() -> "executeLargeBatch()");
         return execute(
             statement::executeLargeBatch,
             decisionBuilder.build()
@@ -485,6 +507,7 @@ public class ReplicaStatement implements Statement {
         checkClosed();
         final RouteDecisionBuilder decisionBuilder = new RouteDecisionBuilder(RW_API_CALL).sql(sql);
         final Statement statement = getWriteStatement(decisionBuilder);
+        logger.info(() -> format("executeLargeUpdate(sql='%s')", sql));
         return execute(
             () -> statement.executeLargeUpdate(sql),
             decisionBuilder.build()
@@ -496,6 +519,7 @@ public class ReplicaStatement implements Statement {
         checkClosed();
         final RouteDecisionBuilder decisionBuilder = new RouteDecisionBuilder(RW_API_CALL).sql(sql);
         final Statement statement = getWriteStatement(decisionBuilder);
+        logger.info(() -> format("executeLargeUpdate(sql='%s', autoGeneratedKeys)", sql));
         return execute(
             () -> statement.executeLargeUpdate(sql, autoGeneratedKeys),
             decisionBuilder.build()
@@ -507,6 +531,7 @@ public class ReplicaStatement implements Statement {
         checkClosed();
         final RouteDecisionBuilder decisionBuilder = new RouteDecisionBuilder(RW_API_CALL).sql(sql);
         final Statement statement = getWriteStatement(decisionBuilder);
+        logger.info(() -> format("executeLargeUpdate(sql='%s', columnIndexes)", sql));
         return execute(
             () -> statement.executeLargeUpdate(sql, columnIndexes),
             decisionBuilder.build()
@@ -518,6 +543,7 @@ public class ReplicaStatement implements Statement {
         checkClosed();
         final RouteDecisionBuilder decisionBuilder = new RouteDecisionBuilder(RW_API_CALL).sql(sql);
         final Statement statement = getWriteStatement(decisionBuilder);
+        logger.info(() -> format("executeLargeUpdate(sql='%s', columnNames)", sql));
         return execute(
             () -> statement.executeLargeUpdate(sql, columnNames),
             decisionBuilder.build()
@@ -563,7 +589,8 @@ public class ReplicaStatement implements Statement {
         DatabaseCall databaseCall,
         Set<String> readOnlyFunctions,
         DualConnection dualConnection,
-        boolean compatibleWithPreviousVersion
+        boolean compatibleWithPreviousVersion,
+        LazyLogger logger
     ) {
         return new Builder(
             connectionProvider,
@@ -571,7 +598,8 @@ public class ReplicaStatement implements Statement {
             databaseCall,
             readOnlyFunctions,
             dualConnection,
-            compatibleWithPreviousVersion
+            compatibleWithPreviousVersion,
+            logger
         );
     }
 
@@ -588,6 +616,7 @@ public class ReplicaStatement implements Statement {
         if (connectionProvider.getState().equals(MAIN)) {
             decisionBuilder.reason(MAIN_CONNECTION_REUSE);
             connectionProvider.getStateDecision().ifPresent(decisionBuilder::cause);
+            logger.debug(() -> "Main connection reuse");
             return prepareWriteStatement(decisionBuilder);
         }
         String sql = decisionBuilder.getSql();
@@ -595,10 +624,12 @@ public class ReplicaStatement implements Statement {
             SqlQuery sqlQuery = new SqlQuery(sql, compatibleWithPreviousVersion);
             if (sqlQuery.isWriteOperation(sqlFunction)) {
                 decisionBuilder.reason(WRITE_OPERATION);
+                logger.debug(() -> "write operation");
                 return prepareWriteStatement(decisionBuilder);
             }
             if (sqlQuery.isSelectForUpdate()) {
                 decisionBuilder.reason(LOCK);
+                logger.debug(() -> "lock");
                 return prepareWriteStatement(decisionBuilder);
             }
         }
@@ -648,6 +679,7 @@ public class ReplicaStatement implements Statement {
         private Integer resultSetType;
         private Integer resultSetConcurrency;
         private Integer resultSetHoldability;
+        private LazyLogger logger;
 
         private Builder(
             ReplicaConnectionProvider connectionProvider,
@@ -655,7 +687,8 @@ public class ReplicaStatement implements Statement {
             DatabaseCall databaseCall,
             Set<String> readOnlyFunctions,
             DualConnection dualConnection,
-            boolean compatibleWithPreviousVersion
+            boolean compatibleWithPreviousVersion,
+            LazyLogger logger
         ) {
             this.connectionProvider = connectionProvider;
             this.consistency = consistency;
@@ -663,6 +696,7 @@ public class ReplicaStatement implements Statement {
             this.readOnlyFunctions = readOnlyFunctions;
             this.dualConnection = dualConnection;
             this.compatibleWithPreviousVersion = compatibleWithPreviousVersion;
+            this.logger = logger;
         }
 
         public Builder resultSetType(int resultSetType) {
@@ -690,7 +724,10 @@ public class ReplicaStatement implements Statement {
                 resultSetHoldability,
                 readOnlyFunctions,
                 dualConnection,
-                compatibleWithPreviousVersion
+                compatibleWithPreviousVersion,
+                logger.isEnabled() ?
+                    new TaggedLogger("ReplicaStatement", UUID.randomUUID().toString(), logger) :
+                    logger
             );
         }
     }

@@ -3,17 +3,26 @@ package com.atlassian.db.replica.api;
 import com.atlassian.db.replica.api.reason.Reason;
 import com.atlassian.db.replica.internal.ClientInfo;
 import com.atlassian.db.replica.internal.ForwardCall;
+import com.atlassian.db.replica.internal.logs.ConnectionProviderLogger;
+import com.atlassian.db.replica.internal.logs.DelegatingLazyLogger;
 import com.atlassian.db.replica.internal.NoOpDirtyConnectionCloseHook;
 import com.atlassian.db.replica.internal.ReplicaCallableStatement;
 import com.atlassian.db.replica.internal.ReplicaConnectionProvider;
 import com.atlassian.db.replica.internal.ReplicaPreparedStatement;
 import com.atlassian.db.replica.internal.ReplicaStatement;
 import com.atlassian.db.replica.internal.RouteDecisionBuilder;
+import com.atlassian.db.replica.internal.logs.ReplicaConsistencyLogger;
+import com.atlassian.db.replica.internal.logs.TaggedLogger;
+import com.atlassian.db.replica.internal.logs.LazyLogger;
+import com.atlassian.db.replica.internal.logs.NoopLazyLogger;
+import com.atlassian.db.replica.internal.logs.StateAwareLogger;
 import com.atlassian.db.replica.internal.state.NoOpStateListener;
+import com.atlassian.db.replica.internal.state.State;
 import com.atlassian.db.replica.internal.state.StateListener;
 import com.atlassian.db.replica.spi.ConnectionProvider;
 import com.atlassian.db.replica.spi.DatabaseCall;
 import com.atlassian.db.replica.spi.DirtyConnectionCloseHook;
+import com.atlassian.db.replica.spi.Logger;
 import com.atlassian.db.replica.spi.ReplicaConsistency;
 
 import java.sql.Array;
@@ -38,7 +47,10 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.Executor;
+
+import static java.lang.String.format;
 
 /**
  * Tries to connect to a replica if the query doesn't write to the database.
@@ -53,23 +65,21 @@ public final class DualConnection implements Connection {
     private final Set<String> readOnlyFunctions;
     private final DirtyConnectionCloseHook dirtyConnectionCloseHook;
     private final boolean compatibleWithPreviousVersion;
+    private final LazyLogger logger;
 
     private DualConnection(
-        ConnectionProvider connectionProvider,
+        ReplicaConnectionProvider connectionProvider,
         ReplicaConsistency consistency,
         DatabaseCall databaseCall,
-        StateListener stateListener,
         Set<String> readOnlyFunctions,
         DirtyConnectionCloseHook dirtyConnectionCloseHook,
-        boolean compatibleWithPreviousVersion
+        boolean compatibleWithPreviousVersion,
+        LazyLogger logger
     ) {
+        this.connectionProvider = connectionProvider;
         this.dirtyConnectionCloseHook = dirtyConnectionCloseHook;
         this.compatibleWithPreviousVersion = compatibleWithPreviousVersion;
-        this.connectionProvider = new ReplicaConnectionProvider(
-            connectionProvider,
-            consistency,
-            stateListener
-        );
+        this.logger = logger;
         this.consistency = consistency;
         this.databaseCall = databaseCall;
         this.readOnlyFunctions = readOnlyFunctions;
@@ -84,7 +94,8 @@ public final class DualConnection implements Connection {
             databaseCall,
             readOnlyFunctions,
             this,
-            compatibleWithPreviousVersion
+            compatibleWithPreviousVersion,
+            logger
         ).build();
     }
 
@@ -98,7 +109,8 @@ public final class DualConnection implements Connection {
             sql,
             readOnlyFunctions,
             this,
-            compatibleWithPreviousVersion
+            compatibleWithPreviousVersion,
+            logger
         ).build();
     }
 
@@ -112,19 +124,24 @@ public final class DualConnection implements Connection {
             sql,
             readOnlyFunctions,
             this,
-            compatibleWithPreviousVersion
+            compatibleWithPreviousVersion,
+            logger
         ).build();
     }
 
     @Override
     public String nativeSQL(String sql) throws SQLException {
         checkClosed();
-        return connectionProvider.getReadConnection(new RouteDecisionBuilder(Reason.RO_API_CALL).sql(sql))
+        final Connection readConnection = connectionProvider.getReadConnection(new RouteDecisionBuilder(Reason.RO_API_CALL).sql(
+            sql));
+        logger.info(() -> format("nativeSQL(sql='%s')", sql));
+        return readConnection
             .nativeSQL(sql);
     }
 
     @Override
     public void setAutoCommit(boolean autoCommit) throws SQLException {
+        logger.debug(() -> format("setAutoCommit(autoCommit='%s')", autoCommit));
         checkClosed();
         connectionProvider.setAutoCommit(autoCommit);
     }
@@ -143,6 +160,7 @@ public final class DualConnection implements Connection {
 
     @Override
     public void rollback() throws SQLException {
+        logger.debug(() -> "rollback()");
         checkClosed();
         connectionProvider.rollback();
     }
@@ -152,6 +170,7 @@ public final class DualConnection implements Connection {
         if (connectionProvider.isDirty()) {
             dirtyConnectionCloseHook.onClose(this);
         }
+        logger.debug(() -> "close()");
         connectionProvider.close();
     }
 
@@ -225,7 +244,8 @@ public final class DualConnection implements Connection {
                 databaseCall,
                 readOnlyFunctions,
                 this,
-                compatibleWithPreviousVersion
+                compatibleWithPreviousVersion,
+                logger
             )
             .resultSetType(resultSetType)
             .resultSetConcurrency(resultSetConcurrency)
@@ -246,7 +266,8 @@ public final class DualConnection implements Connection {
             sql,
             readOnlyFunctions,
             this,
-            compatibleWithPreviousVersion
+            compatibleWithPreviousVersion,
+            logger
         ).resultSetType(resultSetType)
             .resultSetConcurrency(resultSetConcurrency)
             .build();
@@ -263,7 +284,8 @@ public final class DualConnection implements Connection {
             sql,
             readOnlyFunctions,
             this,
-            compatibleWithPreviousVersion
+            compatibleWithPreviousVersion,
+            logger
         )
             .resultSetType(resultSetType)
             .resultSetConcurrency(resultSetConcurrency)
@@ -331,7 +353,8 @@ public final class DualConnection implements Connection {
                 databaseCall,
                 readOnlyFunctions,
                 this,
-                compatibleWithPreviousVersion
+                compatibleWithPreviousVersion,
+                logger
             ).resultSetType(resultSetType)
             .resultSetConcurrency(resultSetConcurrency)
             .resultSetHoldability(resultSetHoldability)
@@ -353,7 +376,8 @@ public final class DualConnection implements Connection {
             sql,
             readOnlyFunctions,
             this,
-            compatibleWithPreviousVersion
+            compatibleWithPreviousVersion,
+            logger
         ).resultSetType(resultSetType)
             .resultSetConcurrency(resultSetConcurrency)
             .resultSetHoldability(resultSetHoldability)
@@ -376,7 +400,8 @@ public final class DualConnection implements Connection {
             sql,
             readOnlyFunctions,
             this,
-            compatibleWithPreviousVersion
+            compatibleWithPreviousVersion,
+            logger
         )
             .resultSetType(resultSetType)
             .resultSetConcurrency(resultSetConcurrency)
@@ -394,7 +419,8 @@ public final class DualConnection implements Connection {
             sql,
             readOnlyFunctions,
             this,
-            compatibleWithPreviousVersion
+            compatibleWithPreviousVersion,
+            logger
         ).autoGeneratedKeys(autoGeneratedKeys)
             .build();
     }
@@ -409,7 +435,8 @@ public final class DualConnection implements Connection {
             sql,
             readOnlyFunctions,
             this,
-            compatibleWithPreviousVersion
+            compatibleWithPreviousVersion,
+            logger
         ).columnIndexes(columnIndexes)
             .build();
     }
@@ -424,7 +451,8 @@ public final class DualConnection implements Connection {
             sql,
             readOnlyFunctions,
             this,
-            compatibleWithPreviousVersion
+            compatibleWithPreviousVersion,
+            logger
         ).columnNames(columnNames)
             .build();
     }
@@ -604,6 +632,8 @@ public final class DualConnection implements Connection {
         private Set<String> readOnlyFunctions = new HashSet<>();
         private DirtyConnectionCloseHook dirtyConnectionCloseHook = new NoOpDirtyConnectionCloseHook();
         private boolean compatibleWithPreviousVersion = false;
+        private Logger logger = null;
+        private ReplicaConnectionProvider replicaConnectionProvider;
 
         private Builder(
             ConnectionProvider connectionProvider,
@@ -645,21 +675,50 @@ public final class DualConnection implements Connection {
             return this;
         }
 
+        public DualConnection.Builder logger(Logger logger) {
+            this.logger = logger;
+            return this;
+        }
+
         public DualConnection.Builder dirtyConnectionCloseHook(DirtyConnectionCloseHook dirtyConnectionCloseHook) {
             this.dirtyConnectionCloseHook = dirtyConnectionCloseHook;
             return this;
         }
 
         public Connection build() throws SQLException {
-            return new DualConnection(
-                connectionProvider,
+            final LazyLogger lazyLogger = logger != null ?
+                new TaggedLogger(
+                    "DualConnection", UUID.randomUUID().toString(),
+                    new StateAwareLogger(this::getState, new DelegatingLazyLogger(logger))
+                ) :
+                new NoopLazyLogger();
+            final ReplicaConsistency replicaConsistency = logger != null ? new ReplicaConsistencyLogger(
                 consistency,
-                databaseCall,
+                lazyLogger
+            ) : consistency;
+            final ConnectionProvider connectionProviderLogger = logger != null ? new ConnectionProviderLogger(
+                connectionProvider,
+                lazyLogger
+            ) : connectionProvider;
+            replicaConnectionProvider = new ReplicaConnectionProvider(
+                connectionProviderLogger,
+                replicaConsistency,
                 stateListener,
+                lazyLogger
+            );
+            return new DualConnection(
+                replicaConnectionProvider,
+                replicaConsistency,
+                databaseCall,
                 readOnlyFunctions,
                 dirtyConnectionCloseHook,
-                compatibleWithPreviousVersion
+                compatibleWithPreviousVersion,
+                lazyLogger
             );
+        }
+
+        private State getState() {
+            return replicaConnectionProvider.getState();
         }
     }
 
