@@ -6,6 +6,8 @@ import com.atlassian.db.replica.internal.DecisionAwareReference;
 import com.atlassian.db.replica.internal.RouteDecisionBuilder;
 import com.atlassian.db.replica.internal.SqlRunnable;
 import com.atlassian.db.replica.internal.Warnings;
+import com.atlassian.db.replica.internal.logs.LazyLogger;
+import com.atlassian.db.replica.internal.logs.TaggedLogger;
 import com.atlassian.db.replica.spi.ConnectionProvider;
 import com.atlassian.db.replica.spi.ReplicaConsistency;
 
@@ -25,9 +27,11 @@ import static com.atlassian.db.replica.internal.state.State.COMMITED_MAIN;
 import static com.atlassian.db.replica.internal.state.State.MAIN;
 import static com.atlassian.db.replica.internal.state.State.NOT_INITIALISED;
 import static com.atlassian.db.replica.internal.state.State.REPLICA;
+import static java.lang.String.format;
 
 public final class ConnectionState {
-    private final ConnectionProvider connectionProvider;
+    public static final String READ_CONNECTION = "readConnection";
+    public static final String WRITE_CONNECTION = "writeConnection";
     private final ReplicaConsistency consistency;
     private volatile Boolean isClosed = false;
     private final ConnectionParameters parameters;
@@ -36,6 +40,7 @@ public final class ConnectionState {
     private volatile boolean replicaConsistent = true;
     private final DecisionAwareReference<Connection> readConnection;
     private final DecisionAwareReference<Connection> writeConnection;
+    private final LazyLogger logger;
 
     /**
      * When we use a connection to write to the database, it becomes a 'dirty' connection.
@@ -48,14 +53,16 @@ public final class ConnectionState {
     private volatile boolean dirty = false;
 
     public void markDirty() {
+        logger.debug(() -> "markDirty");
         this.dirty = true;
     }
 
     public void clearDirty() {
+        logger.debug(() -> "clearDirty");
         this.dirty = false;
     }
 
-    public boolean isDirty(){
+    public boolean isDirty() {
         return dirty;
     }
 
@@ -64,13 +71,14 @@ public final class ConnectionState {
         ReplicaConsistency consistency,
         ConnectionParameters parameters,
         Warnings warnings,
-        StateListener stateListener
+        StateListener stateListener,
+        LazyLogger logger
     ) {
-        this.connectionProvider = connectionProvider;
         this.consistency = consistency;
         this.parameters = parameters;
         this.warnings = warnings;
         this.stateListener = stateListener;
+        this.logger = logger;
         this.readConnection = new DecisionAwareReference<Connection>() {
             @Override
             public Connection create() throws SQLException {
@@ -156,7 +164,7 @@ public final class ConnectionState {
             if (readConnection.get(decisionBuilder).equals(mainDatabaseConnection)) {
                 readConnection.reset(); // We can release the reference. We still can close it via `writeConnection`
             } else {
-                closeConnection(readConnection, decisionBuilder);
+                closeConnection(readConnection, decisionBuilder, READ_CONNECTION);
             }
         }
         return mainDatabaseConnection;
@@ -180,11 +188,13 @@ public final class ConnectionState {
         isClosed = true;
         final Optional<SQLException> mainConnectionCloseException = catchException(() -> closeConnection(
             writeConnection,
-            new RouteDecisionBuilder(RW_API_CALL)
+            new RouteDecisionBuilder(RW_API_CALL),
+            WRITE_CONNECTION
         ));
         final Optional<SQLException> replicaConnectionCloseException = catchException(() -> closeConnection(
             readConnection,
-            new RouteDecisionBuilder(RO_API_CALL)
+            new RouteDecisionBuilder(RO_API_CALL),
+            READ_CONNECTION
         ));
         final State stateAfter = getState();
         if (!stateAfter.equals(state)) {
@@ -241,12 +251,12 @@ public final class ConnectionState {
         try {
             isConsistent = consistency.isConsistent(() -> readConnection.get(decisionBuilder));
         } catch (Exception e) {
-            closeConnection(readConnection, decisionBuilder);
+            closeConnection(readConnection, decisionBuilder, READ_CONNECTION);
             throw e;
         }
         if (isConsistent) {
             if (getState().equals(COMMITED_MAIN)) {
-                closeConnection(writeConnection, decisionBuilder);
+                closeConnection(writeConnection, decisionBuilder, WRITE_CONNECTION);
             }
             final Connection connection = readConnection.get(decisionBuilder);
             replicaConsistent = true;
@@ -260,13 +270,18 @@ public final class ConnectionState {
 
     private void closeConnection(
         DecisionAwareReference<Connection> connectionReference,
-        RouteDecisionBuilder decisionBuilder
+        RouteDecisionBuilder decisionBuilder,
+        String context
     ) throws SQLException {
+        final TaggedLogger closeConnectionLogger = new TaggedLogger("connectionType", context, logger);
+        closeConnectionLogger.debug(() -> "Closing connection");
         if (!connectionReference.isInitialized()) {
+            closeConnectionLogger.debug(() -> "Connection was not initialized");
             return;
         }
         final Connection connection = connectionReference.get(decisionBuilder);
         if (connection.isClosed()) {
+            closeConnectionLogger.debug(() -> "Connection was already closed");
             connectionReference.reset();
             return;
         }
@@ -277,11 +292,14 @@ public final class ConnectionState {
                 warnings.saveWarning(new SQLWarning(e));
             }
             if (connection.isReadOnly()) {
+                closeConnectionLogger.debug(() -> format("Closing connection(%s) setAutoCommit(true)", connection));
                 connection.setAutoCommit(true);
+                closeConnectionLogger.debug(() -> format("Closing connection(%s) setReadOnly(false)", connection));
                 connection.setReadOnly(false);
             }
         } finally {
             connectionReference.reset();
+            closeConnectionLogger.debug(() -> format("Closing connection(%s) close()", connection));
             connection.close();
         }
     }

@@ -24,6 +24,9 @@ Dropping a requirement of a major version of a dependency is a new contract.
 ## [Unreleased]
 [Unreleased]: https://github.com/atlassian-labs/db-replica/compare/release-2.7.2...master
 
+### Added
+- Logger for tracking `DualConnection` internal actions
+
 ## [2.7.2] - 2022-09-20
 [2.7.2]: https://github.com/atlassian-labs/db-replica/compare/release-2.7.0...release-2.7.2
 

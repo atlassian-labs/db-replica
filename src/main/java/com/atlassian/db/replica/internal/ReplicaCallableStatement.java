@@ -1,6 +1,8 @@
 package com.atlassian.db.replica.internal;
 
 import com.atlassian.db.replica.api.DualConnection;
+import com.atlassian.db.replica.internal.logs.LazyLogger;
+import com.atlassian.db.replica.internal.logs.TaggedLogger;
 import com.atlassian.db.replica.spi.DatabaseCall;
 import com.atlassian.db.replica.spi.ReplicaConsistency;
 
@@ -24,6 +26,7 @@ import java.sql.Timestamp;
 import java.util.Calendar;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 
 public class ReplicaCallableStatement extends ReplicaPreparedStatement implements CallableStatement {
     private final String sql;
@@ -41,7 +44,8 @@ public class ReplicaCallableStatement extends ReplicaPreparedStatement implement
         Integer resultSetHoldability,
         Set<String> readOnlyFunctions,
         DualConnection dualConnection,
-        boolean compatibleWithPreviousVersion
+        boolean compatibleWithPreviousVersion,
+        LazyLogger logger
     ) {
         super(
             connectionProvider,
@@ -53,7 +57,8 @@ public class ReplicaCallableStatement extends ReplicaPreparedStatement implement
             resultSetHoldability,
             readOnlyFunctions,
             dualConnection,
-            compatibleWithPreviousVersion
+            compatibleWithPreviousVersion,
+            logger
         );
         this.sql = sql;
         this.resultSetType = resultSetType;
@@ -647,6 +652,7 @@ public class ReplicaCallableStatement extends ReplicaPreparedStatement implement
         private Integer resultSetType;
         private Integer resultSetConcurrency;
         private Integer resultSetHoldability;
+        private final LazyLogger logger;
 
         public Builder(
             ReplicaConnectionProvider connectionProvider,
@@ -655,7 +661,8 @@ public class ReplicaCallableStatement extends ReplicaPreparedStatement implement
             String sql,
             Set<String> readOnlyFunctions,
             DualConnection dualConnection,
-            boolean compatibleWithPreviousVersion
+            boolean compatibleWithPreviousVersion,
+            LazyLogger logger
         ) {
             this.connectionProvider = connectionProvider;
             this.consistency = consistency;
@@ -664,6 +671,7 @@ public class ReplicaCallableStatement extends ReplicaPreparedStatement implement
             this.readOnlyFunctions = readOnlyFunctions;
             this.dualConnection = dualConnection;
             this.compatibleWithPreviousVersion = compatibleWithPreviousVersion;
+            this.logger = logger;
         }
 
         public ReplicaCallableStatement.Builder resultSetType(int resultSetType) {
@@ -692,7 +700,14 @@ public class ReplicaCallableStatement extends ReplicaPreparedStatement implement
                 resultSetHoldability,
                 readOnlyFunctions,
                 dualConnection,
-                compatibleWithPreviousVersion
+                compatibleWithPreviousVersion,
+                logger.isEnabled() ?
+                    new TaggedLogger("sql", sql,
+                        new TaggedLogger(
+                            "ReplicaCallableStatement", UUID.randomUUID().toString(),
+                            logger
+                        )
+                    ) : logger
             );
         }
     }
