@@ -1,5 +1,6 @@
 package com.atlassian.db.replica.internal.aurora;
 
+import com.atlassian.db.replica.api.exception.ReadReplicaConnectionCreationException;
 import com.atlassian.db.replica.spi.ReplicaConnectionProvider;
 import com.atlassian.db.replica.api.Database;
 
