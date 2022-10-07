@@ -709,4 +709,11 @@ public class ReplicaPreparedStatement extends ReplicaStatement implements Prepar
             );
         }
     }
+
+    @Override
+    public String toString() {
+        return getCurrentStatement() != null ?
+            getCurrentStatement().toString() :
+            getClass().getName() + "@" + Integer.toHexString(hashCode());
+    }
 }
