@@ -1,4 +1,4 @@
-package com.atlassian.db.replica.internal.aurora;
+package com.atlassian.db.replica.api.exception;
 
 public class ReadReplicaConnectionCreationException extends RuntimeException {
 
