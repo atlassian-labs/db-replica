@@ -22,7 +22,10 @@ Dropping a requirement of a major version of a dependency is a new contract.
 
 
 ## [Unreleased]
-[Unreleased]: https://github.com/atlassian-labs/db-replica/compare/release-2.8.0...master
+[Unreleased]: https://github.com/atlassian-labs/db-replica/compare/release-2.9.0...master
+
+## [2.9.0] - 2022-10-10
+[2.9.0]: https://github.com/atlassian-labs/db-replica/compare/release-2.8.0...release-2.9.0
 
 ### Added
 - `ReadReplicaConnectionCreationException`
