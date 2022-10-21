@@ -1,6 +1,6 @@
 package com.atlassian.db.replica.it.example.aurora.replica.api;
 
-import com.atlassian.db.replica.internal.LazyReference;
+import com.atlassian.db.replica.internal.util.concurrency.LazyReference;
 import com.atlassian.db.replica.spi.ConnectionProvider;
 import com.atlassian.db.replica.spi.ReplicaConsistency;
 

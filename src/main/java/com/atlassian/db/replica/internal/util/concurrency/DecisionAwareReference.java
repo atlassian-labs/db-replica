@@ -1,4 +1,6 @@
-package com.atlassian.db.replica.internal;
+package com.atlassian.db.replica.internal.util.concurrency;
+
+import com.atlassian.db.replica.internal.RouteDecisionBuilder;
 
 import java.util.concurrent.atomic.AtomicReference;
 

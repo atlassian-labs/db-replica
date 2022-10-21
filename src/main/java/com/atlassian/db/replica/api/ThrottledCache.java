@@ -1,6 +1,6 @@
 package com.atlassian.db.replica.api;
 
-import com.atlassian.db.replica.internal.LockBasedThrottledCache;
+import com.atlassian.db.replica.internal.util.cache.LockBasedThrottledCache;
 import com.atlassian.db.replica.internal.util.ThreadSafe;
 import com.atlassian.db.replica.spi.SuppliedCache;
 
