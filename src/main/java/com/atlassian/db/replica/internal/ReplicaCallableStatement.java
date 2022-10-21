@@ -3,6 +3,7 @@ package com.atlassian.db.replica.internal;
 import com.atlassian.db.replica.api.DualConnection;
 import com.atlassian.db.replica.internal.logs.LazyLogger;
 import com.atlassian.db.replica.internal.logs.TaggedLogger;
+import com.atlassian.db.replica.internal.state.ConnectionState;
 import com.atlassian.db.replica.spi.DatabaseCall;
 import com.atlassian.db.replica.spi.ReplicaConsistency;
 
@@ -45,7 +46,8 @@ public class ReplicaCallableStatement extends ReplicaPreparedStatement implement
         Set<String> readOnlyFunctions,
         DualConnection dualConnection,
         boolean compatibleWithPreviousVersion,
-        LazyLogger logger
+        LazyLogger logger,
+        ConnectionState state
     ) {
         super(
             connectionProvider,
@@ -58,7 +60,8 @@ public class ReplicaCallableStatement extends ReplicaPreparedStatement implement
             readOnlyFunctions,
             dualConnection,
             compatibleWithPreviousVersion,
-            logger
+            logger,
+            state
         );
         this.sql = sql;
         this.resultSetType = resultSetType;
@@ -649,6 +652,7 @@ public class ReplicaCallableStatement extends ReplicaPreparedStatement implement
         private final Set<String> readOnlyFunctions;
         private final DualConnection dualConnection;
         private final boolean compatibleWithPreviousVersion;
+        private final ConnectionState state;
         private Integer resultSetType;
         private Integer resultSetConcurrency;
         private Integer resultSetHoldability;
@@ -662,7 +666,8 @@ public class ReplicaCallableStatement extends ReplicaPreparedStatement implement
             Set<String> readOnlyFunctions,
             DualConnection dualConnection,
             boolean compatibleWithPreviousVersion,
-            LazyLogger logger
+            LazyLogger logger,
+            ConnectionState state
         ) {
             this.connectionProvider = connectionProvider;
             this.consistency = consistency;
@@ -672,6 +677,7 @@ public class ReplicaCallableStatement extends ReplicaPreparedStatement implement
             this.dualConnection = dualConnection;
             this.compatibleWithPreviousVersion = compatibleWithPreviousVersion;
             this.logger = logger;
+            this.state = state;
         }
 
         public ReplicaCallableStatement.Builder resultSetType(int resultSetType) {
@@ -707,7 +713,8 @@ public class ReplicaCallableStatement extends ReplicaPreparedStatement implement
                             "ReplicaCallableStatement", UUID.randomUUID().toString(),
                             logger
                         )
-                    ) : logger
+                    ) : logger,
+                state
             );
         }
     }

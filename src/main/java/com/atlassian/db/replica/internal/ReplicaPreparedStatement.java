@@ -4,6 +4,7 @@ import com.atlassian.db.replica.api.DualConnection;
 import com.atlassian.db.replica.api.reason.Reason;
 import com.atlassian.db.replica.internal.logs.LazyLogger;
 import com.atlassian.db.replica.internal.logs.TaggedLogger;
+import com.atlassian.db.replica.internal.state.ConnectionState;
 import com.atlassian.db.replica.spi.DatabaseCall;
 import com.atlassian.db.replica.spi.ReplicaConsistency;
 
@@ -57,7 +58,8 @@ public class ReplicaPreparedStatement extends ReplicaStatement implements Prepar
         Set<String> readOnlyFunctions,
         DualConnection dualConnection,
         boolean compatibleWithPreviousVersion,
-        LazyLogger logger
+        LazyLogger logger,
+        ConnectionState state
     ) {
         super(
             consistency,
@@ -69,7 +71,8 @@ public class ReplicaPreparedStatement extends ReplicaStatement implements Prepar
             readOnlyFunctions,
             dualConnection,
             compatibleWithPreviousVersion,
-            logger
+            logger,
+            state
         );
         this.sql = sql;
         this.resultSetType = resultSetType;
@@ -92,7 +95,8 @@ public class ReplicaPreparedStatement extends ReplicaStatement implements Prepar
         Set<String> readOnlyFunctions,
         DualConnection dualConnection,
         boolean compatibleWithPreviousVersion,
-        LazyLogger logger
+        LazyLogger logger,
+        ConnectionState state
     ) {
         super(
             consistency,
@@ -104,7 +108,8 @@ public class ReplicaPreparedStatement extends ReplicaStatement implements Prepar
             readOnlyFunctions,
             dualConnection,
             compatibleWithPreviousVersion,
-            logger
+            logger,
+            state
         );
         this.sql = sql;
         this.resultSetType = resultSetType;
@@ -626,6 +631,7 @@ public class ReplicaPreparedStatement extends ReplicaStatement implements Prepar
         private final Set<String> readOnlyFunctions;
         private final DualConnection dualConnection;
         private final boolean compatibleWithPreviousVersion;
+        private final ConnectionState state;
         private Integer resultSetType;
         private Integer resultSetConcurrency;
         private Integer resultSetHoldability;
@@ -642,7 +648,8 @@ public class ReplicaPreparedStatement extends ReplicaStatement implements Prepar
             Set<String> readOnlyFunctions,
             DualConnection dualConnection,
             boolean compatibleWithPreviousVersion,
-            LazyLogger logger
+            LazyLogger logger,
+            ConnectionState state
         ) {
             this.connectionProvider = connectionProvider;
             this.consistency = consistency;
@@ -652,6 +659,7 @@ public class ReplicaPreparedStatement extends ReplicaStatement implements Prepar
             this.dualConnection = dualConnection;
             this.compatibleWithPreviousVersion = compatibleWithPreviousVersion;
             this.logger = logger;
+            this.state = state;
         }
 
         public ReplicaPreparedStatement.Builder resultSetType(int resultSetType) {
@@ -705,7 +713,8 @@ public class ReplicaPreparedStatement extends ReplicaStatement implements Prepar
                             "ReplicaPreparedStatement", UUID.randomUUID().toString(),
                             logger
                         )
-                    ) : logger
+                    ) : logger,
+                state
             );
         }
     }

@@ -2,7 +2,9 @@ package com.atlassian.db.replica.api;
 
 import com.atlassian.db.replica.api.reason.Reason;
 import com.atlassian.db.replica.internal.ClientInfo;
+import com.atlassian.db.replica.internal.ConnectionParameters;
 import com.atlassian.db.replica.internal.ForwardCall;
+import com.atlassian.db.replica.internal.Warnings;
 import com.atlassian.db.replica.internal.logs.ConnectionProviderLogger;
 import com.atlassian.db.replica.internal.logs.DelegatingLazyLogger;
 import com.atlassian.db.replica.internal.NoOpDirtyConnectionCloseHook;
@@ -16,6 +18,7 @@ import com.atlassian.db.replica.internal.logs.TaggedLogger;
 import com.atlassian.db.replica.internal.logs.LazyLogger;
 import com.atlassian.db.replica.internal.logs.NoopLazyLogger;
 import com.atlassian.db.replica.internal.logs.StateAwareLogger;
+import com.atlassian.db.replica.internal.state.ConnectionState;
 import com.atlassian.db.replica.internal.state.NoOpStateListener;
 import com.atlassian.db.replica.internal.state.State;
 import com.atlassian.db.replica.internal.state.StateListener;
@@ -49,6 +52,7 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.Executor;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static java.lang.String.format;
 
@@ -66,6 +70,7 @@ public final class DualConnection implements Connection {
     private final DirtyConnectionCloseHook dirtyConnectionCloseHook;
     private final boolean compatibleWithPreviousVersion;
     private final LazyLogger logger;
+    private final ConnectionState state;
 
     private DualConnection(
         ReplicaConnectionProvider connectionProvider,
@@ -74,7 +79,8 @@ public final class DualConnection implements Connection {
         Set<String> readOnlyFunctions,
         DirtyConnectionCloseHook dirtyConnectionCloseHook,
         boolean compatibleWithPreviousVersion,
-        LazyLogger logger
+        LazyLogger logger,
+        ConnectionState state
     ) {
         this.connectionProvider = connectionProvider;
         this.dirtyConnectionCloseHook = dirtyConnectionCloseHook;
@@ -83,6 +89,7 @@ public final class DualConnection implements Connection {
         this.consistency = consistency;
         this.databaseCall = databaseCall;
         this.readOnlyFunctions = readOnlyFunctions;
+        this.state = state;
     }
 
     @Override
@@ -95,7 +102,8 @@ public final class DualConnection implements Connection {
             readOnlyFunctions,
             this,
             compatibleWithPreviousVersion,
-            logger
+            logger,
+            state
         ).build();
     }
 
@@ -110,7 +118,8 @@ public final class DualConnection implements Connection {
             readOnlyFunctions,
             this,
             compatibleWithPreviousVersion,
-            logger
+            logger,
+            state
         ).build();
     }
 
@@ -125,14 +134,15 @@ public final class DualConnection implements Connection {
             readOnlyFunctions,
             this,
             compatibleWithPreviousVersion,
-            logger
+            logger,
+            state
         ).build();
     }
 
     @Override
     public String nativeSQL(String sql) throws SQLException {
         checkClosed();
-        final Connection readConnection = connectionProvider.getReadConnection(new RouteDecisionBuilder(Reason.RO_API_CALL).sql(
+        final Connection readConnection = state.getReadConnection(new RouteDecisionBuilder(Reason.RO_API_CALL).sql(
             sql));
         logger.info(() -> format("nativeSQL(sql='%s')", sql));
         return readConnection
@@ -182,7 +192,7 @@ public final class DualConnection implements Connection {
     @Override
     public DatabaseMetaData getMetaData() throws SQLException {
         checkClosed();
-        return connectionProvider.getWriteConnection(new RouteDecisionBuilder(Reason.RW_API_CALL)).getMetaData();
+        return state.getWriteConnection(new RouteDecisionBuilder(Reason.RW_API_CALL)).getMetaData();
     }
 
     @Override
@@ -245,7 +255,8 @@ public final class DualConnection implements Connection {
                 readOnlyFunctions,
                 this,
                 compatibleWithPreviousVersion,
-                logger
+                logger,
+                state
             )
             .resultSetType(resultSetType)
             .resultSetConcurrency(resultSetConcurrency)
@@ -267,7 +278,8 @@ public final class DualConnection implements Connection {
             readOnlyFunctions,
             this,
             compatibleWithPreviousVersion,
-            logger
+            logger,
+            state
         ).resultSetType(resultSetType)
             .resultSetConcurrency(resultSetConcurrency)
             .build();
@@ -285,7 +297,8 @@ public final class DualConnection implements Connection {
             readOnlyFunctions,
             this,
             compatibleWithPreviousVersion,
-            logger
+            logger,
+            state
         )
             .resultSetType(resultSetType)
             .resultSetConcurrency(resultSetConcurrency)
@@ -319,25 +332,25 @@ public final class DualConnection implements Connection {
     @Override
     public Savepoint setSavepoint() throws SQLException {
         checkClosed();
-        return connectionProvider.getWriteConnection(new RouteDecisionBuilder(Reason.RW_API_CALL)).setSavepoint();
+        return state.getWriteConnection(new RouteDecisionBuilder(Reason.RW_API_CALL)).setSavepoint();
     }
 
     @Override
     public Savepoint setSavepoint(String name) throws SQLException {
         checkClosed();
-        return connectionProvider.getWriteConnection(new RouteDecisionBuilder(Reason.RW_API_CALL)).setSavepoint(name);
+        return state.getWriteConnection(new RouteDecisionBuilder(Reason.RW_API_CALL)).setSavepoint(name);
     }
 
     @Override
     public void rollback(Savepoint savepoint) throws SQLException {
         checkClosed();
-        connectionProvider.getWriteConnection(new RouteDecisionBuilder(Reason.RW_API_CALL)).rollback(savepoint);
+        state.getWriteConnection(new RouteDecisionBuilder(Reason.RW_API_CALL)).rollback(savepoint);
     }
 
     @Override
     public void releaseSavepoint(Savepoint savepoint) throws SQLException {
         checkClosed();
-        connectionProvider.getWriteConnection(new RouteDecisionBuilder(Reason.RW_API_CALL)).releaseSavepoint(savepoint);
+        state.getWriteConnection(new RouteDecisionBuilder(Reason.RW_API_CALL)).releaseSavepoint(savepoint);
     }
 
     @Override
@@ -354,7 +367,8 @@ public final class DualConnection implements Connection {
                 readOnlyFunctions,
                 this,
                 compatibleWithPreviousVersion,
-                logger
+                logger,
+                state
             ).resultSetType(resultSetType)
             .resultSetConcurrency(resultSetConcurrency)
             .resultSetHoldability(resultSetHoldability)
@@ -377,7 +391,8 @@ public final class DualConnection implements Connection {
             readOnlyFunctions,
             this,
             compatibleWithPreviousVersion,
-            logger
+            logger,
+            state
         ).resultSetType(resultSetType)
             .resultSetConcurrency(resultSetConcurrency)
             .resultSetHoldability(resultSetHoldability)
@@ -401,7 +416,8 @@ public final class DualConnection implements Connection {
             readOnlyFunctions,
             this,
             compatibleWithPreviousVersion,
-            logger
+            logger,
+            state
         )
             .resultSetType(resultSetType)
             .resultSetConcurrency(resultSetConcurrency)
@@ -420,7 +436,8 @@ public final class DualConnection implements Connection {
             readOnlyFunctions,
             this,
             compatibleWithPreviousVersion,
-            logger
+            logger,
+            state
         ).autoGeneratedKeys(autoGeneratedKeys)
             .build();
     }
@@ -436,7 +453,8 @@ public final class DualConnection implements Connection {
             readOnlyFunctions,
             this,
             compatibleWithPreviousVersion,
-            logger
+            logger,
+            state
         ).columnIndexes(columnIndexes)
             .build();
     }
@@ -452,7 +470,8 @@ public final class DualConnection implements Connection {
             readOnlyFunctions,
             this,
             compatibleWithPreviousVersion,
-            logger
+            logger,
+            state
         ).columnNames(columnNames)
             .build();
     }
@@ -460,7 +479,7 @@ public final class DualConnection implements Connection {
     @Override
     public Clob createClob() throws SQLException {
         checkClosed();
-        return connectionProvider
+        return state
             .getWriteConnection(new RouteDecisionBuilder(Reason.RW_API_CALL))
             .createClob();
     }
@@ -468,7 +487,7 @@ public final class DualConnection implements Connection {
     @Override
     public Blob createBlob() throws SQLException {
         checkClosed();
-        return connectionProvider
+        return state
             .getWriteConnection(new RouteDecisionBuilder(Reason.RW_API_CALL))
             .createBlob();
     }
@@ -476,7 +495,7 @@ public final class DualConnection implements Connection {
     @Override
     public NClob createNClob() throws SQLException {
         checkClosed();
-        return connectionProvider
+        return state
             .getWriteConnection(new RouteDecisionBuilder(Reason.RW_API_CALL))
             .createNClob();
     }
@@ -484,7 +503,7 @@ public final class DualConnection implements Connection {
     @Override
     public SQLXML createSQLXML() throws SQLException {
         checkClosed();
-        return connectionProvider
+        return state
             .getWriteConnection(new RouteDecisionBuilder(Reason.RW_API_CALL))
             .createSQLXML();
     }
@@ -494,7 +513,7 @@ public final class DualConnection implements Connection {
         if (isClosed()) {
             return false;
         }
-        return connectionProvider.getReadConnection(new RouteDecisionBuilder(Reason.RO_API_CALL)).isValid(timeout);
+        return state.getReadConnection(new RouteDecisionBuilder(Reason.RO_API_CALL)).isValid(timeout);
     }
 
     @Override
@@ -541,7 +560,7 @@ public final class DualConnection implements Connection {
     @Override
     public String getClientInfo(String name) throws SQLException {
         checkClosed();
-        return connectionProvider
+        return state
             .getWriteConnection(new RouteDecisionBuilder(Reason.RW_API_CALL))
             .getClientInfo(name);
     }
@@ -549,7 +568,7 @@ public final class DualConnection implements Connection {
     @Override
     public Properties getClientInfo() throws SQLException {
         checkClosed();
-        return connectionProvider
+        return state
             .getWriteConnection(new RouteDecisionBuilder(Reason.RW_API_CALL))
             .getClientInfo();
     }
@@ -557,7 +576,7 @@ public final class DualConnection implements Connection {
     @Override
     public Array createArrayOf(String typeName, Object[] elements) throws SQLException {
         checkClosed();
-        return connectionProvider
+        return state
             .getReadConnection(new RouteDecisionBuilder(Reason.RO_API_CALL))
             .createArrayOf(typeName, elements);
     }
@@ -565,7 +584,7 @@ public final class DualConnection implements Connection {
     @Override
     public Struct createStruct(String typeName, Object[] attributes) throws SQLException {
         checkClosed();
-        return connectionProvider
+        return state
             .getWriteConnection(new RouteDecisionBuilder(Reason.RW_API_CALL))
             .createStruct(typeName, attributes);
     }
@@ -579,7 +598,7 @@ public final class DualConnection implements Connection {
     @Override
     public String getSchema() throws SQLException {
         checkClosed();
-        return connectionProvider.getReadConnection(new RouteDecisionBuilder(Reason.RO_API_CALL)).getSchema();
+        return state.getReadConnection(new RouteDecisionBuilder(Reason.RO_API_CALL)).getSchema();
     }
 
     @Override
@@ -596,7 +615,7 @@ public final class DualConnection implements Connection {
     @Override
     public int getNetworkTimeout() throws SQLException {
         checkClosed();
-        return connectionProvider
+        return state
             .getWriteConnection(new RouteDecisionBuilder(Reason.RW_API_CALL))
             .getNetworkTimeout();
     }
@@ -634,6 +653,7 @@ public final class DualConnection implements Connection {
         private boolean compatibleWithPreviousVersion = false;
         private Logger logger = null;
         private ReplicaConnectionProvider replicaConnectionProvider;
+        private AtomicReference<ConnectionState> state = new AtomicReference<>();
 
         private Builder(
             ConnectionProvider connectionProvider,
@@ -700,11 +720,24 @@ public final class DualConnection implements Connection {
                 connectionProvider,
                 lazyLogger
             ) : connectionProvider;
+            final ConnectionParameters parameters = new ConnectionParameters(lazyLogger);
+            final Warnings warnings = new Warnings();
+            this.state.set(
+                new ConnectionState(
+                    connectionProviderLogger,
+                    consistency,
+                    parameters,
+                    warnings,
+                    stateListener,
+                    lazyLogger
+                )
+            );
             replicaConnectionProvider = new ReplicaConnectionProvider(
-                connectionProviderLogger,
                 replicaConsistency,
-                stateListener,
-                lazyLogger
+                lazyLogger,
+                parameters,
+                warnings,
+                state.get()
             );
             return new DualConnection(
                 replicaConnectionProvider,
@@ -713,12 +746,13 @@ public final class DualConnection implements Connection {
                 readOnlyFunctions,
                 dirtyConnectionCloseHook,
                 compatibleWithPreviousVersion,
-                lazyLogger
+                lazyLogger,
+                state.get()
             );
         }
 
         private State getState() {
-            return replicaConnectionProvider.getState();
+            return this.state.get().getState();
         }
     }
 
