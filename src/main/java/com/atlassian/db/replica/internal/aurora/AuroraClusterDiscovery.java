@@ -3,7 +3,7 @@ package com.atlassian.db.replica.internal.aurora;
 import com.atlassian.db.replica.api.AuroraConnectionDetails;
 import com.atlassian.db.replica.api.Database;
 import com.atlassian.db.replica.api.jdbc.JdbcUrl;
-import com.atlassian.db.replica.internal.NoCacheSuppliedCache;
+import com.atlassian.db.replica.internal.util.cache.NoCacheSuppliedCache;
 import com.atlassian.db.replica.spi.ReplicaConnectionPerUrlProvider;
 import com.atlassian.db.replica.spi.SuppliedCache;
 

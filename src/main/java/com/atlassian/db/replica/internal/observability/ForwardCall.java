@@ -1,4 +1,4 @@
-package com.atlassian.db.replica.internal;
+package com.atlassian.db.replica.internal.observability;
 
 import com.atlassian.db.replica.api.SqlCall;
 import com.atlassian.db.replica.api.reason.RouteDecision;

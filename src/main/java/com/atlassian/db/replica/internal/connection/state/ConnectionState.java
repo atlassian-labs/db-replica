@@ -2,12 +2,11 @@ package com.atlassian.db.replica.internal.connection.state;
 
 import com.atlassian.db.replica.api.reason.RouteDecision;
 import com.atlassian.db.replica.internal.connection.params.ConnectionParameters;
-import com.atlassian.db.replica.internal.DecisionAwareReference;
+import com.atlassian.db.replica.internal.util.concurrency.DecisionAwareReference;
 import com.atlassian.db.replica.internal.RouteDecisionBuilder;
-import com.atlassian.db.replica.internal.SqlRunnable;
-import com.atlassian.db.replica.internal.Warnings;
-import com.atlassian.db.replica.internal.logs.LazyLogger;
-import com.atlassian.db.replica.internal.logs.TaggedLogger;
+import com.atlassian.db.replica.internal.connection.Warnings;
+import com.atlassian.db.replica.internal.observability.logs.LazyLogger;
+import com.atlassian.db.replica.internal.observability.logs.TaggedLogger;
 import com.atlassian.db.replica.spi.ConnectionProvider;
 import com.atlassian.db.replica.spi.ReplicaConsistency;
 

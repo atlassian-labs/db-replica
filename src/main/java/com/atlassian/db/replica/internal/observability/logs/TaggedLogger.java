@@ -1,71 +1,71 @@
-package com.atlassian.db.replica.internal.logs;
-
-import com.atlassian.db.replica.internal.connection.state.State;
+package com.atlassian.db.replica.internal.observability.logs;
 
 import java.util.function.Supplier;
 
-public class StateAwareLogger implements LazyLogger {
-    private final Supplier<State> stateSupplier;
+public class TaggedLogger implements LazyLogger {
+    private final String key;
+    private final String value;
     private final LazyLogger logger;
 
-    public StateAwareLogger(Supplier<State> stateSupplier, LazyLogger logger) {
-        this.stateSupplier = stateSupplier;
+    public TaggedLogger(String key, String value, LazyLogger logger) {
+        this.key = key;
+        this.value = value;
         this.logger = logger;
     }
 
     @Override
     public void debug(Supplier<String> message) {
         if (isEnabled()) {
-            logger.debug(messageWithStatus(message));
+            logger.debug(messageWithDualConnectionUuid(message));
         }
     }
 
     @Override
     public void debug(Supplier<String> message, Throwable t) {
         if (isEnabled()) {
-            logger.debug(messageWithStatus(message), t);
+            logger.debug(messageWithDualConnectionUuid(message), t);
         }
     }
 
     @Override
     public void info(Supplier<String> message) {
         if (isEnabled()) {
-            logger.info(messageWithStatus(message));
+            logger.info(messageWithDualConnectionUuid(message));
         }
     }
 
     @Override
     public void info(Supplier<String> message, Throwable t) {
         if (isEnabled()) {
-            logger.info(messageWithStatus(message), t);
+            logger.info(messageWithDualConnectionUuid(message), t);
         }
     }
 
     @Override
     public void warn(Supplier<String> message) {
         if (isEnabled()) {
-            logger.warn(messageWithStatus(message));
+            logger.warn(messageWithDualConnectionUuid(message));
         }
     }
 
     @Override
     public void warn(Supplier<String> message, Throwable t) {
         if (isEnabled()) {
-            logger.warn(messageWithStatus(message), t);
+            logger.warn(messageWithDualConnectionUuid(message), t);
         }
     }
 
     @Override
     public void error(Supplier<String> message) {
         if (isEnabled()) {
-            logger.error(messageWithStatus(message));
+            logger.error(messageWithDualConnectionUuid(message));
         }
     }
 
     @Override
     public void error(Supplier<String> message, Throwable t) {
         if (isEnabled()) {
-            logger.error(messageWithStatus(message), t);
+            logger.error(messageWithDualConnectionUuid(message), t);
         }
     }
 
@@ -74,7 +74,7 @@ public class StateAwareLogger implements LazyLogger {
         return logger.isEnabled();
     }
 
-    private Supplier<String> messageWithStatus(Supplier<String> message) {
-        return () -> "[state=" + stateSupplier.get().getName() + "] " + message.get();
+    private Supplier<String> messageWithDualConnectionUuid(Supplier<String> message) {
+        return () -> "[" + key + "=" + value + "] " + message.get();
     }
 }

@@ -2,9 +2,9 @@ package com.atlassian.db.replica.internal.connection.statements;
 
 import com.atlassian.db.replica.api.DualConnection;
 import com.atlassian.db.replica.internal.connection.params.ConnectionParameters;
-import com.atlassian.db.replica.internal.ReadReplicaUnsupportedOperationException;
-import com.atlassian.db.replica.internal.logs.LazyLogger;
-import com.atlassian.db.replica.internal.logs.TaggedLogger;
+import com.atlassian.db.replica.internal.connection.ReadReplicaUnsupportedOperationException;
+import com.atlassian.db.replica.internal.observability.logs.LazyLogger;
+import com.atlassian.db.replica.internal.observability.logs.TaggedLogger;
 import com.atlassian.db.replica.internal.connection.state.ConnectionState;
 import com.atlassian.db.replica.spi.DatabaseCall;
 import com.atlassian.db.replica.spi.ReplicaConsistency;
