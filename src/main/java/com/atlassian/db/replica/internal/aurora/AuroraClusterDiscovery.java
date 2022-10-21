@@ -14,7 +14,6 @@ import java.util.Collections;
 import java.util.function.Supplier;
 
 import static java.util.stream.Collectors.toList;
-
 public final class AuroraClusterDiscovery {
     private final ReplicaConnectionPerUrlProvider replicaConnectionPerUrlProvider;
     private final SuppliedCache<Collection<Database>> discoveredReplicasCache;
