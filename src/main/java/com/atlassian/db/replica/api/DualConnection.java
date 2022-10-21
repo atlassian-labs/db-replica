@@ -4,6 +4,7 @@ import com.atlassian.db.replica.api.reason.Reason;
 import com.atlassian.db.replica.internal.ClientInfo;
 import com.atlassian.db.replica.internal.ConnectionParameters;
 import com.atlassian.db.replica.internal.ForwardCall;
+import com.atlassian.db.replica.internal.NetworkTimeout;
 import com.atlassian.db.replica.internal.Warnings;
 import com.atlassian.db.replica.internal.logs.ConnectionProviderLogger;
 import com.atlassian.db.replica.internal.logs.DelegatingLazyLogger;
@@ -48,12 +49,16 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static com.atlassian.db.replica.api.reason.Reason.RO_API_CALL;
+import static com.atlassian.db.replica.internal.state.State.CLOSED;
+import static com.atlassian.db.replica.internal.state.State.MAIN;
 import static java.lang.String.format;
 
 /**
@@ -158,26 +163,43 @@ public final class DualConnection implements Connection {
     public void setAutoCommit(boolean autoCommit) throws SQLException {
         logger.debug(() -> format("setAutoCommit(autoCommit='%s')", autoCommit));
         checkClosed();
-        connectionProvider.setAutoCommit(autoCommit);
+        final boolean autoCommitBefore = getAutoCommit();
+        if (autoCommitBefore != autoCommit) {
+            preCommit(autoCommitBefore);
+        }
+        parameters.setAutoCommit(state::getConnection, autoCommit);
+        if (autoCommitBefore != getAutoCommit()) {
+            recordCommit(autoCommitBefore);
+        }
     }
 
     @Override
     public boolean getAutoCommit() throws SQLException {
         checkClosed();
-        return connectionProvider.getAutoCommit();
+        return parameters.isAutoCommit();
     }
 
     @Override
     public void commit() throws SQLException {
         checkClosed();
-        connectionProvider.commit();
+        final Optional<Connection> connection = state.getConnection();
+        if (connection.isPresent()) {
+            preCommit(parameters.isAutoCommit());
+            logger.debug(() -> "commit()");
+            connection.get().commit();
+            recordCommit(parameters.isAutoCommit());
+        }
     }
 
     @Override
     public void rollback() throws SQLException {
         logger.debug(() -> "rollback()");
         checkClosed();
-        connectionProvider.rollback();
+        state.clearDirty();
+        final Optional<Connection> connection = state.getConnection();
+        if (connection.isPresent()) {
+            connection.get().rollback();
+        }
     }
 
     @Override
@@ -186,12 +208,12 @@ public final class DualConnection implements Connection {
             dirtyConnectionCloseHook.onClose(this);
         }
         logger.debug(() -> "close()");
-        connectionProvider.close();
+        state.close();
     }
 
     @Override
     public boolean isClosed() {
-        return connectionProvider.isClosed();
+        return state.getState().equals(CLOSED);
     }
 
     @Override
@@ -203,25 +225,25 @@ public final class DualConnection implements Connection {
     @Override
     public void setReadOnly(boolean readOnly) throws SQLException {
         checkClosed();
-        connectionProvider.setReadOnly(readOnly);
+        parameters.setReadOnly(state::getConnection, readOnly);
     }
 
     @Override
     public boolean isReadOnly() throws SQLException {
         checkClosed();
-        return connectionProvider.getReadOnly();
+        return parameters.isReadOnly();
     }
 
     @Override
     public void setCatalog(String catalog) throws SQLException {
         checkClosed();
-        connectionProvider.setCatalog(catalog);
+        parameters.setCatalog(state::getConnection, catalog);
     }
 
     @Override
     public String getCatalog() throws SQLException {
         checkClosed();
-        return connectionProvider.getCatalog();
+        return parameters.getCatalog();
     }
 
     @Override
@@ -315,25 +337,25 @@ public final class DualConnection implements Connection {
     @Override
     public Map<String, Class<?>> getTypeMap() throws SQLException {
         checkClosed();
-        return connectionProvider.getTypeMap();
+        return parameters.getTypeMap();
     }
 
     @Override
     public void setTypeMap(Map<String, Class<?>> map) throws SQLException {
         checkClosed();
-        connectionProvider.setTypeMap(map);
+        parameters.setTypeMap(state::getConnection, map);
     }
 
     @Override
     public void setHoldability(int holdability) throws SQLException {
         checkClosed();
-        connectionProvider.setHoldability(holdability);
+        parameters.setHoldability(state::getConnection, holdability);
     }
 
     @Override
     public int getHoldability() throws SQLException {
         checkClosed();
-        return connectionProvider.getHoldability();
+        return parameters.getHoldability() == null ? state.getWriteConnection(new RouteDecisionBuilder(Reason.RW_API_CALL)).getHoldability() : parameters.getHoldability();
     }
 
     @Override
@@ -538,7 +560,7 @@ public final class DualConnection implements Connection {
             throw new SQLClientInfoException(CONNECTION_CLOSED_MESSAGE, failures, cause);
         }
         try {
-            connectionProvider.setClientInfo(new ClientInfo(name, value));
+            parameters.setClientInfo(state::getConnection, new ClientInfo(name, value));
         } catch (SQLException cause) {
             final Map<String, ClientInfoStatus> failures = new HashMap<>();
             failures.put(name, ClientInfoStatus.REASON_UNKNOWN);
@@ -559,7 +581,7 @@ public final class DualConnection implements Connection {
             throw new SQLClientInfoException(CONNECTION_CLOSED_MESSAGE, failures, cause);
         }
         try {
-            connectionProvider.setClientInfo(new ClientInfo(properties));
+            parameters.setClientInfo(state::getConnection, new ClientInfo(properties));
         } catch (SQLException cause) {
             final Map<String, ClientInfoStatus> failures = new HashMap<>();
             for (Map.Entry<Object, Object> e : properties.entrySet()) {
@@ -604,7 +626,7 @@ public final class DualConnection implements Connection {
     @Override
     public void setSchema(String schema) throws SQLException {
         checkClosed();
-        connectionProvider.setSchema(schema);
+        parameters.setSchema(state::getConnection, schema);
     }
 
     @Override
@@ -615,13 +637,13 @@ public final class DualConnection implements Connection {
 
     @Override
     public void abort(Executor executor) throws SQLException {
-        connectionProvider.abort(executor);
+        state.abort(executor);
     }
 
     @Override
     public void setNetworkTimeout(Executor executor, int milliseconds) throws SQLException {
         checkClosed();
-        connectionProvider.setNetworkTimeout(executor, milliseconds);
+        parameters.setNetworkTimeout(state::getConnection, new NetworkTimeout(executor, milliseconds));
     }
 
     @Override
@@ -637,7 +659,12 @@ public final class DualConnection implements Connection {
         if (iface.isAssignableFrom(getClass())) {
             return iface.cast(this);
         }
-        return connectionProvider.unwrap(iface);
+        final Connection currentConnection = state.getReadConnection(new RouteDecisionBuilder(RO_API_CALL));
+        if (iface.isAssignableFrom(currentConnection.getClass())) {
+            return iface.cast(currentConnection);
+        } else {
+            return currentConnection.unwrap(iface);
+        }
     }
 
     @Override
@@ -645,7 +672,27 @@ public final class DualConnection implements Connection {
         if (iface.isAssignableFrom(getClass())) {
             return true;
         }
-        return connectionProvider.isWrapperFor(iface);
+        final Connection currentConnection = state.getReadConnection(new RouteDecisionBuilder(RO_API_CALL));
+        if (iface.isAssignableFrom(currentConnection.getClass())) {
+            return true;
+        } else {
+            return currentConnection.isWrapperFor(iface);
+        }
+    }
+
+    private void recordCommit(boolean autoCommit) throws SQLException {
+        if (state.getState().equals(MAIN) && !autoCommit) {
+            final Connection mainConnection = state.getWriteConnection(new RouteDecisionBuilder(Reason.RW_API_CALL));
+            consistency.write(mainConnection);
+            state.clearDirty();
+        }
+    }
+
+    private void preCommit(boolean autoCommit) throws SQLException {
+        if (state.getState().equals(MAIN) && !autoCommit) {
+            final Connection mainConnection = state.getWriteConnection(new RouteDecisionBuilder(Reason.RW_API_CALL));
+            consistency.preCommit(mainConnection);
+        }
     }
 
     public static Builder builder(
@@ -745,8 +792,6 @@ public final class DualConnection implements Connection {
                 )
             );
             replicaConnectionProvider = new ReplicaConnectionProvider(
-                replicaConsistency,
-                lazyLogger,
                 parameters,
                 warnings,
                 state.get()
