@@ -624,7 +624,6 @@ public class ReplicaPreparedStatement extends ReplicaStatement implements Prepar
     }
 
     public static class Builder {
-        private final ReplicaConnectionProvider connectionProvider;
         private final ReplicaConsistency consistency;
         private final DatabaseCall databaseCall;
         private final String sql;
@@ -642,7 +641,6 @@ public class ReplicaPreparedStatement extends ReplicaStatement implements Prepar
         private LazyLogger logger;
 
         public Builder(
-            ReplicaConnectionProvider connectionProvider,
             ReplicaConsistency consistency,
             DatabaseCall databaseCall,
             String sql,
@@ -653,7 +651,6 @@ public class ReplicaPreparedStatement extends ReplicaStatement implements Prepar
             ConnectionState state,
             ConnectionParameters parameters
         ) {
-            this.connectionProvider = connectionProvider;
             this.consistency = consistency;
             this.databaseCall = databaseCall;
             this.sql = sql;
