@@ -39,10 +39,6 @@ public class ReplicaConnectionProvider implements AutoCloseable {
         this.logger = logger;
     }
 
-    public void addRuntimeParameterConfiguration(String parameterConfiguration) {
-        parameters.addRuntimeParameterConfiguration(parameterConfiguration);
-    }
-
     public void setTransactionIsolation(Integer transactionIsolation) throws SQLException {
         parameters.setTransactionIsolation(state::getConnection, transactionIsolation);
     }
@@ -154,10 +150,6 @@ public class ReplicaConnectionProvider implements AutoCloseable {
 
     public State getState() {
         return this.state.getState();
-    }
-
-    public Optional<RouteDecision> getStateDecision() {
-        return this.state.getDecision();
     }
 
     public void rollback() throws SQLException {
