@@ -1,9 +1,9 @@
-package com.atlassian.db.replica.internal;
+package com.atlassian.db.replica.internal.connection.params;
 
 
 import java.sql.Connection;
 import java.sql.SQLException;
 
-public interface ConnectionOperation {
+interface ConnectionOperation {
     void accept(Connection connection) throws SQLException;
 }

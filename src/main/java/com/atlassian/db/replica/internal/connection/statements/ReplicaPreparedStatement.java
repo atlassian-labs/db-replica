@@ -2,7 +2,7 @@ package com.atlassian.db.replica.internal.connection.statements;
 
 import com.atlassian.db.replica.api.DualConnection;
 import com.atlassian.db.replica.api.reason.Reason;
-import com.atlassian.db.replica.internal.ConnectionParameters;
+import com.atlassian.db.replica.internal.connection.params.ConnectionParameters;
 import com.atlassian.db.replica.internal.ReadReplicaUnsupportedOperationException;
 import com.atlassian.db.replica.internal.RouteDecisionBuilder;
 import com.atlassian.db.replica.internal.StatementOperation;
