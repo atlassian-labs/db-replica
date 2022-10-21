@@ -614,7 +614,7 @@ public class ReplicaStatement implements Statement {
         if (connection.getAutoCommit()) {
             consistency.write(connection);
         } else {
-            connectionProvider.markConnectionDirty();
+            state.markDirty();
         }
     }
 
