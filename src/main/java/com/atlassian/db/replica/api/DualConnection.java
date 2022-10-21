@@ -1,10 +1,10 @@
 package com.atlassian.db.replica.api;
 
 import com.atlassian.db.replica.api.reason.Reason;
-import com.atlassian.db.replica.internal.ClientInfo;
-import com.atlassian.db.replica.internal.ConnectionParameters;
+import com.atlassian.db.replica.internal.connection.params.ClientInfo;
+import com.atlassian.db.replica.internal.connection.params.ConnectionParameters;
 import com.atlassian.db.replica.internal.ForwardCall;
-import com.atlassian.db.replica.internal.NetworkTimeout;
+import com.atlassian.db.replica.internal.connection.params.NetworkTimeout;
 import com.atlassian.db.replica.internal.Warnings;
 import com.atlassian.db.replica.internal.logs.ConnectionProviderLogger;
 import com.atlassian.db.replica.internal.logs.DelegatingLazyLogger;
