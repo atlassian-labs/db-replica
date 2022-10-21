@@ -45,7 +45,6 @@ public class ReplicaPreparedStatement extends ReplicaStatement implements Prepar
     private final LazyLogger logger;
 
     protected ReplicaPreparedStatement(
-        ReplicaConnectionProvider connectionProvider,
         ReplicaConsistency consistency,
         DatabaseCall databaseCall,
         String sql,
@@ -59,11 +58,11 @@ public class ReplicaPreparedStatement extends ReplicaStatement implements Prepar
         DualConnection dualConnection,
         boolean compatibleWithPreviousVersion,
         LazyLogger logger,
-        ConnectionState state
+        ConnectionState state,
+        ConnectionParameters parameters
     ) {
         super(
             consistency,
-            connectionProvider,
             databaseCall,
             resultSetType,
             resultSetConcurrency,
@@ -72,7 +71,8 @@ public class ReplicaPreparedStatement extends ReplicaStatement implements Prepar
             dualConnection,
             compatibleWithPreviousVersion,
             logger,
-            state
+            state,
+            parameters
         );
         this.sql = sql;
         this.resultSetType = resultSetType;
@@ -85,7 +85,6 @@ public class ReplicaPreparedStatement extends ReplicaStatement implements Prepar
     }
 
     protected ReplicaPreparedStatement(
-        ReplicaConnectionProvider connectionProvider,
         ReplicaConsistency consistency,
         DatabaseCall databaseCall,
         String sql,
@@ -96,11 +95,11 @@ public class ReplicaPreparedStatement extends ReplicaStatement implements Prepar
         DualConnection dualConnection,
         boolean compatibleWithPreviousVersion,
         LazyLogger logger,
-        ConnectionState state
+        ConnectionState state,
+        ConnectionParameters parameters
     ) {
         super(
             consistency,
-            connectionProvider,
             databaseCall,
             resultSetType,
             resultSetConcurrency,
@@ -109,7 +108,8 @@ public class ReplicaPreparedStatement extends ReplicaStatement implements Prepar
             dualConnection,
             compatibleWithPreviousVersion,
             logger,
-            state
+            state,
+            parameters
         );
         this.sql = sql;
         this.resultSetType = resultSetType;
@@ -632,6 +632,7 @@ public class ReplicaPreparedStatement extends ReplicaStatement implements Prepar
         private final DualConnection dualConnection;
         private final boolean compatibleWithPreviousVersion;
         private final ConnectionState state;
+        private final ConnectionParameters parameters;
         private Integer resultSetType;
         private Integer resultSetConcurrency;
         private Integer resultSetHoldability;
@@ -649,7 +650,8 @@ public class ReplicaPreparedStatement extends ReplicaStatement implements Prepar
             DualConnection dualConnection,
             boolean compatibleWithPreviousVersion,
             LazyLogger logger,
-            ConnectionState state
+            ConnectionState state,
+            ConnectionParameters parameters
         ) {
             this.connectionProvider = connectionProvider;
             this.consistency = consistency;
@@ -660,6 +662,7 @@ public class ReplicaPreparedStatement extends ReplicaStatement implements Prepar
             this.compatibleWithPreviousVersion = compatibleWithPreviousVersion;
             this.logger = logger;
             this.state = state;
+            this.parameters = parameters;
         }
 
         public ReplicaPreparedStatement.Builder resultSetType(int resultSetType) {
@@ -694,7 +697,6 @@ public class ReplicaPreparedStatement extends ReplicaStatement implements Prepar
 
         public ReplicaPreparedStatement build() {
             return new ReplicaPreparedStatement(
-                connectionProvider,
                 consistency,
                 databaseCall,
                 sql,
@@ -714,7 +716,8 @@ public class ReplicaPreparedStatement extends ReplicaStatement implements Prepar
                             logger
                         )
                     ) : logger,
-                state
+                state,
+                parameters
             );
         }
     }
