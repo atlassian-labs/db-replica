@@ -8,7 +8,7 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.function.Supplier;
 
-public class AuroraReplicaNode implements Database {
+final class AuroraReplicaNode implements Database {
     private final String id;
     private final ReplicaConnectionProvider replicaConnectionProvider;
 

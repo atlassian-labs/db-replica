@@ -3,26 +3,26 @@ package com.atlassian.db.replica.internal.aurora;
 import com.atlassian.db.replica.api.jdbc.JdbcProtocol;
 import com.atlassian.db.replica.api.jdbc.JdbcUrl;
 
-public class AuroraJdbcUrl {
+final class AuroraJdbcUrl {
     private static final String PREFIX = "jdbc:postgresql://";
 
     private final AuroraEndpoint endpoint;
     private final String databaseName;
 
-    public AuroraJdbcUrl(AuroraEndpoint endpoint, String databaseName) {
+    AuroraJdbcUrl(AuroraEndpoint endpoint, String databaseName) {
         this.endpoint = endpoint;
         this.databaseName = databaseName;
     }
 
-    public AuroraEndpoint getEndpoint() {
+    AuroraEndpoint getEndpoint() {
         return endpoint;
     }
 
-    public String getDatabaseName() {
+    String getDatabaseName() {
         return databaseName;
     }
 
-    public JdbcUrl toJdbcUrl() {
+    JdbcUrl toJdbcUrl() {
         return JdbcUrl.builder()
             .protocol(JdbcProtocol.POSTGRES)
             .endpoint(endpoint.toString())
