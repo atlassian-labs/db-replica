@@ -9,19 +9,19 @@ import com.atlassian.db.replica.internal.Warnings;
 import com.atlassian.db.replica.internal.logs.ConnectionProviderLogger;
 import com.atlassian.db.replica.internal.logs.DelegatingLazyLogger;
 import com.atlassian.db.replica.internal.NoOpDirtyConnectionCloseHook;
-import com.atlassian.db.replica.internal.ReplicaCallableStatement;
-import com.atlassian.db.replica.internal.ReplicaPreparedStatement;
-import com.atlassian.db.replica.internal.ReplicaStatement;
+import com.atlassian.db.replica.internal.connection.statements.ReplicaCallableStatement;
+import com.atlassian.db.replica.internal.connection.statements.ReplicaPreparedStatement;
+import com.atlassian.db.replica.internal.connection.statements.ReplicaStatement;
 import com.atlassian.db.replica.internal.RouteDecisionBuilder;
 import com.atlassian.db.replica.internal.logs.ReplicaConsistencyLogger;
 import com.atlassian.db.replica.internal.logs.TaggedLogger;
 import com.atlassian.db.replica.internal.logs.LazyLogger;
 import com.atlassian.db.replica.internal.logs.NoopLazyLogger;
 import com.atlassian.db.replica.internal.logs.StateAwareLogger;
-import com.atlassian.db.replica.internal.state.ConnectionState;
-import com.atlassian.db.replica.internal.state.NoOpStateListener;
-import com.atlassian.db.replica.internal.state.State;
-import com.atlassian.db.replica.internal.state.StateListener;
+import com.atlassian.db.replica.internal.connection.state.ConnectionState;
+import com.atlassian.db.replica.internal.connection.state.NoOpStateListener;
+import com.atlassian.db.replica.internal.connection.state.State;
+import com.atlassian.db.replica.internal.connection.state.StateListener;
 import com.atlassian.db.replica.spi.ConnectionProvider;
 import com.atlassian.db.replica.spi.DatabaseCall;
 import com.atlassian.db.replica.spi.DirtyConnectionCloseHook;
@@ -56,8 +56,8 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static com.atlassian.db.replica.api.reason.Reason.RO_API_CALL;
-import static com.atlassian.db.replica.internal.state.State.CLOSED;
-import static com.atlassian.db.replica.internal.state.State.MAIN;
+import static com.atlassian.db.replica.internal.connection.state.State.CLOSED;
+import static com.atlassian.db.replica.internal.connection.state.State.MAIN;
 import static java.lang.String.format;
 
 /**
@@ -246,7 +246,7 @@ public final class DualConnection implements Connection {
     @Override
     public void setTransactionIsolation(int level) throws SQLException {
         checkClosed();
-        parameters.setTransactionIsolation(state::getConnection, level);;
+        parameters.setTransactionIsolation(state::getConnection, level);
     }
 
     @Override
@@ -792,7 +792,7 @@ public final class DualConnection implements Connection {
                     stateListener,
                     lazyLogger
                 )
-            );;
+            );
             return new DualConnection(
                 replicaConsistency,
                 databaseCall,

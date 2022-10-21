@@ -1,4 +1,4 @@
-package com.atlassian.db.replica.internal.state;
+package com.atlassian.db.replica.internal.connection.state;
 
 public final class NoOpStateListener implements StateListener {
     @Override

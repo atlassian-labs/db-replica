@@ -1,9 +1,11 @@
-package com.atlassian.db.replica.internal;
+package com.atlassian.db.replica.internal.connection.statements;
 
 import com.atlassian.db.replica.api.DualConnection;
+import com.atlassian.db.replica.internal.ConnectionParameters;
+import com.atlassian.db.replica.internal.ReadReplicaUnsupportedOperationException;
 import com.atlassian.db.replica.internal.logs.LazyLogger;
 import com.atlassian.db.replica.internal.logs.TaggedLogger;
-import com.atlassian.db.replica.internal.state.ConnectionState;
+import com.atlassian.db.replica.internal.connection.state.ConnectionState;
 import com.atlassian.db.replica.spi.DatabaseCall;
 import com.atlassian.db.replica.spi.ReplicaConsistency;
 
@@ -634,6 +636,7 @@ public class ReplicaCallableStatement extends ReplicaPreparedStatement implement
         throw new ReadReplicaUnsupportedOperationException();
     }
 
+    @Override
     public CallableStatement createStatement(Connection connection) throws SQLException {
         if (resultSetType == null) {
             return connection.prepareCall(sql);
