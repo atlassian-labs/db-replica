@@ -954,7 +954,7 @@ public class TestDualConnection {
     }
 
     @Test
-    public void shouldGetMetaDataFromMaster() throws SQLException {
+    public void shouldGetMetaDataFromReplicaWhenConnectionNotInitialised() throws SQLException {
         final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
         final Connection connection = DualConnection.builder(
             connectionProvider,
@@ -964,7 +964,41 @@ public class TestDualConnection {
         connection.getMetaData();
 
         assertThat(connectionProvider.getProvidedConnectionTypes())
-            .containsOnly(MAIN);
+            .containsOnly(REPLICA);
+        verify(connectionProvider.singleProvidedConnection()).getMetaData();
+    }
+
+
+    @Test
+    public void shouldGetMetaDataFromReplicaAfterRead() throws SQLException {
+        final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
+        final Connection connection = DualConnection.builder(
+            connectionProvider,
+            permanentConsistency().build()
+        ).build();
+
+        connection.prepareStatement(SIMPLE_QUERY).executeQuery();
+        connection.getMetaData();
+
+        assertThat(connectionProvider.getProvidedConnectionTypes())
+            .containsExactly(REPLICA);
+        verify(connectionProvider.singleProvidedConnection()).getMetaData();
+    }
+
+
+    @Test
+    public void shouldGetMetaDataFromMainAfterWrite() throws SQLException {
+        final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
+        final Connection connection = DualConnection.builder(
+            connectionProvider,
+            permanentConsistency().build()
+        ).build();
+
+        connection.prepareStatement(SIMPLE_QUERY).executeUpdate();
+        connection.getMetaData();
+
+        assertThat(connectionProvider.getProvidedConnectionTypes())
+            .containsExactly(MAIN);
         verify(connectionProvider.singleProvidedConnection()).getMetaData();
     }
 
