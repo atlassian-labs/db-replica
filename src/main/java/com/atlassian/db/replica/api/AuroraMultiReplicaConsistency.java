@@ -1,9 +1,9 @@
 package com.atlassian.db.replica.api;
 
 import com.atlassian.db.replica.api.exception.ConnectionCouldNotBeClosedException;
-import com.atlassian.db.replica.internal.util.concurrency.LazyReference;
-import com.atlassian.db.replica.internal.util.cache.NoCacheSuppliedCache;
-import com.atlassian.db.replica.internal.observability.logs.NotLoggingLogger;
+import com.atlassian.db.replica.internal.LazyReference;
+import com.atlassian.db.replica.internal.NoCacheSuppliedCache;
+import com.atlassian.db.replica.internal.NotLoggingLogger;
 import com.atlassian.db.replica.internal.aurora.AuroraClusterDiscovery;
 import com.atlassian.db.replica.api.exception.ReadReplicaConnectionCreationException;
 import com.atlassian.db.replica.spi.Logger;

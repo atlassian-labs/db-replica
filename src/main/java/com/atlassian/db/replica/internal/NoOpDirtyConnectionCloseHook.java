@@ -1,4 +1,4 @@
-package com.atlassian.db.replica.internal.observability;
+package com.atlassian.db.replica.internal;
 
 import com.atlassian.db.replica.spi.DirtyConnectionCloseHook;
 

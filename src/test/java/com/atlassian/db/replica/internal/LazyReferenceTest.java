@@ -1,4 +1,4 @@
-package com.atlassian.db.replica.internal.util.concurrency;
+package com.atlassian.db.replica.internal;
 
 import org.junit.jupiter.api.Test;
 

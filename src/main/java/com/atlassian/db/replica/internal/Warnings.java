@@ -1,4 +1,4 @@
-package com.atlassian.db.replica.internal.connection;
+package com.atlassian.db.replica.internal;
 
 import java.sql.SQLWarning;
 

@@ -1,4 +1,4 @@
-package com.atlassian.db.replica.internal.observability.logs;
+package com.atlassian.db.replica.internal.logs;
 
 import java.util.function.Supplier;
 
