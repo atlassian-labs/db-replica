@@ -182,7 +182,11 @@ public final class DualConnection implements Connection {
     @Override
     public DatabaseMetaData getMetaData() throws SQLException {
         checkClosed();
-        return connectionProvider.getReadConnection(new RouteDecisionBuilder(Reason.RO_API_CALL)).getMetaData();
+        if (compatibleWithPreviousVersion) {
+            return connectionProvider.getWriteConnection(new RouteDecisionBuilder(Reason.RW_API_CALL)).getMetaData();
+        } else {
+            return connectionProvider.getReadConnection(new RouteDecisionBuilder(Reason.RO_API_CALL)).getMetaData();
+        }
     }
 
     @Override
