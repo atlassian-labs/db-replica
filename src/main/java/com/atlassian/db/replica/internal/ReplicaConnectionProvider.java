@@ -5,6 +5,8 @@ import com.atlassian.db.replica.api.reason.RouteDecision;
 import com.atlassian.db.replica.internal.logs.LazyLogger;
 import com.atlassian.db.replica.internal.state.ConnectionState;
 import com.atlassian.db.replica.internal.state.State;
+import com.atlassian.db.replica.internal.state.StateListener;
+import com.atlassian.db.replica.spi.ConnectionProvider;
 import com.atlassian.db.replica.spi.ReplicaConsistency;
 
 import java.sql.Connection;
@@ -26,17 +28,31 @@ public class ReplicaConnectionProvider implements AutoCloseable {
     private final LazyLogger logger;
 
     public ReplicaConnectionProvider(
+        ConnectionProvider connectionProvider,
         ReplicaConsistency consistency,
-        LazyLogger logger,
-        ConnectionParameters parameters,
-        Warnings warnings,
-        ConnectionState state
+        StateListener stateListener,
+        LazyLogger logger
     ) {
-        this.parameters = parameters;
-        this.warnings = warnings;
-        this.state = state;
+        this.parameters = new ConnectionParameters(logger);
+        this.warnings = new Warnings();
+        this.state = new ConnectionState(
+            connectionProvider,
+            consistency,
+            parameters,
+            warnings,
+            stateListener,
+            logger
+        );
         this.consistency = consistency;
         this.logger = logger;
+    }
+
+    public Connection getWriteConnection(RouteDecisionBuilder decisionBuilder) throws SQLException {
+        return state.getWriteConnection(decisionBuilder);
+    }
+
+    public Connection getReadConnection(RouteDecisionBuilder decisionBuilder) throws SQLException {
+        return state.getReadConnection(decisionBuilder);
     }
 
     public void addRuntimeParameterConfiguration(String parameterConfiguration) {
