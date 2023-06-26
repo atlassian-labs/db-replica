@@ -193,6 +193,14 @@ public class ReplicaConnectionProvider implements AutoCloseable {
         }
     }
 
+    public void markConnectionDirty() {
+        this.state.markDirty();
+    }
+
+    public boolean isDirty() {
+        return this.state.isDirty();
+    }
+
     @Override
     public void close() throws SQLException {
         state.close();

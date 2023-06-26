@@ -177,7 +177,7 @@ public final class DualConnection implements Connection {
 
     @Override
     public void close() throws SQLException {
-        if (state.isDirty()) {
+        if (connectionProvider.isDirty()) {
             dirtyConnectionCloseHook.onClose(this);
         }
         logger.debug(() -> "close()");
