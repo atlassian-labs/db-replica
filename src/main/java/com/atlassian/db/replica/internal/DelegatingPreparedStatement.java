@@ -1,4 +1,4 @@
-package com.atlassian.db.replica.internal.connection.statements;
+package com.atlassian.db.replica.internal;
 
 import java.io.*;
 import java.math.*;
@@ -7,11 +7,11 @@ import java.sql.*;
 import java.sql.Date;
 import java.util.*;
 
-final class DelegatingPreparedStatement implements PreparedStatement {
+public class DelegatingPreparedStatement implements PreparedStatement {
 
     private final PreparedStatement delegate;
 
-    DelegatingPreparedStatement(PreparedStatement delegate) {
+    public DelegatingPreparedStatement(PreparedStatement delegate) {
         this.delegate = delegate;
     }
 

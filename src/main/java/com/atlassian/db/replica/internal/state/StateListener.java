@@ -1,4 +1,4 @@
-package com.atlassian.db.replica.internal.connection.state;
+package com.atlassian.db.replica.internal.state;
 
 
 public interface StateListener {
