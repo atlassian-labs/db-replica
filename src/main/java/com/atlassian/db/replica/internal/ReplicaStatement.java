@@ -6,7 +6,6 @@ import com.atlassian.db.replica.api.reason.Reason;
 import com.atlassian.db.replica.api.reason.RouteDecision;
 import com.atlassian.db.replica.internal.logs.LazyLogger;
 import com.atlassian.db.replica.internal.logs.TaggedLogger;
-import com.atlassian.db.replica.internal.state.ConnectionState;
 import com.atlassian.db.replica.spi.DatabaseCall;
 import com.atlassian.db.replica.spi.ReplicaConsistency;
 
@@ -48,7 +47,6 @@ public class ReplicaStatement implements Statement {
     private final DualConnection dualConnection;
     private final boolean compatibleWithPreviousVersion;
     private final LazyLogger logger;
-    private final ConnectionState state;
 
     public ReplicaStatement(
         ReplicaConsistency consistency,
@@ -60,8 +58,7 @@ public class ReplicaStatement implements Statement {
         Set<String> readOnlyFunctions,
         DualConnection dualConnection,
         boolean compatibleWithPreviousVersion,
-        LazyLogger logger,
-        ConnectionState state
+        LazyLogger logger
     ) {
         this.consistency = consistency;
         this.connectionProvider = connectionProvider;
@@ -73,19 +70,18 @@ public class ReplicaStatement implements Statement {
         readStatement = new DecisionAwareReference<Statement>() {
             @Override
             public Statement create() throws Exception {
-                return createStatement(state.getReadConnection(getFirstCause()));
+                return createStatement(connectionProvider.getReadConnection(getFirstCause()));
             }
         };
         writeStatement = new DecisionAwareReference<Statement>() {
             @Override
             public Statement create() throws Exception {
-                return createStatement(state.getWriteConnection(getFirstCause()));
+                return createStatement(connectionProvider.getWriteConnection(getFirstCause()));
             }
         };
         this.dualConnection = dualConnection;
         this.compatibleWithPreviousVersion = compatibleWithPreviousVersion;
         this.logger = logger;
-        this.state = state;
     }
 
     @Override
@@ -323,7 +319,7 @@ public class ReplicaStatement implements Statement {
         if (dualConnection != null) {
             return dualConnection;
         } else {
-            return state.getWriteConnection(new RouteDecisionBuilder(Reason.RW_API_CALL));
+            return connectionProvider.getWriteConnection(new RouteDecisionBuilder(Reason.RW_API_CALL));
         }
     }
 
@@ -594,8 +590,7 @@ public class ReplicaStatement implements Statement {
         Set<String> readOnlyFunctions,
         DualConnection dualConnection,
         boolean compatibleWithPreviousVersion,
-        LazyLogger logger,
-        ConnectionState state
+        LazyLogger logger
     ) {
         return new Builder(
             connectionProvider,
@@ -604,8 +599,7 @@ public class ReplicaStatement implements Statement {
             readOnlyFunctions,
             dualConnection,
             compatibleWithPreviousVersion,
-            logger,
-            state
+            logger
         );
     }
 
@@ -682,7 +676,6 @@ public class ReplicaStatement implements Statement {
         private final Set<String> readOnlyFunctions;
         private final DualConnection dualConnection;
         private final boolean compatibleWithPreviousVersion;
-        private final ConnectionState state;
         private Integer resultSetType;
         private Integer resultSetConcurrency;
         private Integer resultSetHoldability;
@@ -695,8 +688,7 @@ public class ReplicaStatement implements Statement {
             Set<String> readOnlyFunctions,
             DualConnection dualConnection,
             boolean compatibleWithPreviousVersion,
-            LazyLogger logger,
-            ConnectionState state
+            LazyLogger logger
         ) {
             this.connectionProvider = connectionProvider;
             this.consistency = consistency;
@@ -705,7 +697,6 @@ public class ReplicaStatement implements Statement {
             this.dualConnection = dualConnection;
             this.compatibleWithPreviousVersion = compatibleWithPreviousVersion;
             this.logger = logger;
-            this.state = state;
         }
 
         public Builder resultSetType(int resultSetType) {
@@ -736,8 +727,7 @@ public class ReplicaStatement implements Statement {
                 compatibleWithPreviousVersion,
                 logger.isEnabled() ?
                     new TaggedLogger("ReplicaStatement", UUID.randomUUID().toString(), logger) :
-                    logger,
-                state
+                    logger
             );
         }
     }
