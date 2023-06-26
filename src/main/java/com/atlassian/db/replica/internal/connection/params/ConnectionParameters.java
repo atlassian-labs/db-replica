@@ -1,6 +1,6 @@
 package com.atlassian.db.replica.internal.connection.params;
 
-import com.atlassian.db.replica.internal.observability.logs.LazyLogger;
+import com.atlassian.db.replica.internal.logs.LazyLogger;
 
 import java.sql.Connection;
 import java.sql.SQLException;

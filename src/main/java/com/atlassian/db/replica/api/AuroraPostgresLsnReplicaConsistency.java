@@ -1,7 +1,7 @@
 package com.atlassian.db.replica.api;
 
-import com.atlassian.db.replica.internal.util.cache.MonotonicMemoryCache;
-import com.atlassian.db.replica.internal.util.cache.NoCacheSuppliedCache;
+import com.atlassian.db.replica.internal.MonotonicMemoryCache;
+import com.atlassian.db.replica.internal.NoCacheSuppliedCache;
 import com.atlassian.db.replica.spi.Cache;
 import com.atlassian.db.replica.spi.ReplicaConsistency;
 import com.atlassian.db.replica.spi.SuppliedCache;

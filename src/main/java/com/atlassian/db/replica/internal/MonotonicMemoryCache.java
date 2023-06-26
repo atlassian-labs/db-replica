@@ -1,4 +1,4 @@
-package com.atlassian.db.replica.internal.util.cache;
+package com.atlassian.db.replica.internal;
 
 import com.atlassian.db.replica.spi.*;
 
@@ -12,7 +12,7 @@ import static com.atlassian.db.replica.internal.util.Comparables.*;
  *
  * @param <T>
  */
-public final class MonotonicMemoryCache<T extends Comparable<T>> implements Cache<T> {
+public class MonotonicMemoryCache<T extends Comparable<T>> implements Cache<T> {
 
     private final AtomicReference<T> cache = new AtomicReference<>(null);
 

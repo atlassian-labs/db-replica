@@ -1,6 +1,6 @@
 package com.atlassian.db.replica.spi;
 
-import com.atlassian.db.replica.internal.util.cache.MonotonicMemoryCache;
+import com.atlassian.db.replica.internal.*;
 
 import java.util.*;
 

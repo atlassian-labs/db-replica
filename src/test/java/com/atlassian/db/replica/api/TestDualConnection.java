@@ -8,7 +8,7 @@ import com.atlassian.db.replica.api.mocks.NoOpConnection;
 import com.atlassian.db.replica.api.mocks.NoOpConnectionProvider;
 import com.atlassian.db.replica.api.mocks.ReadOnlyAwareConnection;
 import com.atlassian.db.replica.api.mocks.SingleConnectionProvider;
-import com.atlassian.db.replica.internal.util.cache.MonotonicMemoryCache;
+import com.atlassian.db.replica.internal.MonotonicMemoryCache;
 import com.atlassian.db.replica.api.reason.Reason;
 import com.atlassian.db.replica.internal.RouteDecisionBuilder;
 import com.atlassian.db.replica.internal.connection.state.State;
