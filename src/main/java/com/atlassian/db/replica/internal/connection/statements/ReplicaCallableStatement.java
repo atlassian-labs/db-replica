@@ -3,8 +3,6 @@ package com.atlassian.db.replica.internal.connection.statements;
 import com.atlassian.db.replica.api.DualConnection;
 import com.atlassian.db.replica.internal.connection.params.ConnectionParameters;
 import com.atlassian.db.replica.internal.connection.ReadReplicaUnsupportedOperationException;
-import com.atlassian.db.replica.internal.connection.statements.operations.Operations;
-import com.atlassian.db.replica.internal.dispatcher.StatementDispatcher;
 import com.atlassian.db.replica.internal.observability.logs.LazyLogger;
 import com.atlassian.db.replica.internal.observability.logs.TaggedLogger;
 import com.atlassian.db.replica.internal.connection.state.ConnectionState;
@@ -19,10 +17,12 @@ import java.sql.Array;
 import java.sql.Blob;
 import java.sql.CallableStatement;
 import java.sql.Clob;
+import java.sql.Connection;
 import java.sql.Date;
 import java.sql.NClob;
 import java.sql.Ref;
 import java.sql.RowId;
+import java.sql.SQLException;
 import java.sql.SQLXML;
 import java.sql.Time;
 import java.sql.Timestamp;
@@ -32,31 +32,43 @@ import java.util.Set;
 import java.util.UUID;
 
 public class ReplicaCallableStatement extends ReplicaPreparedStatement implements CallableStatement {
+    private final String sql;
+    private final Integer resultSetType;
+    private final Integer resultSetConcurrency;
+    private final Integer resultSetHoldability;
 
     public ReplicaCallableStatement(
         ReplicaConsistency consistency,
         DatabaseCall databaseCall,
         String sql,
+        Integer resultSetType,
+        Integer resultSetConcurrency,
+        Integer resultSetHoldability,
+        Set<String> readOnlyFunctions,
         DualConnection dualConnection,
         boolean compatibleWithPreviousVersion,
         LazyLogger logger,
         ConnectionState state,
-        ConnectionParameters parameters,
-        Operations operations,
-        StatementDispatcher<CallableStatement> dispatcher
+        ConnectionParameters parameters
     ) {
         super(
             consistency,
             databaseCall,
             sql,
+            resultSetType,
+            resultSetConcurrency,
+            resultSetHoldability,
+            readOnlyFunctions,
             dualConnection,
             compatibleWithPreviousVersion,
             logger,
             state,
-            parameters,
-            operations,
-            dispatcher
+            parameters
         );
+        this.sql = sql;
+        this.resultSetType = resultSetType;
+        this.resultSetConcurrency = resultSetConcurrency;
+        this.resultSetHoldability = resultSetHoldability;
     }
 
     @Override
@@ -624,6 +636,17 @@ public class ReplicaCallableStatement extends ReplicaPreparedStatement implement
         throw new ReadReplicaUnsupportedOperationException();
     }
 
+    @Override
+    public CallableStatement createStatement(Connection connection) throws SQLException {
+        if (resultSetType == null) {
+            return connection.prepareCall(sql);
+        } else if (resultSetHoldability == null) {
+            return connection.prepareCall(sql, resultSetType, resultSetConcurrency);
+        } else {
+            return connection.prepareCall(sql, resultSetType, resultSetConcurrency, resultSetHoldability);
+        }
+    }
+
     public static class Builder {
         private final ReplicaConsistency consistency;
         private final DatabaseCall databaseCall;
@@ -676,11 +699,14 @@ public class ReplicaCallableStatement extends ReplicaPreparedStatement implement
         }
 
         public ReplicaCallableStatement build() {
-            final Operations operations = new Operations();
             return new ReplicaCallableStatement(
                 consistency,
                 databaseCall,
                 sql,
+                resultSetType,
+                resultSetConcurrency,
+                resultSetHoldability,
+                readOnlyFunctions,
                 dualConnection,
                 compatibleWithPreviousVersion,
                 logger.isEnabled() ?
@@ -691,29 +717,7 @@ public class ReplicaCallableStatement extends ReplicaPreparedStatement implement
                         )
                     ) : logger,
                 state,
-                parameters,
-                operations,
-                new StatementDispatcher<>(
-                    state,
-                    logger,
-                    compatibleWithPreviousVersion,
-                    readOnlyFunctions,
-                    connection -> {
-                        if (resultSetType == null) {
-                            return connection.prepareCall(sql);
-                        } else if (resultSetHoldability == null) {
-                            return connection.prepareCall(sql, resultSetType, resultSetConcurrency);
-                        } else {
-                            return connection.prepareCall(
-                                sql,
-                                resultSetType,
-                                resultSetConcurrency,
-                                resultSetHoldability
-                            );
-                        }
-                    },
-                    operations
-                )
+                parameters
             );
         }
     }
