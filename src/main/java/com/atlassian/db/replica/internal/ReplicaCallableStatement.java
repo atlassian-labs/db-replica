@@ -36,6 +36,7 @@ public class ReplicaCallableStatement extends ReplicaPreparedStatement implement
     private final Integer resultSetHoldability;
 
     public ReplicaCallableStatement(
+        ReplicaConnectionProvider connectionProvider,
         ReplicaConsistency consistency,
         DatabaseCall databaseCall,
         String sql,
@@ -46,10 +47,10 @@ public class ReplicaCallableStatement extends ReplicaPreparedStatement implement
         DualConnection dualConnection,
         boolean compatibleWithPreviousVersion,
         LazyLogger logger,
-        ConnectionState state,
-        ConnectionParameters parameters
+        ConnectionState state
     ) {
         super(
+            connectionProvider,
             consistency,
             databaseCall,
             sql,
@@ -60,8 +61,7 @@ public class ReplicaCallableStatement extends ReplicaPreparedStatement implement
             dualConnection,
             compatibleWithPreviousVersion,
             logger,
-            state,
-            parameters
+            state
         );
         this.sql = sql;
         this.resultSetType = resultSetType;
@@ -653,7 +653,6 @@ public class ReplicaCallableStatement extends ReplicaPreparedStatement implement
         private final DualConnection dualConnection;
         private final boolean compatibleWithPreviousVersion;
         private final ConnectionState state;
-        private final ConnectionParameters parameters;
         private Integer resultSetType;
         private Integer resultSetConcurrency;
         private Integer resultSetHoldability;
@@ -668,8 +667,7 @@ public class ReplicaCallableStatement extends ReplicaPreparedStatement implement
             DualConnection dualConnection,
             boolean compatibleWithPreviousVersion,
             LazyLogger logger,
-            ConnectionState state,
-            ConnectionParameters parameters
+            ConnectionState state
         ) {
             this.connectionProvider = connectionProvider;
             this.consistency = consistency;
@@ -680,7 +678,6 @@ public class ReplicaCallableStatement extends ReplicaPreparedStatement implement
             this.compatibleWithPreviousVersion = compatibleWithPreviousVersion;
             this.logger = logger;
             this.state = state;
-            this.parameters = parameters;
         }
 
         public ReplicaCallableStatement.Builder resultSetType(int resultSetType) {
@@ -700,6 +697,7 @@ public class ReplicaCallableStatement extends ReplicaPreparedStatement implement
 
         public ReplicaCallableStatement build() {
             return new ReplicaCallableStatement(
+                connectionProvider,
                 consistency,
                 databaseCall,
                 sql,
@@ -716,8 +714,7 @@ public class ReplicaCallableStatement extends ReplicaPreparedStatement implement
                             logger
                         )
                     ) : logger,
-                state,
-                parameters
+                state
             );
         }
     }
