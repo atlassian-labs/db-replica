@@ -1,19 +1,12 @@
-package com.atlassian.db.replica.internal.connection.statements;
+package com.atlassian.db.replica.internal;
 
 import com.atlassian.db.replica.api.DualConnection;
 import com.atlassian.db.replica.api.SqlCall;
 import com.atlassian.db.replica.api.reason.Reason;
 import com.atlassian.db.replica.api.reason.RouteDecision;
-import com.atlassian.db.replica.internal.ConnectionParameters;
-import com.atlassian.db.replica.internal.DecisionAwareReference;
-import com.atlassian.db.replica.internal.ReadReplicaUnsupportedOperationException;
-import com.atlassian.db.replica.internal.RouteDecisionBuilder;
-import com.atlassian.db.replica.internal.SqlFunction;
-import com.atlassian.db.replica.internal.SqlQuery;
-import com.atlassian.db.replica.internal.StatementOperation;
 import com.atlassian.db.replica.internal.logs.LazyLogger;
 import com.atlassian.db.replica.internal.logs.TaggedLogger;
-import com.atlassian.db.replica.internal.connection.state.ConnectionState;
+import com.atlassian.db.replica.internal.state.ConnectionState;
 import com.atlassian.db.replica.spi.DatabaseCall;
 import com.atlassian.db.replica.spi.ReplicaConsistency;
 
@@ -34,7 +27,7 @@ import static com.atlassian.db.replica.api.reason.Reason.READ_OPERATION;
 import static com.atlassian.db.replica.api.reason.Reason.RO_API_CALL;
 import static com.atlassian.db.replica.api.reason.Reason.RW_API_CALL;
 import static com.atlassian.db.replica.api.reason.Reason.WRITE_OPERATION;
-import static com.atlassian.db.replica.internal.connection.state.State.MAIN;
+import static com.atlassian.db.replica.internal.state.State.MAIN;
 import static java.lang.String.format;
 
 public class ReplicaStatement implements Statement {
@@ -398,10 +391,10 @@ public class ReplicaStatement implements Statement {
     public boolean execute(String sql, int[] columnIndexes) throws SQLException {
         checkClosed();
         final RouteDecisionBuilder decisionBuilder = new RouteDecisionBuilder(RW_API_CALL).sql(sql);
-        final Statement statement = getWriteStatement(decisionBuilder);
+        final Statement state = getWriteStatement(decisionBuilder);
         logger.info(() -> format("execute(sql='%s', columnIndexes)", sql));
         return execute(
-            () -> statement.execute(sql, columnIndexes),
+            () -> state.execute(sql, columnIndexes),
             decisionBuilder.build()
         );
     }
@@ -690,10 +683,10 @@ public class ReplicaStatement implements Statement {
         private final boolean compatibleWithPreviousVersion;
         private final ConnectionState state;
         private final ConnectionParameters parameters;
-        private final LazyLogger logger;
         private Integer resultSetType;
         private Integer resultSetConcurrency;
         private Integer resultSetHoldability;
+        private LazyLogger logger;
 
         private Builder(
             ReplicaConsistency consistency,

@@ -2,7 +2,7 @@ package com.atlassian.db.replica.api;
 
 import com.atlassian.db.replica.api.mocks.CircularConsistency;
 import com.atlassian.db.replica.api.mocks.ConnectionProviderMock;
-import com.atlassian.db.replica.internal.connection.state.StateListener;
+import com.atlassian.db.replica.internal.state.StateListener;
 import com.google.common.collect.ImmutableList;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -14,11 +14,11 @@ import java.sql.SQLException;
 import static com.atlassian.db.replica.api.Queries.*;
 import static com.atlassian.db.replica.api.mocks.CircularConsistency.permanentConsistency;
 import static com.atlassian.db.replica.api.mocks.CircularConsistency.permanentInconsistency;
-import static com.atlassian.db.replica.internal.connection.state.State.CLOSED;
-import static com.atlassian.db.replica.internal.connection.state.State.COMMITED_MAIN;
-import static com.atlassian.db.replica.internal.connection.state.State.MAIN;
-import static com.atlassian.db.replica.internal.connection.state.State.NOT_INITIALISED;
-import static com.atlassian.db.replica.internal.connection.state.State.REPLICA;
+import static com.atlassian.db.replica.internal.state.State.CLOSED;
+import static com.atlassian.db.replica.internal.state.State.COMMITED_MAIN;
+import static com.atlassian.db.replica.internal.state.State.MAIN;
+import static com.atlassian.db.replica.internal.state.State.NOT_INITIALISED;
+import static com.atlassian.db.replica.internal.state.State.REPLICA;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 

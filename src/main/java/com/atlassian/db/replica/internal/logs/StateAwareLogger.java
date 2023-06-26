@@ -1,6 +1,6 @@
 package com.atlassian.db.replica.internal.logs;
 
-import com.atlassian.db.replica.internal.connection.state.State;
+import com.atlassian.db.replica.internal.state.State;
 
 import java.util.function.Supplier;
 
