@@ -77,7 +77,6 @@ public final class DualConnection implements Connection {
     private final LazyLogger logger;
     private final ConnectionState state;
     private final ConnectionParameters parameters;
-    private final Warnings warnings;
 
     private DualConnection(
         ReplicaConnectionProvider connectionProvider,
@@ -88,8 +87,7 @@ public final class DualConnection implements Connection {
         boolean compatibleWithPreviousVersion,
         LazyLogger logger,
         ConnectionState state,
-        ConnectionParameters parameters,
-        Warnings warnings
+        ConnectionParameters parameters
     ) {
         this.connectionProvider = connectionProvider;
         this.dirtyConnectionCloseHook = dirtyConnectionCloseHook;
@@ -100,7 +98,6 @@ public final class DualConnection implements Connection {
         this.readOnlyFunctions = readOnlyFunctions;
         this.state = state;
         this.parameters = parameters;
-        this.warnings = warnings;
     }
 
     @Override
@@ -265,21 +262,13 @@ public final class DualConnection implements Connection {
     @Override
     public SQLWarning getWarnings() throws SQLException {
         checkClosed();
-        final Optional<Connection> connection = state.getConnection();
-        if (connection.isPresent()) {
-            warnings.saveWarning(connection.get().getWarnings());
-        }
-        return warnings.getWarning();
+        return connectionProvider.getWarning();
     }
 
     @Override
     public void clearWarnings() throws SQLException {
         checkClosed();
-        final Optional<Connection> connection = state.getConnection();
-        if (connection.isPresent()) {
-            connection.get().clearWarnings();
-        }
-        warnings.clear();
+        connectionProvider.clearWarnings();
     }
 
     @Override
@@ -804,6 +793,7 @@ public final class DualConnection implements Connection {
             );
             replicaConnectionProvider = new ReplicaConnectionProvider(
                 parameters,
+                warnings,
                 state.get()
             );
             return new DualConnection(
@@ -815,8 +805,7 @@ public final class DualConnection implements Connection {
                 compatibleWithPreviousVersion,
                 lazyLogger,
                 state.get(),
-                parameters,
-                warnings
+                parameters
             );
         }
 
