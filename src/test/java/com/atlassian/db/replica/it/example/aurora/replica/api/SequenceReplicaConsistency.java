@@ -2,12 +2,12 @@ package com.atlassian.db.replica.it.example.aurora.replica.api;
 
 import com.atlassian.db.replica.api.ThrottledCache;
 import com.atlassian.db.replica.internal.MonotonicMemoryCache;
+import com.atlassian.db.replica.internal.aurora.ReplicaNode;
 import com.atlassian.db.replica.spi.Cache;
 import com.atlassian.db.replica.spi.ReplicaConsistency;
 import com.atlassian.db.replica.spi.SuppliedCache;
 
 import java.sql.Connection;
-import java.sql.SQLException;
 import java.time.Clock;
 import java.time.Duration;
 import java.util.concurrent.ConcurrentHashMap;
@@ -18,22 +18,25 @@ import static java.time.Duration.ofSeconds;
 @SuppressWarnings({"SqlNoDataSourceInspection", "SqlResolve"})
 public class SequenceReplicaConsistency implements ReplicaConsistency {
     public static final Duration LSN_CHECK_LOCK_TIMEOUT = ofSeconds(1);
-    private static final String AURORA_REPLICA_ID = "replicaId";
+
     private final AuroraSequence sequence;
     private final Cache<Long> lastWrite;
     private final boolean unknownWritesFallback;
     private final ConcurrentHashMap<String, SuppliedCache<Long>> multiReplicaLsnCache;
+    private final ReplicaNode replicaNode;
 
     SequenceReplicaConsistency(
         String sequenceName,
         Cache<Long> lastWrite,
         boolean unknownWritesFallback,
-        ConcurrentHashMap<String, SuppliedCache<Long>> multiReplicaLsnCache
+        ConcurrentHashMap<String, SuppliedCache<Long>> multiReplicaLsnCache,
+        ReplicaNode replicaNode
     ) {
         this.sequence = new AuroraSequence(sequenceName);
         this.lastWrite = lastWrite;
         this.unknownWritesFallback = unknownWritesFallback;
         this.multiReplicaLsnCache = multiReplicaLsnCache;
+        this.replicaNode = replicaNode;
     }
 
     public static Builder builder() {
@@ -68,7 +71,7 @@ public class SequenceReplicaConsistency implements ReplicaConsistency {
     }
 
     private void tryRefreshLsnCacheForCurrentReplica(Connection replica) {
-        String replicaId = getReplicaId(replica);
+        String replicaId = replicaNode.get(replica);
         if (replicaId != null) {
             multiReplicaLsnCache.computeIfAbsent(
                     replicaId,
@@ -78,16 +81,8 @@ public class SequenceReplicaConsistency implements ReplicaConsistency {
         }
     }
 
-    private String getReplicaId(Connection replica) {
-        try {
-            return replica.getClientInfo(AURORA_REPLICA_ID);
-        } catch (SQLException e) {
-            return null;
-        }
-    }
-
     private boolean isConsistent(Connection replica, long lastWrite) {
-        final Long lsn = multiReplicaLsnCache.get(getReplicaId(replica)).get().orElse(0L);
+        final Long lsn = multiReplicaLsnCache.get(replicaNode.get(replica)).get().orElse(0L);
         return lsn >= lastWrite;
     }
 
@@ -96,6 +91,7 @@ public class SequenceReplicaConsistency implements ReplicaConsistency {
         private Cache<Long> lastWrite = new MonotonicMemoryCache<>();
         private boolean unknownWritesFallback = false;
         private ConcurrentHashMap<String, SuppliedCache<Long>> multiReplicaLsnCache = new ConcurrentHashMap<>();
+        private ReplicaNode replicaNode = new ReplicaNode();
 
         public Builder sequenceName(String sequenceName) {
             this.sequenceName = sequenceName;
@@ -117,6 +113,11 @@ public class SequenceReplicaConsistency implements ReplicaConsistency {
             return this;
         }
 
+        public Builder replicaNode(ReplicaNode replicaNode) {
+            this.replicaNode = replicaNode;
+            return this;
+        }
+
         /**
          * @deprecated use {@link Builder#sequenceName(String)}{@code .}{@link Builder#build()} instead.
          */
@@ -130,7 +131,8 @@ public class SequenceReplicaConsistency implements ReplicaConsistency {
                 sequenceName,
                 lastWrite,
                 unknownWritesFallback,
-                multiReplicaLsnCache
+                multiReplicaLsnCache,
+                replicaNode
             );
         }
     }
