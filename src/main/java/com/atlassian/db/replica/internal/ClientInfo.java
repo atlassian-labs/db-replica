@@ -1,4 +1,4 @@
-package com.atlassian.db.replica.internal.connection.params;
+package com.atlassian.db.replica.internal;
 
 import java.sql.Connection;
 import java.sql.SQLClientInfoException;

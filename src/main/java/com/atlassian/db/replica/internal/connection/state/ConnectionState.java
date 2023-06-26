@@ -1,7 +1,7 @@
 package com.atlassian.db.replica.internal.connection.state;
 
 import com.atlassian.db.replica.api.reason.RouteDecision;
-import com.atlassian.db.replica.internal.connection.params.ConnectionParameters;
+import com.atlassian.db.replica.internal.ConnectionParameters;
 import com.atlassian.db.replica.internal.DecisionAwareReference;
 import com.atlassian.db.replica.internal.RouteDecisionBuilder;
 import com.atlassian.db.replica.internal.SqlRunnable;
