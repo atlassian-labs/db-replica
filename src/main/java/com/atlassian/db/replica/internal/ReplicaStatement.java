@@ -31,6 +31,7 @@ import static com.atlassian.db.replica.internal.state.State.MAIN;
 import static java.lang.String.format;
 
 public class ReplicaStatement implements Statement {
+    private final ReplicaConnectionProvider connectionProvider;
     private final Integer resultSetType;
     private final Integer resultSetConcurrency;
     private final Integer resultSetHoldability;
@@ -48,10 +49,10 @@ public class ReplicaStatement implements Statement {
     private final boolean compatibleWithPreviousVersion;
     private final LazyLogger logger;
     private final ConnectionState state;
-    private final ConnectionParameters parameters;
 
     public ReplicaStatement(
         ReplicaConsistency consistency,
+        ReplicaConnectionProvider connectionProvider,
         DatabaseCall databaseCall,
         Integer resultSetType,
         Integer resultSetConcurrency,
@@ -60,10 +61,10 @@ public class ReplicaStatement implements Statement {
         DualConnection dualConnection,
         boolean compatibleWithPreviousVersion,
         LazyLogger logger,
-        ConnectionState state,
-        ConnectionParameters parameters
+        ConnectionState state
     ) {
         this.consistency = consistency;
+        this.connectionProvider = connectionProvider;
         this.databaseCall = databaseCall;
         this.resultSetType = resultSetType;
         this.resultSetConcurrency = resultSetConcurrency;
@@ -85,7 +86,6 @@ public class ReplicaStatement implements Statement {
         this.compatibleWithPreviousVersion = compatibleWithPreviousVersion;
         this.logger = logger;
         this.state = state;
-        this.parameters = parameters;
     }
 
     @Override
@@ -214,7 +214,7 @@ public class ReplicaStatement implements Statement {
         if (sqlQuery.isSqlSet()) {
             decisionBuilder = new RouteDecisionBuilder(READ_OPERATION).sql(sql);
             statement = getReadStatement(decisionBuilder);
-            parameters.addRuntimeParameterConfiguration(sql);
+            connectionProvider.addRuntimeParameterConfiguration(sql);
         } else {
             decisionBuilder = new RouteDecisionBuilder(RW_API_CALL).sql(sql);
             statement = getWriteStatement(decisionBuilder);
@@ -588,24 +588,24 @@ public class ReplicaStatement implements Statement {
     }
 
     public static Builder builder(
+        ReplicaConnectionProvider connectionProvider,
         ReplicaConsistency consistency,
         DatabaseCall databaseCall,
         Set<String> readOnlyFunctions,
         DualConnection dualConnection,
         boolean compatibleWithPreviousVersion,
         LazyLogger logger,
-        ConnectionState state,
-        ConnectionParameters parameters
+        ConnectionState state
     ) {
         return new Builder(
+            connectionProvider,
             consistency,
             databaseCall,
             readOnlyFunctions,
             dualConnection,
             compatibleWithPreviousVersion,
             logger,
-            state,
-            parameters
+            state
         );
     }
 
@@ -619,9 +619,9 @@ public class ReplicaStatement implements Statement {
     }
 
     public Statement getReadStatement(RouteDecisionBuilder decisionBuilder) throws SQLException {
-        if (state.getState().equals(MAIN)) {
+        if (connectionProvider.getState().equals(MAIN)) {
             decisionBuilder.reason(MAIN_CONNECTION_REUSE);
-            state.getDecision().ifPresent(decisionBuilder::cause);
+            connectionProvider.getStateDecision().ifPresent(decisionBuilder::cause);
             logger.debug(() -> "Main connection reuse");
             return prepareWriteStatement(decisionBuilder);
         }
@@ -676,28 +676,29 @@ public class ReplicaStatement implements Statement {
     }
 
     public static class Builder {
+        private final ReplicaConnectionProvider connectionProvider;
         private final ReplicaConsistency consistency;
         private final DatabaseCall databaseCall;
         private final Set<String> readOnlyFunctions;
         private final DualConnection dualConnection;
         private final boolean compatibleWithPreviousVersion;
         private final ConnectionState state;
-        private final ConnectionParameters parameters;
         private Integer resultSetType;
         private Integer resultSetConcurrency;
         private Integer resultSetHoldability;
         private LazyLogger logger;
 
         private Builder(
+            ReplicaConnectionProvider connectionProvider,
             ReplicaConsistency consistency,
             DatabaseCall databaseCall,
             Set<String> readOnlyFunctions,
             DualConnection dualConnection,
             boolean compatibleWithPreviousVersion,
             LazyLogger logger,
-            ConnectionState state,
-            ConnectionParameters parameters
+            ConnectionState state
         ) {
+            this.connectionProvider = connectionProvider;
             this.consistency = consistency;
             this.databaseCall = databaseCall;
             this.readOnlyFunctions = readOnlyFunctions;
@@ -705,7 +706,6 @@ public class ReplicaStatement implements Statement {
             this.compatibleWithPreviousVersion = compatibleWithPreviousVersion;
             this.logger = logger;
             this.state = state;
-            this.parameters = parameters;
         }
 
         public Builder resultSetType(int resultSetType) {
@@ -726,6 +726,7 @@ public class ReplicaStatement implements Statement {
         public ReplicaStatement build() {
             return new ReplicaStatement(
                 consistency,
+                connectionProvider,
                 databaseCall,
                 resultSetType,
                 resultSetConcurrency,
@@ -736,8 +737,7 @@ public class ReplicaStatement implements Statement {
                 logger.isEnabled() ?
                     new TaggedLogger("ReplicaStatement", UUID.randomUUID().toString(), logger) :
                     logger,
-                state,
-                parameters
+                state
             );
         }
     }
