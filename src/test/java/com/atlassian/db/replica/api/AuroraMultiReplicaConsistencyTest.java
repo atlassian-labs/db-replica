@@ -1,8 +1,5 @@
-package com.atlassian.db.replica.internal.aurora;
+package com.atlassian.db.replica.api;
 
-import com.atlassian.db.replica.api.AuroraMultiReplicaConsistency;
-import com.atlassian.db.replica.api.Database;
-import com.atlassian.db.replica.api.ReplicaConsistencyMock;
 import com.atlassian.db.replica.internal.aurora.AuroraReplicaNode;
 import com.atlassian.db.replica.spi.ReplicaConnectionPerUrlProvider;
 import com.atlassian.db.replica.spi.ReplicaConsistency;

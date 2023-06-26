@@ -4,7 +4,7 @@ import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-final class AuroraEndpoint {
+public final class AuroraEndpoint {
     private static final String SERVER_ID_PATTERN = "([^.]+)";
     private static final String CLUSTER_PATTERN = "([^.]+)";
     private static final String DNS_PATTERN = "(.*)";
@@ -14,13 +14,13 @@ final class AuroraEndpoint {
     private final AuroraCluster cluster;
     private final RdsDns dns;
 
-    AuroraEndpoint(String serverId, AuroraCluster cluster, RdsDns dns) {
+    public AuroraEndpoint(String serverId, AuroraCluster cluster, RdsDns dns) {
         this.serverId = serverId;
         this.cluster = cluster;
         this.dns = dns;
     }
 
-    static AuroraEndpoint parse(String readerEndpoint) {
+    public static AuroraEndpoint parse(String readerEndpoint) {
         Objects.requireNonNull(readerEndpoint);
 
         Matcher matcher = ENDPOINT_PATTERN.matcher(readerEndpoint);
@@ -34,15 +34,15 @@ final class AuroraEndpoint {
         );
     }
 
-    String getServerId() {
+    public String getServerId() {
         return serverId;
     }
 
-    AuroraCluster getCluster() {
+    public AuroraCluster getCluster() {
         return cluster;
     }
 
-    RdsDns getDns() {
+    public RdsDns getDns() {
         return dns;
     }
 
@@ -52,7 +52,7 @@ final class AuroraEndpoint {
     }
 
 
-    static final class AuroraEndpointBuilder {
+    public static final class AuroraEndpointBuilder {
         private String serverId;
         private AuroraCluster cluster;
         private RdsDns dns;
@@ -60,33 +60,33 @@ final class AuroraEndpoint {
         private AuroraEndpointBuilder() {
         }
 
-        static AuroraEndpointBuilder anAuroraEndpoint(AuroraEndpoint endpoint) {
+        public static AuroraEndpointBuilder anAuroraEndpoint(AuroraEndpoint endpoint) {
             return new AuroraEndpointBuilder()
                 .serverId(endpoint.serverId)
                 .cluster(endpoint.cluster)
                 .dns(endpoint.dns);
         }
 
-        static AuroraEndpointBuilder anAuroraEndpoint() {
+        public static AuroraEndpointBuilder anAuroraEndpoint() {
             return new AuroraEndpointBuilder();
         }
 
-        AuroraEndpointBuilder serverId(String serverId) {
+        public AuroraEndpointBuilder serverId(String serverId) {
             this.serverId = serverId;
             return this;
         }
 
-        AuroraEndpointBuilder cluster(AuroraCluster cluster) {
+        public AuroraEndpointBuilder cluster(AuroraCluster cluster) {
             this.cluster = cluster;
             return this;
         }
 
-        AuroraEndpointBuilder dns(RdsDns dns) {
+        public AuroraEndpointBuilder dns(RdsDns dns) {
             this.dns = dns;
             return this;
         }
 
-        AuroraEndpoint build() {
+        public AuroraEndpoint build() {
             return new AuroraEndpoint(serverId, cluster, dns);
         }
     }

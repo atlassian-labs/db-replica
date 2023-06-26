@@ -4,7 +4,7 @@ import java.util.Objects;
 
 import static com.atlassian.db.replica.internal.aurora.AuroraCluster.AuroraClusterBuilder.anAuroraCluster;
 
-final class AuroraCluster {
+public final class AuroraCluster {
     private final String clusterName;
     private final String clusterPrefix;
 
@@ -13,16 +13,26 @@ final class AuroraCluster {
         this.clusterPrefix = clusterPrefix;
     }
 
-    static AuroraCluster parse(String cluster) {
+    public static AuroraCluster parse(String cluster) {
         Objects.requireNonNull(cluster);
 
-        String[] chunks = splitByLastOccurrence( cluster);
-        String clusterName = chunks[0];
+        String[] chunks = splitByLastOccurence("-", cluster);
         if (chunks.length == 1) {
+            String clusterName = chunks[0];
             return anAuroraCluster(clusterName).build();
         } else {
+            String clusterName = chunks[0];
             String clusterPrefix = chunks[1];
             return anAuroraCluster(clusterName).clusterPrefix(clusterPrefix).build();
+        }
+    }
+
+    private static String[] splitByLastOccurence(String delimiter, String str) {
+        int i = str.lastIndexOf(delimiter);
+        if (i == -1) {
+            return new String[]{str};
+        } else {
+            return new String[]{str.substring(i + 1), str.substring(0, i)};
         }
     }
 
@@ -33,10 +43,6 @@ final class AuroraCluster {
         } else {
             return clusterName;
         }
-    }
-
-    String getClusterName() {
-        return clusterName;
     }
 
     @Override
@@ -57,37 +63,37 @@ final class AuroraCluster {
         return result;
     }
 
-    private static String[] splitByLastOccurrence(String str) {
-        int i = str.lastIndexOf("-");
-        if (i == -1) {
-            return new String[]{str};
-        } else {
-            return new String[]{str.substring(i + 1), str.substring(0, i)};
-        }
+    public String getClusterName() {
+        return clusterName;
     }
-    static final class AuroraClusterBuilder {
 
+    public String getClusterPrefix() {
+        return clusterPrefix;
+    }
+
+
+    public static final class AuroraClusterBuilder {
         private String clusterName;
         private String clusterPrefix;
 
         private AuroraClusterBuilder() {
         }
 
-        static AuroraClusterBuilder anAuroraCluster(String clusterName) {
+        public static AuroraClusterBuilder anAuroraCluster(String clusterName) {
             return new AuroraClusterBuilder().clusterName(clusterName);
         }
 
-        AuroraClusterBuilder clusterName(String clusterName) {
+        public AuroraClusterBuilder clusterName(String clusterName) {
             this.clusterName = clusterName;
             return this;
         }
 
-        AuroraClusterBuilder clusterPrefix(String clusterPrefix) {
+        public AuroraClusterBuilder clusterPrefix(String clusterPrefix) {
             this.clusterPrefix = clusterPrefix;
             return this;
         }
 
-        AuroraCluster build() {
+        public AuroraCluster build() {
             return new AuroraCluster(clusterName, clusterPrefix);
         }
     }

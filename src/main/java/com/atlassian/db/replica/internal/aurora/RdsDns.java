@@ -4,8 +4,8 @@ import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-final class RdsDns {
-    private static final Pattern DNS_PATTERN = Pattern.compile("([^.]+).([^:]*):?(\\d+)?");
+public final class RdsDns {
+    private static final Pattern DNS_PATTERN = Pattern.compile("([^.]+).([^:]*):?([0-9]+)?");
     private final String region;
     private final String domain;
     private final Integer port;
@@ -16,17 +16,17 @@ final class RdsDns {
         this.port = port;
     }
 
-     static RdsDns parse(String dns) {
+    public static RdsDns parse(String dns) {
         Objects.requireNonNull(dns);
 
         Matcher matcher = DNS_PATTERN.matcher(dns);
         matcher.matches();
-        return new RdsDns(matcher.group(1), matcher.group(2), parseNullableInteger(groupOrNull(matcher)));
+        return new RdsDns(matcher.group(1), matcher.group(2), parseNullableInteger(groupOrNull(matcher, 3)));
     }
 
-    private static String groupOrNull(Matcher matcher) {
+    private static String groupOrNull(Matcher matcher, int n) {
         try {
-            return matcher.group(3);
+            return matcher.group(n);
         } catch (IndexOutOfBoundsException e) {
             return null;
         }
@@ -38,6 +38,18 @@ final class RdsDns {
         } else {
             return Integer.valueOf(str);
         }
+    }
+
+    public String getRegion() {
+        return region;
+    }
+
+    public String getDomain() {
+        return domain;
+    }
+
+    public Integer getPort() {
+        return port;
     }
 
     @Override
