@@ -968,7 +968,6 @@ public class TestDualConnection {
         verify(connectionProvider.singleProvidedConnection()).getMetaData();
     }
 
-
     @Test
     public void shouldGetMetaDataFromReplicaAfterRead() throws SQLException {
         final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
@@ -985,7 +984,6 @@ public class TestDualConnection {
         verify(connectionProvider.singleProvidedConnection()).getMetaData();
     }
 
-
     @Test
     public void shouldGetMetaDataFromMainAfterWrite() throws SQLException {
         final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
@@ -1000,6 +998,100 @@ public class TestDualConnection {
         assertThat(connectionProvider.getProvidedConnectionTypes())
             .containsExactly(MAIN);
         verify(connectionProvider.singleProvidedConnection()).getMetaData();
+    }
+
+    @Test
+    public void shouldGetClientInfoFromReplicaWhenConnectionNotInitialised() throws SQLException {
+        final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
+        final Connection connection = DualConnection.builder(
+            connectionProvider,
+            permanentConsistency().build()
+        ).build();
+
+        connection.getClientInfo();
+
+        assertThat(connectionProvider.getProvidedConnectionTypes())
+            .containsOnly(REPLICA);
+        verify(connectionProvider.singleProvidedConnection()).getClientInfo();
+    }
+
+    @Test
+    public void shouldGetClientInfoFromReplicaAfterRead() throws SQLException {
+        final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
+        final Connection connection = DualConnection.builder(
+            connectionProvider,
+            permanentConsistency().build()
+        ).build();
+
+        connection.prepareStatement(SIMPLE_QUERY).executeQuery();
+        connection.getClientInfo();
+
+        assertThat(connectionProvider.getProvidedConnectionTypes())
+            .containsExactly(REPLICA);
+        verify(connectionProvider.singleProvidedConnection()).getClientInfo();
+    }
+
+    @Test
+    public void shouldGetClientInfoFromMainAfterWrite() throws SQLException {
+        final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
+        final Connection connection = DualConnection.builder(
+            connectionProvider,
+            permanentConsistency().build()
+        ).build();
+
+        connection.prepareStatement(SIMPLE_QUERY).executeUpdate();
+        connection.getClientInfo();
+
+        assertThat(connectionProvider.getProvidedConnectionTypes())
+            .containsExactly(MAIN);
+        verify(connectionProvider.singleProvidedConnection()).getClientInfo();
+    }
+
+    @Test
+    public void shouldGetClientInfoWithNameFromReplicaWhenConnectionNotInitialised() throws SQLException {
+        final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
+        final Connection connection = DualConnection.builder(
+            connectionProvider,
+            permanentConsistency().build()
+        ).build();
+
+        connection.getClientInfo("abcdef");
+
+        assertThat(connectionProvider.getProvidedConnectionTypes())
+            .containsOnly(REPLICA);
+        verify(connectionProvider.singleProvidedConnection()).getClientInfo("abcdef");
+    }
+
+    @Test
+    public void shouldGetClientInfoWithNameFromReplicaAfterRead() throws SQLException {
+        final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
+        final Connection connection = DualConnection.builder(
+            connectionProvider,
+            permanentConsistency().build()
+        ).build();
+
+        connection.prepareStatement(SIMPLE_QUERY).executeQuery();
+        connection.getClientInfo("ghijkl");
+
+        assertThat(connectionProvider.getProvidedConnectionTypes())
+            .containsExactly(REPLICA);
+        verify(connectionProvider.singleProvidedConnection()).getClientInfo("ghijkl");
+    }
+
+    @Test
+    public void shouldGetClientInfoWithNameFromMainAfterWrite() throws SQLException {
+        final ConnectionProviderMock connectionProvider = new ConnectionProviderMock();
+        final Connection connection = DualConnection.builder(
+            connectionProvider,
+            permanentConsistency().build()
+        ).build();
+
+        connection.prepareStatement(SIMPLE_QUERY).executeUpdate();
+        connection.getClientInfo("mnopqr");
+
+        assertThat(connectionProvider.getProvidedConnectionTypes())
+            .containsExactly(MAIN);
+        verify(connectionProvider.singleProvidedConnection()).getClientInfo("mnopqr");
     }
 
     @Test
