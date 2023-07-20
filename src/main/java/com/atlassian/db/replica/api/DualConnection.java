@@ -182,11 +182,7 @@ public final class DualConnection implements Connection {
     @Override
     public DatabaseMetaData getMetaData() throws SQLException {
         checkClosed();
-        if (compatibleWithPreviousVersion) {
-            return connectionProvider.getWriteConnection(new RouteDecisionBuilder(Reason.RW_API_CALL)).getMetaData();
-        } else {
-            return connectionProvider.getReadConnection(new RouteDecisionBuilder(Reason.RO_API_CALL)).getMetaData();
-        }
+        return connectionProvider.getReadConnection(new RouteDecisionBuilder(Reason.RO_API_CALL)).getMetaData();
     }
 
     @Override
@@ -545,29 +541,18 @@ public final class DualConnection implements Connection {
     @Override
     public String getClientInfo(String name) throws SQLException {
         checkClosed();
-        if (compatibleWithPreviousVersion) {
-            return connectionProvider
-                .getWriteConnection(new RouteDecisionBuilder(Reason.RW_API_CALL))
-                .getClientInfo(name);
-        } else {
-            return connectionProvider
-                .getReadConnection(new RouteDecisionBuilder(Reason.RO_API_CALL))
-                .getClientInfo(name);
-        }
+        return connectionProvider
+            .getReadConnection(new RouteDecisionBuilder(Reason.RO_API_CALL))
+            .getClientInfo(name);
+
     }
 
     @Override
     public Properties getClientInfo() throws SQLException {
         checkClosed();
-        if (compatibleWithPreviousVersion) {
-            return connectionProvider
-                .getWriteConnection(new RouteDecisionBuilder(Reason.RW_API_CALL))
-                .getClientInfo();
-        } else {
-            return connectionProvider
-                .getReadConnection(new RouteDecisionBuilder(Reason.RO_API_CALL))
-                .getClientInfo();
-        }
+        return connectionProvider
+            .getReadConnection(new RouteDecisionBuilder(Reason.RO_API_CALL))
+            .getClientInfo();
     }
 
     @Override

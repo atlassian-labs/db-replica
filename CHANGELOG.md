@@ -22,7 +22,15 @@ Dropping a requirement of a major version of a dependency is a new contract.
 
 
 ## [Unreleased]
-[Unreleased]: https://github.com/atlassian-labs/db-replica/compare/release-2.9.0...master
+[Unreleased]: https://github.com/atlassian-labs/db-replica/compare/release-2.9.4...master
+
+## [2.9.4] - 2022-06-28
+[2.9.4]: https://github.com/atlassian-labs/db-replica/compare/release-2.9.2...release-2.9.4
+
+- Default `getClientInfo()` method in `DualConnection` to use read connection
+
+## [2.9.2] - 2022-06-26
+[2.9.2]: https://github.com/atlassian-labs/db-replica/compare/release-2.9.0...release-2.9.2
 
 - Default `getMetaData()` method in `DualConnection` to use read connection
 
