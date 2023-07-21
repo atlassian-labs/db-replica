@@ -32,7 +32,10 @@ public class AuroraClusterMock {
         replicas.clear();
         this.connection = mock(Connection.class);
         final PreparedStatement preparedStatement = mock(PreparedStatement.class);
-        when(this.connection.prepareStatement(eq("SELECT server_id FROM aurora_replica_status() WHERE session_id != 'MASTER_SESSION_ID' and last_update_timestamp > NOW() - INTERVAL '5 minutes'")))
+        when(this.connection.prepareStatement(eq("SELECT server_id, durable_lsn, current_read_lsn, feedback_xmin, " +
+            "round(extract(milliseconds from (now()-last_update_timestamp))) as state_lag_in_msec, replica_lag_in_msec " +
+            "FROM aurora_replica_status() " +
+            "WHERE session_id != 'MASTER_SESSION_ID' and last_update_timestamp > NOW() - INTERVAL '5 minutes';")))
             .thenReturn(preparedStatement);
         when(preparedStatement.executeQuery()).thenAnswer((Answer<ResultSet>) invocation -> {
             return auroraGlobalDbInstanceStatus();
@@ -62,6 +65,11 @@ public class AuroraClusterMock {
         SimpleResultSet rs = new SimpleResultSet();
         rs.addColumn("SERVER_ID", Types.VARCHAR, 255, 0);
         rs.addColumn("SESSION_ID", Types.VARCHAR, 255, 0);
+        rs.addColumn("REPLICA_LAG_IN_MSEC", Types.INTEGER,0,0);
+        rs.addColumn("DURABLE_LSN", Types.INTEGER,0,0);
+        rs.addColumn("CURRENT_READ_LSN", Types.INTEGER,0,0);
+        rs.addColumn("FEEDBACK_XMIN", Types.INTEGER,0,0);
+        rs.addColumn("STATE_LAG_IN_MSEC", Types.INTEGER,0,0);
         replicas.forEach(replica -> rs.addRow(replica.getServerId(), replica.getSessionId()));
         return rs;
     }

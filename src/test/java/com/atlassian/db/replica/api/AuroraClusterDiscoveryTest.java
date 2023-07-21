@@ -82,6 +82,7 @@ class AuroraClusterDiscoveryTest {
             .scaleUp();
 
         AuroraClusterDiscovery clusterDiscovery = AuroraClusterDiscovery.builder()
+            .logger(mockLogger)
             .replicaConnectionPerUrlProvider(replicaUrl -> () -> {
                 final Connection connection = mock(Connection.class);
                 final DatabaseMetaData databaseMetaData = mock(DatabaseMetaData.class);
