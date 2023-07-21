@@ -48,13 +48,19 @@ public final class AuroraMultiReplicaConsistency implements ReplicaConsistency {
 
     @Override
     public boolean isConsistent(Supplier<Connection> replicaSupplier) {
-        return cluster.getReplicas(replicaSupplier)
-            .stream()
+        Collection<Database> replicas = cluster.getReplicas(replicaSupplier);
+        logger.info("Checking consistency for " + replicas.size() + " replicas.");
+
+        return replicas.stream()
             .allMatch(replica -> {
+                logger.info("Checking consistency for replica:" + replica.getId());
                 try (LazyConnectionSupplier connectionSupplier = new LazyConnectionSupplier(replica.getConnectionSupplier())) {
                     return replicaConsistency.isConsistent(connectionSupplier);
                 } catch (ReadReplicaConnectionCreationException exception) {
-                    logger.warn("ReadReplicaConnectionCreationException occurred during consistency checking. It is likely that replica is the process of scaling, replica id: " + replica.getId(), exception);
+                    logger.warn(
+                        "ReadReplicaConnectionCreationException occurred during consistency checking. It is likely that replica is the process of scaling, replica id: " + replica.getId(),
+                        exception
+                    );
                     return true;
                 } catch (SQLException exception) {
                     throw new ConnectionCouldNotBeClosedException(exception);
@@ -79,7 +85,7 @@ public final class AuroraMultiReplicaConsistency implements ReplicaConsistency {
          * The initial implementation of AuroraMultiReplicaConsistency was buggy. The implementation took the
          * connection management responsibility from ReplicaConsistency. The current implementation fixes the issue
          * by allowing ReplicaConsistency implementation to take full responsibility for the connection lifecycle.
-         *
+         * <p>
          * Unfortunately, the existing implementations of ReplicaConsistency may rely on the bug (for example some
          * implementations in our product rely on it). To make it backwards compatible (behavioural compatibility),
          * LazyConnectionSupplier closes the connection if ReplicaConsistency doesn't do that.
