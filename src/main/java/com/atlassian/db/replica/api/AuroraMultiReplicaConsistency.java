@@ -53,6 +53,7 @@ public final class AuroraMultiReplicaConsistency implements ReplicaConsistency {
 
         return replicas.stream()
             .allMatch(replica -> {
+                logger.info("Checking consistency for replica:" + replica.getId());
                 try (LazyConnectionSupplier connectionSupplier = new LazyConnectionSupplier(replica.getConnectionSupplier())) {
                     return replicaConsistency.isConsistent(connectionSupplier);
                 } catch (ReadReplicaConnectionCreationException exception) {
