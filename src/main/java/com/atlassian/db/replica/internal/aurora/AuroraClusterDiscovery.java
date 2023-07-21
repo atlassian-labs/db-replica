@@ -4,6 +4,7 @@ import com.atlassian.db.replica.api.AuroraConnectionDetails;
 import com.atlassian.db.replica.api.Database;
 import com.atlassian.db.replica.api.jdbc.JdbcUrl;
 import com.atlassian.db.replica.internal.NoCacheSuppliedCache;
+import com.atlassian.db.replica.spi.Logger;
 import com.atlassian.db.replica.spi.ReplicaConnectionPerUrlProvider;
 import com.atlassian.db.replica.spi.SuppliedCache;
 
@@ -19,15 +20,18 @@ public final class AuroraClusterDiscovery {
     private final ReplicaConnectionPerUrlProvider replicaConnectionPerUrlProvider;
     private final SuppliedCache<Collection<Database>> discoveredReplicasCache;
     private final String clusterUri;
+    private final Logger logger;
 
     private AuroraClusterDiscovery(
         ReplicaConnectionPerUrlProvider replicaConnectionPerUrlProvider,
         SuppliedCache<Collection<Database>> discoveredReplicasCache,
-        String clusterUri
+        String clusterUri,
+        Logger logger
     ) {
         this.replicaConnectionPerUrlProvider = replicaConnectionPerUrlProvider;
         this.discoveredReplicasCache = discoveredReplicasCache;
         this.clusterUri = clusterUri;
+        this.logger = logger;
     }
 
     public Collection<Database> getReplicas(Supplier<Connection> connectionSupplier) {
@@ -68,7 +72,8 @@ public final class AuroraClusterDiscovery {
             final String readerEndpoint = split[2];
             final String databaseName = split[3];
             return new AuroraReplicasDiscoverer(
-                new AuroraJdbcUrl(AuroraEndpoint.parse(readerEndpoint), databaseName)
+                new AuroraJdbcUrl(AuroraEndpoint.parse(readerEndpoint), databaseName),
+                logger
             );
         } catch (SQLException exception) {
             throw new ReadReplicaDiscovererCreationException(exception);
@@ -80,7 +85,8 @@ public final class AuroraClusterDiscovery {
         final String readerEndpoint = split[2];
         final String databaseName = split[3];
         return new AuroraReplicasDiscoverer(
-            new AuroraJdbcUrl(AuroraEndpoint.parse(readerEndpoint), databaseName)
+            new AuroraJdbcUrl(AuroraEndpoint.parse(readerEndpoint), databaseName),
+            logger
         );
     }
 
@@ -92,6 +98,7 @@ public final class AuroraClusterDiscovery {
         private ReplicaConnectionPerUrlProvider replicaConnectionPerUrlProvider;
         private SuppliedCache<Collection<Database>> discoveredReplicasCache = new NoCacheSuppliedCache<>();
         private String clusterUri;
+        private Logger logger;
 
         public Builder replicaConnectionPerUrlProvider(ReplicaConnectionPerUrlProvider replicaConnectionPerUrlProvider) {
             this.replicaConnectionPerUrlProvider = replicaConnectionPerUrlProvider;
@@ -108,6 +115,11 @@ public final class AuroraClusterDiscovery {
             return this;
         }
 
+        public Builder logger(Logger logger) {
+            this.logger = logger;
+            return this;
+        }
+
         /**
          * @deprecated use
          * {@link Builder#replicaConnectionPerUrlProvider(ReplicaConnectionPerUrlProvider)}{@code .}
@@ -120,7 +132,9 @@ public final class AuroraClusterDiscovery {
         }
 
         public AuroraClusterDiscovery build() {
-            return new AuroraClusterDiscovery(replicaConnectionPerUrlProvider, discoveredReplicasCache, clusterUri);
+            return new AuroraClusterDiscovery(replicaConnectionPerUrlProvider, discoveredReplicasCache, clusterUri,
+                logger
+            );
         }
     }
 

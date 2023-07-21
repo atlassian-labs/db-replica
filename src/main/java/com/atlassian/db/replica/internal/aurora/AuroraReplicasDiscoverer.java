@@ -1,5 +1,7 @@
 package com.atlassian.db.replica.internal.aurora;
 
+import com.atlassian.db.replica.spi.Logger;
+
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -15,8 +17,11 @@ import static java.util.stream.Collectors.toList;
 public final class AuroraReplicasDiscoverer {
     private final AuroraJdbcUrl readerUrl;
 
-    public AuroraReplicasDiscoverer(AuroraJdbcUrl readerUrl) {
+    private final Logger logger;
+
+    public AuroraReplicasDiscoverer(AuroraJdbcUrl readerUrl, Logger logger) {
         this.readerUrl = readerUrl;
+        this.logger = logger;
     }
 
     /**
@@ -38,11 +43,14 @@ public final class AuroraReplicasDiscoverer {
 
     private List<String> fetchReplicasServerIds(Connection connection) throws SQLException {
         List<String> ids = new LinkedList<>();
-        final String sql = "SELECT server_id FROM aurora_replica_status() WHERE session_id != 'MASTER_SESSION_ID' and last_update_timestamp > NOW() - INTERVAL '5 minutes'";
+        final String sql = "SELECT server_id, round(extract(milliseconds from (now()-last_update_timestamp))) as state_lag_msec, replica_lag_in_msec FROM aurora_replica_status() WHERE session_id != 'MASTER_SESSION_ID' and last_update_timestamp > NOW() - INTERVAL '5 minutes';";
         try (ResultSet rs =
                  connection.prepareStatement(sql).executeQuery()) {
             while (rs.next()) {
-                ids.add(rs.getString("server_id"));
+                String serverId = rs.getString("server_id");
+                int replicaLagInMs = rs.getInt("replica_lag_in_ms");
+                logger.info("Server ID: " + serverId + " Replica lag in ms: " + replicaLagInMs);
+                ids.add(serverId);
             }
         }
         return ids;
