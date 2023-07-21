@@ -1,10 +1,12 @@
 package com.atlassian.db.replica.api;
 
+import com.atlassian.db.replica.api.mocks.MockLogger;
 import com.atlassian.db.replica.internal.DefaultReplicaConnectionPerUrlProvider;
 import com.atlassian.db.replica.internal.aurora.AuroraClusterDiscovery;
 import com.atlassian.db.replica.spi.ReplicaConnectionPerUrlProvider;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mock;
 
 import java.sql.Array;
 import java.sql.Blob;
@@ -42,10 +44,12 @@ class AuroraClusterDiscoveryTest {
     private AuroraClusterMock auroraClusterMock;
     private PostgresConnectionMock postgresConnectionMock;
     private AuroraClusterDiscovery auroraClusterDiscovery;
+    private MockLogger mockLogger;
 
     @BeforeEach
     public void before() throws SQLException {
         auroraClusterMock = new AuroraClusterMock();
+        mockLogger = new MockLogger();
         postgresConnectionMock = new PostgresConnectionMock(
             auroraClusterMock.getMainConnection(),
             "jdbc:postgresql://" + readerEndpoint + "/" + databaseName
@@ -56,6 +60,7 @@ class AuroraClusterDiscoveryTest {
         );
         auroraClusterDiscovery = AuroraClusterDiscovery.builder()
             .replicaConnectionPerUrlProvider(replicaConnectionPerUrlProvider)
+            .logger(mockLogger)
             .build();
     }
 
