@@ -9,10 +9,12 @@ import java.sql.SQLException;
 public final class AuroraConnectionProvider implements ConnectionProvider {
     private final String readerUrl;
     private final String writerUrl;
+    private final String password;
 
-    public AuroraConnectionProvider(String readerUrl, String writerUrl) {
+    public AuroraConnectionProvider(String readerUrl, String writerUrl, String password) {
         this.readerUrl = readerUrl;
         this.writerUrl = writerUrl;
+        this.password = password;
     }
 
     @Override
@@ -34,7 +36,7 @@ public final class AuroraConnectionProvider implements ConnectionProvider {
         return DriverManager.getConnection(
             url,
             "postgres",
-            System.getenv("password")
+            password
         );
     }
 }
