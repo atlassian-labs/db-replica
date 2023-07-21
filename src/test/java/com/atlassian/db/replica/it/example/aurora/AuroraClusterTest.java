@@ -1,84 +1,80 @@
 package com.atlassian.db.replica.it.example.aurora;
 
-import com.atlassian.db.replica.api.DualConnection;
-import com.atlassian.db.replica.api.SqlCall;
-import com.atlassian.db.replica.api.reason.Reason;
-import com.atlassian.db.replica.api.reason.RouteDecision;
-import com.atlassian.db.replica.it.example.aurora.app.User;
-import com.atlassian.db.replica.it.example.aurora.app.Users;
+import com.atlassian.db.replica.internal.NotLoggingLogger;
+import com.atlassian.db.replica.internal.aurora.AuroraEndpoint;
+import com.atlassian.db.replica.internal.aurora.AuroraJdbcUrl;
+import com.atlassian.db.replica.internal.aurora.AuroraReplicasDiscoverer;
+import com.atlassian.db.replica.internal.aurora.ReadReplicaDiscovererCreationException;
 import com.atlassian.db.replica.it.example.aurora.replica.AuroraConnectionProvider;
-import com.atlassian.db.replica.it.example.aurora.replica.ConsistencyFactory;
-import com.atlassian.db.replica.it.example.aurora.utils.DecisionLog;
-import com.atlassian.db.replica.it.example.aurora.utils.ReplicationLag;
-import com.atlassian.db.replica.spi.ReplicaConnectionPerUrlProvider;
 import com.atlassian.db.replica.spi.ConnectionProvider;
-import com.atlassian.db.replica.spi.DatabaseCall;
-import com.atlassian.db.replica.internal.DefaultReplicaConnectionPerUrlProvider;
-import com.atlassian.db.replica.spi.ReplicaConsistency;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.util.Collection;
 import java.util.List;
-import java.util.stream.Collectors;
 
-import static com.atlassian.db.replica.api.reason.Reason.READ_OPERATION;
-import static com.atlassian.db.replica.api.reason.Reason.REPLICA_INCONSISTENT;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class AuroraClusterTest {
-    final String databaseName = "newdb";
-    final String readerEndpoint = "database-1.cluster-ro-crmnlihjxqlm.eu-central-1.rds.amazonaws.com:5432";
-    final String readerJdbcUrl = "jdbc:postgresql://" + readerEndpoint + "/" + databaseName;
-    final String writerJdbcUrl = "jdbc:postgresql://database-1.cluster-crmnlihjxqlm.eu-central-1.rds.amazonaws.com:5432" + "/" + databaseName;
-    final String jdbcUsername = "postgres";
+    final String databaseName = "postgres";
     final String jdbcPassword = System.getenv("password");
 
     @Test
-    @Disabled
-    void shouldUtilizeReplicaForReadQueriesForSynchronisedWrites() throws SQLException {
-        final DecisionLog decisionLog = new DecisionLog();
-        final SqlCall<Connection> connectionPool = initializeConnectionPool(decisionLog);
-        new ReplicationLag(connectionPool).set(10);
-        final Users users = new Users(connectionPool);
-        final User newUser = new User();
+    void should_discover_replicas_on_aurora_1_3_6() throws SQLException {
+        final String readerEndpoint = "database-2.cluster-ro-c2vqiwlre1di.eu-central-1.rds.amazonaws.com:5432";
+        final String readerJdbcUrl = "jdbc:postgresql://" + readerEndpoint + "/" + databaseName;
+        final String writerJdbcUrl = "jdbc:postgresql://database-2.cluster-c2vqiwlre1di.eu-central-1.rds.amazonaws.com:5432" + "/" + databaseName;
 
-        users.add(newUser);
-        final Collection<User> allUsers = users.fetch();
+        final ConnectionProvider connectionProvider = getConnectionProvider(readerJdbcUrl, writerJdbcUrl, jdbcPassword);
 
-        final List<Reason> reasons = decisionLog.getDecisions().stream().map(RouteDecision::getReason).collect(
-            Collectors.toList());
-        assertThat(allUsers).contains(newUser);
-        assertThat(decisionLog.getDecisions()).contains(new RouteDecision(
-            "SELECT username FROM users",
-            READ_OPERATION,
-            null
-        ));
+        final int visibleReplicasMainDbPerspective = getVisibleReplicas(connectionProvider.getMainConnection());
+        final int visibleReplicasReplicaDbPerspective = getVisibleReplicas(connectionProvider.getReplicaConnection());
 
-        assertThat(reasons).isNotEmpty().doesNotContain(REPLICA_INCONSISTENT);
+        assertThat(visibleReplicasMainDbPerspective).isEqualTo(1);
+        assertThat(visibleReplicasReplicaDbPerspective).isEqualTo(1);
     }
 
-    private SqlCall<Connection> initializeConnectionPool(final DatabaseCall decisionLog) throws SQLException {
-        final ConnectionProvider connectionProvider = new AuroraConnectionProvider(
-            readerJdbcUrl,
-            writerJdbcUrl
-        );
 
-        ReplicaConnectionPerUrlProvider replicaConnectionPerUrlProvider = new DefaultReplicaConnectionPerUrlProvider(
-            jdbcUsername,
-            jdbcPassword
-        );
+    @Test
+    void should_discover_replicas_on_aurora_1_3_9() throws SQLException {
+        final String readerEndpoint = "database-3.cluster-ro-c2vqiwlre1di.eu-central-1.rds.amazonaws.com:5432";
+        final String readerJdbcUrl = "jdbc:postgresql://" + readerEndpoint + "/" + databaseName;
+        final String writerJdbcUrl = "jdbc:postgresql://database-3.cluster-c2vqiwlre1di.eu-central-1.rds.amazonaws.com:5432" + "/" + databaseName;
 
-        final ReplicaConsistency replicaConsistency = new ConsistencyFactory(
-            connectionProvider,
-            replicaConnectionPerUrlProvider
-        ).create();
+        final ConnectionProvider connectionProvider = getConnectionProvider(readerJdbcUrl, writerJdbcUrl, jdbcPassword);
 
-        return () -> DualConnection.builder(connectionProvider, replicaConsistency)
-            .databaseCall(decisionLog)
-            .build();
+        final int visibleReplicasMainDbPerspective = getVisibleReplicas(connectionProvider.getMainConnection());
+        final int visibleReplicasReplicaDbPerspective = getVisibleReplicas(connectionProvider.getReplicaConnection());
+
+        assertThat(visibleReplicasMainDbPerspective).isEqualTo(1);
+        assertThat(visibleReplicasReplicaDbPerspective).isEqualTo(1);
     }
 
+    private int getVisibleReplicas(Connection connectionProvider) throws SQLException {
+        try (final Connection connection = connectionProvider) {
+            final AuroraReplicasDiscoverer discoverer = createDiscovererFromConnection(connection);
+            final List<AuroraJdbcUrl> auroraJdbcUrls = discoverer.fetchReplicasUrls(connection);
+            return auroraJdbcUrls.size();
+        }
+    }
+
+    private ConnectionProvider getConnectionProvider(
+        String readerJdbcUrl, String writerJdbcUrl, String password
+    ) throws SQLException {
+        return new AuroraConnectionProvider(readerJdbcUrl, writerJdbcUrl, password);
+    }
+
+    private AuroraReplicasDiscoverer createDiscovererFromConnection(Connection connection) {
+        try {
+            final String databaseUrl = connection.getMetaData().getURL();
+            final String[] split = databaseUrl.split("/");
+            final String readerEndpoint = split[2];
+            final String databaseName = split[3];
+            return new AuroraReplicasDiscoverer(
+                new AuroraJdbcUrl(AuroraEndpoint.parse(readerEndpoint), databaseName),
+                new NotLoggingLogger());
+        } catch (SQLException exception) {
+            throw new ReadReplicaDiscovererCreationException(exception);
+        }
+    }
 }
