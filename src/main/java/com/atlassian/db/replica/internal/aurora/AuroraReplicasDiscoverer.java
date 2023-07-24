@@ -59,6 +59,7 @@ public final class AuroraReplicasDiscoverer {
                 long currentReadLsn = rs.getLong("current_read_lsn");
                 long feedbackXmin = rs.getLong("feedback_xmin");
                 long stateLag = rs.getLong("state_lag_in_msec");
+                /* Idea for future logging
                 logger.debug(String.format(
                     "server_id=%s, replica_lag_in_ms=%d, durable_lsn=%d, current_read_lsn=%d, feedback_xmin=%d, state_lag=%d",
                     serverId,
@@ -68,15 +69,7 @@ public final class AuroraReplicasDiscoverer {
                     feedbackXmin,
                     stateLag
                 ));
-                lazyLogger.debug(() -> String.format(
-                    "server_id=%s, replica_lag_in_ms=%d, durable_lsn=%d, current_read_lsn=%d, feedback_xmin=%d, state_lag=%d",
-                    serverId,
-                    replicaLagInMs,
-                    durableLsn,
-                    currentReadLsn,
-                    feedbackXmin,
-                    stateLag
-                ));
+                */
                 ids.add(serverId);
             }
         }

@@ -41,6 +41,7 @@ public final class AuroraMultiReplicaConsistency implements ReplicaConsistency {
             .replicaConnectionPerUrlProvider(replicaConnectionPerUrlProvider)
             .discoveredReplicasCache(discoveredReplicasCache)
             .clusterUri(clusterUri)
+            .logger(lazyLogger)
             .build();
     }
 
