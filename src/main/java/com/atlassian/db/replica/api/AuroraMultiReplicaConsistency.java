@@ -49,6 +49,7 @@ public final class AuroraMultiReplicaConsistency implements ReplicaConsistency {
 
     @Override
     public boolean isConsistent(Supplier<Connection> replicaSupplier) {
+
         Collection<Database> replicas = cluster.getReplicas(replicaSupplier);
         logger.info("Checking consistency for " + replicas.size() + " replicas.");
 

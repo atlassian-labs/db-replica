@@ -51,11 +51,11 @@ public final class AuroraReplicasDiscoverer {
                  connection.prepareStatement(sql).executeQuery()) {
             while (rs.next()) {
                 String serverId = rs.getString("server_id");
-                int replicaLagInMs = rs.getInt("replica_lag_in_msec");
-                int durableLsn = rs.getInt("durable_lsn");
-                int currentReadLsn = rs.getInt("current_read_lsn");
-                int feedbackXmin = rs.getInt("feedback_xmin");
-                int stateLag = rs.getInt("state_lag_in_msec");
+                long replicaLagInMs = rs.getLong("replica_lag_in_msec");
+                long durableLsn = rs.getLong("durable_lsn");
+                long currentReadLsn = rs.getLong("current_read_lsn");
+                long feedbackXmin = rs.getLong("feedback_xmin");
+                long stateLag = rs.getLong("state_lag_in_msec");
                 logger.debug(String.format(
                     "server_id=%s, replica_lag_in_ms=%d, durable_lsn=%d, current_read_lsn=%d, feedback_xmin=%d, state_lag=%d",
                     serverId,
