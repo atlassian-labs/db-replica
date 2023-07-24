@@ -25,26 +25,30 @@ public final class AuroraClusterDiscovery {
     private final String clusterUri;
     private final Logger logger;
     private final LazyLogger lazyLogger;
+    private final Supplier<Connection> discovererConnectionSupplier;
 
     private AuroraClusterDiscovery(
         ReplicaConnectionPerUrlProvider replicaConnectionPerUrlProvider,
         SuppliedCache<Collection<Database>> discoveredReplicasCache,
         String clusterUri,
         Logger logger,
-        LazyLogger lazyLogger
+        LazyLogger lazyLogger,
+        Supplier<Connection> discovererConnectionSupplier
     ) {
         this.replicaConnectionPerUrlProvider = replicaConnectionPerUrlProvider;
         this.discoveredReplicasCache = discoveredReplicasCache;
         this.clusterUri = clusterUri;
         this.logger = logger;
         this.lazyLogger = lazyLogger;
+        this.discovererConnectionSupplier = discovererConnectionSupplier;
     }
 
     public Collection<Database> getReplicas(Supplier<Connection> connectionSupplier) {
-        return discoveredReplicasCache.get(() -> fetchReplicas(connectionSupplier)).orElseGet(() -> {
-            lazyLogger.debug(() -> "AuroraClusterDiscovery#getReplicas no replicas cached.");
-            return Collections.emptyList();
-        });
+        return discoveredReplicasCache.get(() -> fetchReplicas(discovererConnectionSupplier != null ? discovererConnectionSupplier : connectionSupplier)).orElseGet(
+            () -> {
+                lazyLogger.debug(() -> "AuroraClusterDiscovery#getReplicas no replicas cached.");
+                return Collections.emptyList();
+            });
     }
 
     private Collection<Database> fetchReplicas(Supplier<Connection> connectionSupplier) {
@@ -53,7 +57,8 @@ public final class AuroraClusterDiscovery {
             final AuroraReplicasDiscoverer discoverer = createDiscoverer(connection);
             return discoverer.fetchReplicasUrls(connection).stream().map(auroraUrl -> {
                 JdbcUrl url = auroraUrl.toJdbcUrl();
-                return new AuroraReplicaNode(auroraUrl.getEndpoint().getServerId(),
+                return new AuroraReplicaNode(
+                    auroraUrl.getEndpoint().getServerId(),
                     replicaConnectionPerUrlProvider.getReplicaConnectionProvider(url)
                 );
             }).collect(toList());
@@ -73,13 +78,15 @@ public final class AuroraClusterDiscovery {
     private AuroraReplicasDiscoverer createDiscovererFromConnection(Connection connection) {
         try {
             final String databaseUrl = connection.getMetaData().getURL();
-            lazyLogger.debug(() -> format("AuroraClusterDiscovery#createDiscovererFromConnection (databaseUrl=%s)",
+            lazyLogger.debug(() -> format(
+                "AuroraClusterDiscovery#createDiscovererFromConnection (databaseUrl=%s)",
                 databaseUrl
             ));
             final String[] split = databaseUrl.split("/");
             final String readerEndpoint = split[2];
             final String databaseName = split[3];
-            return new AuroraReplicasDiscoverer(new AuroraJdbcUrl(AuroraEndpoint.parse(readerEndpoint), databaseName),
+            return new AuroraReplicasDiscoverer(
+                new AuroraJdbcUrl(AuroraEndpoint.parse(readerEndpoint), databaseName),
                 logger,
                 lazyLogger
             );
@@ -89,13 +96,15 @@ public final class AuroraClusterDiscovery {
     }
 
     private AuroraReplicasDiscoverer createDiscovererFromClusterUri() {
-        lazyLogger.debug(() -> format("AuroraClusterDiscovery#createDiscovererFromClusterUri (clusterUri=%s)",
+        lazyLogger.debug(() -> format(
+            "AuroraClusterDiscovery#createDiscovererFromClusterUri (clusterUri=%s)",
             clusterUri
         ));
         final String[] split = clusterUri.split("/");
         final String readerEndpoint = split[2];
         final String databaseName = split[3];
-        return new AuroraReplicasDiscoverer(new AuroraJdbcUrl(AuroraEndpoint.parse(readerEndpoint), databaseName),
+        return new AuroraReplicasDiscoverer(
+            new AuroraJdbcUrl(AuroraEndpoint.parse(readerEndpoint), databaseName),
             logger,
             lazyLogger
         );
@@ -111,6 +120,7 @@ public final class AuroraClusterDiscovery {
         private String clusterUri;
         private Logger logger;
         private LazyLogger lazyLogger = new NoopLazyLogger();
+        private Supplier<Connection> discovererConnectionSupplier = null;
 
         public Builder replicaConnectionPerUrlProvider(ReplicaConnectionPerUrlProvider replicaConnectionPerUrlProvider) {
             this.replicaConnectionPerUrlProvider = replicaConnectionPerUrlProvider;
@@ -144,6 +154,17 @@ public final class AuroraClusterDiscovery {
         }
 
         /**
+         * Use dedicated connection supplier for the discovery
+         *
+         * @param connectionSupplier
+         * @return
+         */
+        public Builder connectionSupplier(Supplier<Connection> connectionSupplier) {
+            this.discovererConnectionSupplier = connectionSupplier;
+            return this;
+        }
+
+        /**
          * @deprecated use
          * {@link Builder#replicaConnectionPerUrlProvider(ReplicaConnectionPerUrlProvider)}{@code .}
          * {@link Builder#build()} instead.
@@ -155,11 +176,13 @@ public final class AuroraClusterDiscovery {
         }
 
         public AuroraClusterDiscovery build() {
-            return new AuroraClusterDiscovery(replicaConnectionPerUrlProvider,
+            return new AuroraClusterDiscovery(
+                replicaConnectionPerUrlProvider,
                 discoveredReplicasCache,
                 clusterUri,
                 logger,
-                lazyLogger
+                lazyLogger,
+                discovererConnectionSupplier
             );
         }
     }
