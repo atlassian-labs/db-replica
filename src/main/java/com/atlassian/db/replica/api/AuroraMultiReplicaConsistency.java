@@ -32,7 +32,8 @@ public final class AuroraMultiReplicaConsistency implements ReplicaConsistency {
         ReplicaConnectionPerUrlProvider replicaConnectionPerUrlProvider,
         SuppliedCache<Collection<Database>> discoveredReplicasCache,
         String clusterUri,
-        LazyLogger lazyLogger
+        LazyLogger lazyLogger,
+        Supplier<Connection> discovererConnectionSupplier
     ) {
         this.logger = logger;
         this.replicaConsistency = replicaConsistency;
@@ -40,6 +41,7 @@ public final class AuroraMultiReplicaConsistency implements ReplicaConsistency {
         this.cluster = AuroraClusterDiscovery.builder()
             .replicaConnectionPerUrlProvider(replicaConnectionPerUrlProvider)
             .discoveredReplicasCache(discoveredReplicasCache)
+            .connectionSupplier(discovererConnectionSupplier)
             .clusterUri(clusterUri)
             .logger(lazyLogger)
             .build();
@@ -128,6 +130,7 @@ public final class AuroraMultiReplicaConsistency implements ReplicaConsistency {
         private Logger logger = new NotLoggingLogger();
         private LazyLogger lazyLogger = new NoopLazyLogger();
         private String clusterUri;
+        private Supplier<Connection> discovererConnectionSupplier;
 
         public Builder replicaConsistency(ReplicaConsistency replicaConsistency) {
             this.replicaConsistency = replicaConsistency;
@@ -157,6 +160,18 @@ public final class AuroraMultiReplicaConsistency implements ReplicaConsistency {
 
         public Builder clusterUri(String clusterUri) {
             this.clusterUri = clusterUri;
+            return this;
+        }
+
+        /**
+         *
+         * @param clusterUri read replica uri
+         * @param connectionSupplier the dedicated connection provider for the replica discoverer.
+         * @return
+         */
+        public Builder clusterUri(String clusterUri, Supplier<Connection> connectionSupplier) {
+            this.clusterUri = clusterUri;
+            this.discovererConnectionSupplier = connectionSupplier;
             return this;
         }
 
@@ -204,7 +219,8 @@ public final class AuroraMultiReplicaConsistency implements ReplicaConsistency {
                 replicaConnectionPerUrlProvider,
                 discoveredReplicasCache,
                 clusterUri,
-                lazyLogger
+                lazyLogger,
+                discovererConnectionSupplier
             );
         }
     }

@@ -25,6 +25,16 @@ Dropping a requirement of a major version of a dependency is a new contract.
 [Unreleased]: https://github.com/atlassian-labs/db-replica/compare/release-2.9.4...master
 
 ### Added
+- Support for custom connection provider for replica discovery in `AuroraMultiReplicaConsistency`
+
+## [2.9.10] - 2023-07-24
+
+### Fix
+- Changed discovery query to use Longs instead of Integers
+
+## [2.9.8] - 2023-07-24
+
+### Added
 - `LazyLogger` to `AuroraMultiReplicaConsistency`
 
 ## [2.9.6] - 2023-07-21
