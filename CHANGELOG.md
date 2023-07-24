@@ -22,8 +22,27 @@ Dropping a requirement of a major version of a dependency is a new contract.
 
 
 ## [Unreleased]
-[Unreleased]: https://github.com/atlassian-labs/db-replica/compare/release-2.9.0...master
+[Unreleased]: https://github.com/atlassian-labs/db-replica/compare/release-2.9.4...master
 
+### Added
+- `LazyLogger` to `AuroraMultiReplicaConsistency`
+
+## [2.9.6] - 2023-07-21
+[2.9.4]: https://github.com/atlassian-labs/db-replica/compare/release-2.9.2...release-2.9.4
+
+### Fixed
+- Add additional logging to `AuroraMultiReplicaConsistency`
+
+## [2.9.4] - 2023-06-28
+[2.9.4]: https://github.com/atlassian-labs/db-replica/compare/release-2.9.2...release-2.9.4
+
+### Fixed
+- Default `getClientInfo()` method in `DualConnection` to use read connection
+
+## [2.9.2] - 2023-06-26
+[2.9.2]: https://github.com/atlassian-labs/db-replica/compare/release-2.9.0...release-2.9.2
+
+### Fixed
 - Default `getMetaData()` method in `DualConnection` to use read connection
 
 ## [2.9.0] - 2022-10-10

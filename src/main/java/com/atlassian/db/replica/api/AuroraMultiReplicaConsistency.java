@@ -1,11 +1,13 @@
 package com.atlassian.db.replica.api;
 
 import com.atlassian.db.replica.api.exception.ConnectionCouldNotBeClosedException;
+import com.atlassian.db.replica.api.exception.ReadReplicaConnectionCreationException;
 import com.atlassian.db.replica.internal.LazyReference;
 import com.atlassian.db.replica.internal.NoCacheSuppliedCache;
 import com.atlassian.db.replica.internal.NotLoggingLogger;
 import com.atlassian.db.replica.internal.aurora.AuroraClusterDiscovery;
-import com.atlassian.db.replica.api.exception.ReadReplicaConnectionCreationException;
+import com.atlassian.db.replica.internal.logs.LazyLogger;
+import com.atlassian.db.replica.internal.logs.NoopLazyLogger;
 import com.atlassian.db.replica.spi.Logger;
 import com.atlassian.db.replica.spi.ReplicaConnectionPerUrlProvider;
 import com.atlassian.db.replica.spi.ReplicaConsistency;
@@ -16,25 +18,29 @@ import java.sql.SQLException;
 import java.util.Collection;
 import java.util.function.Supplier;
 
+import static java.lang.String.format;
+
 public final class AuroraMultiReplicaConsistency implements ReplicaConsistency {
     private final Logger logger;
     private final ReplicaConsistency replicaConsistency;
     private final AuroraClusterDiscovery cluster;
+    private final LazyLogger lazyLogger;
 
     private AuroraMultiReplicaConsistency(
         Logger logger,
         ReplicaConsistency replicaConsistency,
         ReplicaConnectionPerUrlProvider replicaConnectionPerUrlProvider,
         SuppliedCache<Collection<Database>> discoveredReplicasCache,
-        String clusterUri
+        String clusterUri,
+        LazyLogger lazyLogger
     ) {
         this.logger = logger;
         this.replicaConsistency = replicaConsistency;
+        this.lazyLogger = lazyLogger;
         this.cluster = AuroraClusterDiscovery.builder()
             .replicaConnectionPerUrlProvider(replicaConnectionPerUrlProvider)
             .discoveredReplicasCache(discoveredReplicasCache)
             .clusterUri(clusterUri)
-            .logger(logger)
             .build();
     }
 
@@ -49,21 +55,28 @@ public final class AuroraMultiReplicaConsistency implements ReplicaConsistency {
 
     @Override
     public boolean isConsistent(Supplier<Connection> replicaSupplier) {
-        Collection<Database> replicas = cluster.getReplicas(replicaSupplier);
+        final Collection<Database> replicas = cluster.getReplicas(replicaSupplier);
         logger.info("Checking consistency for " + replicas.size() + " replicas.");
-
-        return replicas.stream()
+        lazyLogger.debug(() -> format("Checking consistency for %d replicas.", replicas.size()));
+        return replicas
+            .stream()
             .allMatch(replica -> {
                 logger.info("Checking consistency for replica:" + replica.getId());
                 try (LazyConnectionSupplier connectionSupplier = new LazyConnectionSupplier(replica.getConnectionSupplier())) {
-                    return replicaConsistency.isConsistent(connectionSupplier);
+                    final boolean isConsistent = replicaConsistency.isConsistent(connectionSupplier);
+                    lazyLogger.debug(() -> format(
+                        "AuroraMultiReplicaConsistency#isConsistent (isConsistent=%s, replica=%s)",
+                        isConsistent,
+                        replica.getId()
+                    ));
+                    return isConsistent;
                 } catch (ReadReplicaConnectionCreationException exception) {
-                    logger.warn(
-                        "ReadReplicaConnectionCreationException occurred during consistency checking. It is likely that replica is the process of scaling, replica id: " + replica.getId(),
-                        exception
-                    );
+                    final String message = "ReadReplicaConnectionCreationException occurred during consistency checking. It is likely that replica is the process of scaling, replica id: " + replica.getId();
+                    logger.warn(message, exception);
+                    lazyLogger.warn(() -> "AuroraMultiReplicaConsistency#isConsistent " + message);
                     return true;
                 } catch (SQLException exception) {
+                    lazyLogger.warn(() -> "AuroraMultiReplicaConsistency#isConsistent (ConnectionCouldNotBeClosedException)");
                     throw new ConnectionCouldNotBeClosedException(exception);
                 }
             });
@@ -112,6 +125,7 @@ public final class AuroraMultiReplicaConsistency implements ReplicaConsistency {
         private ReplicaConnectionPerUrlProvider replicaConnectionPerUrlProvider;
         private SuppliedCache<Collection<Database>> discoveredReplicasCache = new NoCacheSuppliedCache<>();
         private Logger logger = new NotLoggingLogger();
+        private LazyLogger lazyLogger = new NoopLazyLogger();
         private String clusterUri;
 
         public Builder replicaConsistency(ReplicaConsistency replicaConsistency) {
@@ -124,8 +138,19 @@ public final class AuroraMultiReplicaConsistency implements ReplicaConsistency {
             return this;
         }
 
+        /**
+         * @param logger
+         * @return
+         * @deprecated use {@link Builder#logger(LazyLogger)}
+         */
+        @Deprecated
         public Builder logger(Logger logger) {
             this.logger = logger;
+            return this;
+        }
+
+        public Builder logger(LazyLogger lazyLogger) {
+            this.lazyLogger = lazyLogger;
             return this;
         }
 
@@ -177,7 +202,8 @@ public final class AuroraMultiReplicaConsistency implements ReplicaConsistency {
                 replicaConsistency,
                 replicaConnectionPerUrlProvider,
                 discoveredReplicasCache,
-                clusterUri
+                clusterUri,
+                lazyLogger
             );
         }
     }

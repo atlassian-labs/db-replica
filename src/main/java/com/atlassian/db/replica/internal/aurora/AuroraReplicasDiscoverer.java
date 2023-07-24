@@ -1,5 +1,6 @@
 package com.atlassian.db.replica.internal.aurora;
 
+import com.atlassian.db.replica.internal.logs.LazyLogger;
 import com.atlassian.db.replica.spi.Logger;
 
 import java.sql.Connection;
@@ -18,10 +19,12 @@ public final class AuroraReplicasDiscoverer {
     private final AuroraJdbcUrl readerUrl;
 
     private final Logger logger;
+    private final LazyLogger lazyLogger;
 
-    public AuroraReplicasDiscoverer(AuroraJdbcUrl readerUrl, Logger logger) {
+    public AuroraReplicasDiscoverer(AuroraJdbcUrl readerUrl, Logger logger, LazyLogger lazyLogger) {
         this.readerUrl = readerUrl;
         this.logger = logger;
+        this.lazyLogger = lazyLogger;
     }
 
     /**
@@ -57,6 +60,15 @@ public final class AuroraReplicasDiscoverer {
                 int feedbackXmin = rs.getInt("feedback_xmin");
                 int stateLag = rs.getInt("state_lag_in_msec");
                 logger.debug(String.format(
+                    "server_id=%s, replica_lag_in_ms=%d, durable_lsn=%d, current_read_lsn=%d, feedback_xmin=%d, state_lag=%d",
+                    serverId,
+                    replicaLagInMs,
+                    durableLsn,
+                    currentReadLsn,
+                    feedbackXmin,
+                    stateLag
+                ));
+                lazyLogger.debug(() -> String.format(
                     "server_id=%s, replica_lag_in_ms=%d, durable_lsn=%d, current_read_lsn=%d, feedback_xmin=%d, state_lag=%d",
                     serverId,
                     replicaLagInMs,
