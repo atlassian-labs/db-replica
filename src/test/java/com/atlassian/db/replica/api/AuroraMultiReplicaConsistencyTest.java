@@ -187,5 +187,6 @@ class AuroraMultiReplicaConsistencyTest {
         //then
         assertThat(throwable).doesNotThrowAnyException();
         verify(discovererConnectionSupplier).get();
+        verify(connection).close();
     }
 }
