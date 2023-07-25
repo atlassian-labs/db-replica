@@ -22,7 +22,12 @@ Dropping a requirement of a major version of a dependency is a new contract.
 
 
 ## [Unreleased]
-[Unreleased]: https://github.com/atlassian-labs/db-replica/compare/release-2.9.4...master
+[Unreleased]: https://github.com/atlassian-labs/db-replica/compare/release-2.10.0...master
+
+### Fix
+- Connection leak in `AuroraClusterDiscovery`
+
+## [2.10.0] - 2023-07-24
 
 ### Added
 - Support for custom connection provider for replica discovery in `AuroraMultiReplicaConsistency`

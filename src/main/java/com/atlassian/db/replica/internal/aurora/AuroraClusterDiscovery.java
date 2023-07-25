@@ -14,6 +14,7 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import java.util.function.Supplier;
 
 import static java.lang.String.format;
@@ -44,27 +45,42 @@ public final class AuroraClusterDiscovery {
     }
 
     public Collection<Database> getReplicas(Supplier<Connection> connectionSupplier) {
-        return discoveredReplicasCache.get(() -> fetchReplicas(discovererConnectionSupplier != null ? discovererConnectionSupplier : connectionSupplier)).orElseGet(
-            () -> {
-                lazyLogger.debug(() -> "AuroraClusterDiscovery#getReplicas no replicas cached.");
-                return Collections.emptyList();
-            });
+        return discoveredReplicasCache
+            .get(() -> discovererConnectionSupplier != null ? fetchReplicas() : fetchReplicas(connectionSupplier)).orElseGet(
+                () -> {
+                    lazyLogger.debug(() -> "AuroraClusterDiscovery#getReplicas no replicas cached.");
+                    return Collections.emptyList();
+                });
     }
 
     private Collection<Database> fetchReplicas(Supplier<Connection> connectionSupplier) {
         try {
             final Connection connection = connectionSupplier.get();
-            final AuroraReplicasDiscoverer discoverer = createDiscoverer(connection);
-            return discoverer.fetchReplicasUrls(connection).stream().map(auroraUrl -> {
-                JdbcUrl url = auroraUrl.toJdbcUrl();
-                return new AuroraReplicaNode(
-                    auroraUrl.getEndpoint().getServerId(),
-                    replicaConnectionPerUrlProvider.getReplicaConnectionProvider(url)
-                );
-            }).collect(toList());
+            return getDatabases(connection);
         } catch (SQLException exception) {
             throw new ReadReplicaDiscoveryOperationException(exception);
         }
+    }
+
+    private Collection<Database> fetchReplicas() {
+        try {
+            try (final Connection connection = discovererConnectionSupplier.get()) {
+                return getDatabases(connection);
+            }
+        } catch (SQLException exception) {
+            throw new ReadReplicaDiscoveryOperationException(exception);
+        }
+    }
+
+    private List<Database> getDatabases(Connection connection) throws SQLException {
+        final AuroraReplicasDiscoverer discoverer = createDiscoverer(connection);
+        return discoverer.fetchReplicasUrls(connection).stream().map(auroraUrl -> {
+            JdbcUrl url = auroraUrl.toJdbcUrl();
+            return new AuroraReplicaNode(
+                auroraUrl.getEndpoint().getServerId(),
+                replicaConnectionPerUrlProvider.getReplicaConnectionProvider(url)
+            );
+        }).collect(toList());
     }
 
     private AuroraReplicasDiscoverer createDiscoverer(Connection connection) {
