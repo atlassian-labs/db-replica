@@ -9,6 +9,10 @@ on:
         description: 'Release? Major/Minor/Patch/None'
         required : true
         default: 'None'
+      prerelease:
+        description: 'Prerelease? Alpha/Beta/RC/None'
+        required: false
+        default: 'None'
 
 jobs:
   build:
@@ -45,11 +49,16 @@ jobs:
       if: github.event.inputs.release != null && github.event.inputs.release != 'None'
       uses: atlassian-labs/artifact-publish-token@v1.0.1
     - name: Release
-      if: github.event.inputs.release != null && github.event.inputs.release != 'None'
+      if: github.event.inputs.release != 'None' || github.event.inputs.prerelease != 'None'
       env:
-        atlassian_private_username: ${{ steps.publish-token.outputs.artifactoryUsername }}
-        atlassian_private_password: ${{ steps.publish-token.outputs.artifactoryApiKey }}
+          atlassian_private_username: ${{ steps.publish-token.outputs.artifactoryUsername }}
+          atlassian_private_password: ${{ steps.publish-token.outputs.artifactoryApiKey }}
       run: |
-        ./gradlew markNextVersion -Prelease.incrementer=increment${{ github.event.inputs.release }} -Prelease.localOnly
-        ./gradlew release -Prelease.customUsername=${{ secrets.REPOSITORY_ACCESS_TOKEN }}
-        ./gradlew publish
+          if [ "${{ github.event.inputs.prerelease }}" != "None" ]
+          then
+            ./gradlew markNextVersion -Prelease.incrementer=incrementPrerelease -Prelease.preReleaseStage=${{ github.event.inputs.prerelease }} -Prelease.localOnly
+          else
+            ./gradlew markNextVersion -Prelease.incrementer=increment${{ github.event.inputs.release }} -Prelease.localOnly
+          fi
+          ./gradlew release -Prelease.customUsername=${{ secrets.REPOSITORY_ACCESS_TOKEN }}
+          ./gradlew publish
