@@ -30,4 +30,4 @@
 [changelog]: ../../CHANGELOG.md
 [readme]: ../../README.md
 [`gradle-release` plugin]: https://bitbucket.org/atlassian/gradle-release/src/master/README.md
-[triggering a release]: trigger-gha-release.md
+[triggering a release]: trigger-gha-release.mp4
